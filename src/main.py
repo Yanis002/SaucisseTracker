@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from typing import Optional
 from PyQt6 import uic, QtWidgets, QtGui, QtCore
 from sys import exit, argv
 from os import path, name as osName
@@ -94,6 +95,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.label.setPixmap(QtGui.QPixmap(get_new_path("/../res/item.png")))
         self.label.setObjectName("label")
 
+        self.label.mousePressEvent = self.item_update
+
+        # black & white effect, todo find something better? idk
+        self.label_effect = QtWidgets.QGraphicsColorizeEffect(self.label)
+        self.label_effect.setStrength(0.0)
+        self.label_effect.setColor(QtGui.QColor('black'))
+        self.label.setGraphicsEffect(self.label_effect)
+
         ### end init
 
         self.retranslateUi()
@@ -108,6 +117,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_exit.setText(_translate("MainWindow", "Exit"))
 
     # connections callbacks
+
+    def item_update(self, event: Optional[QtGui.QMouseEvent]):
+        if event is not None:
+            match event.button():
+                case QtCore.Qt.MouseButton.LeftButton | QtCore.Qt.MouseButton.RightButton:
+                    if self.label_effect.strength() > 0.0:
+                        self.label_effect.setStrength(0.0)
+                    else:
+                        self.label_effect.setStrength(1.0)
 
 # start the app
 if __name__ == "__main__":
