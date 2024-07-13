@@ -109,13 +109,15 @@ class MainWindow(QtWidgets.QMainWindow):
             label = Label(self.centralwidget, item.index)
             label.setGeometry(QtCore.QRect(item.pos.x, item.pos.y, 32, 32))
             label.setText("")
-            label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[0]}")))
+            label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[label.img_index]}")))
             label.setObjectName(f"item_{item.index}")
-            label.clicked.connect(self.label_clicked)
+            label.clicked_left.connect(self.label_clicked_left)
+            label.clicked_middle.connect(self.label_clicked_middle)
+            label.clicked_right.connect(self.label_clicked_right)
 
-            # black & white effect, todo find something better? idk
+            # black & white effect, todo find something better? idk, enabled by default
             label_effect = QtWidgets.QGraphicsColorizeEffect(label)
-            label_effect.setStrength(0.0)
+            label_effect.setStrength(1.0)
             label_effect.setColor(QtGui.QColor("black"))
             label_effect.setObjectName(f"itemfx_{item.index}")
             label.setGraphicsEffect(label_effect)
@@ -124,13 +126,41 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # connections callbacks
 
-    def label_clicked(self):
-        label: Label = self.sender()
+    def update_pixmap(self, label: Label, increase: bool):
         label_effect = self.config.inventory.label_map[label.index]
-        if label_effect.strength() > 0.0:
-            label_effect.setStrength(0.0)
+        item = self.config.inventory.items[label.index]
+        index = 0
+
+        if increase:
+            label.img_index += 1
         else:
-            label_effect.setStrength(1.0)
+            label.img_index -= 1
+
+        if label.img_index > len(item.paths) - 1:
+            label.img_index = -1
+        if label.img_index < -1:
+            label.img_index = len(item.paths) - 1
+
+        print(label.img_index, len(item.paths)-1)
+
+        if label.img_index < 0:
+            label_effect.setStrength(1.0) # enable filter
+            index = 0
+        else:
+            label_effect.setStrength(0.0) # disable filter
+            index = label.img_index
+        label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[index]}")))
+
+    def label_clicked_left(self):
+        label: Label = self.sender()
+        self.update_pixmap(label, True)
+
+    def label_clicked_middle(self):
+        label: Label = self.sender()
+
+    def label_clicked_right(self):
+        label: Label = self.sender()
+        self.update_pixmap(label, False)
 
 
 # start the app
