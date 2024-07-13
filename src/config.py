@@ -134,4 +134,4 @@ class TrackerConfig:
 
         # register external fonts
         for font in self.cosmetics.fonts:
-            QtGui.QFontDatabase.addApplicationFont(get_new_path(f"/../config/oot/{font.path}"))
+            QtGui.QFontDatabase.addApplicationFont(get_new_path(f"config/oot/{font.path}"))

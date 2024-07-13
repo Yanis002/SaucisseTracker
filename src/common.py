@@ -1,6 +1,6 @@
 import sys
 
-from os import path
+from os import getcwd, path
 from typing import Optional
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QLabel, QWidget
@@ -39,28 +39,21 @@ class Label(QLabel):
                         self.clicked_right.emit()
 
 
-# from https://stackoverflow.com/a/42615559
+# adapted from https://stackoverflow.com/a/42615559
 def get_app_path():
     if getattr(sys, 'frozen', False):
-        # If the application is run as a bundle, the PyInstaller bootloader
-        # extends the sys module by a flag frozen=True and sets the app 
-        # path into variable _MEIPASS'.
-        return sys._MEIPASS
+        return getcwd()
     elif __file__:
-        return path.dirname(path.abspath(__file__))
+        return path.dirname(path.abspath(__file__)).removesuffix("src")
     else:
         raise RuntimeError("ERROR: couldn't determine the execution type")
 
 
 def get_new_path(new_path: str, is_bundled: bool = False):
     if is_bundled:
-        new_path = path.join(path.dirname(path.abspath(__file__)), new_path) 
+        new_path = path.join(path.dirname(path.abspath(__file__)).removesuffix("src"), new_path) 
     else: 
         new_path = path.join(get_app_path(), new_path)
-
-    if not path.isfile(new_path):
-        # temp fix for executables
-        new_path = new_path.replace("/..", ".")
 
     if not path.isfile(new_path):
         raise RuntimeError(f"ERROR: invalid path: '{new_path}'")

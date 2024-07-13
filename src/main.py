@@ -23,18 +23,21 @@ class MainWindow(QtWidgets.QMainWindow):
             windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
 
         self.config = config
-        bg_path = get_new_path(f"/../config/oot/{self.config.cosmetics.bg_path}")
+        offset = 34 if osName == "nt" else 20
+        bg_path = get_new_path(f"config/oot/{self.config.cosmetics.bg_path}")
         width, height = Image.open(bg_path).size
-        self.resize(width, height + 20)
-        self.setMinimumSize(QtCore.QSize(width, height + 20))
-        self.setMaximumSize(QtCore.QSize(width, height + 20))
+        self.resize(width, height + offset)
+        self.setMinimumSize(QtCore.QSize(width, height + offset))
+        self.setMaximumSize(QtCore.QSize(width, height + offset))
         self.setAutoFillBackground(False)
         self.setStyleSheet("")
 
         # set the windows's title
         self.title = "SaucisseTracker"
-        self.icon = QtGui.QIcon(get_new_path("/../res/icon.png", True))
+        self.icon = QtGui.QIcon(get_new_path("res/icon.png", True))
         self.centralwidget = QtWidgets.QWidget(self)
+        self.centralwidget.setObjectName("centralwidget")
+        self.setCentralWidget(self.centralwidget)
 
         self.setWindowTitle(self.title)
         self.setWindowIcon(self.icon)
@@ -42,22 +45,23 @@ class MainWindow(QtWidgets.QMainWindow):
         ### init background frame
 
         self.bg = QtWidgets.QFrame(self.centralwidget)
+        self.bg.setObjectName("bg")
         self.bg.setGeometry(QtCore.QRect(0, 0, width, height))
         self.bg.setMinimumSize(QtCore.QSize(width, height))
         self.bg.setMaximumSize(QtCore.QSize(width, height))
         self.bg.setLayoutDirection(QtCore.Qt.LayoutDirection.LeftToRight)
         self.bg.setAutoFillBackground(False)
-        self.bg.setStyleSheet(
-            f"""
-                background-image: url({bg_path});
-                background-color: rgb(0, 0, 0);
-            """
-        )
+        self.bg.setStyleSheet("background-color: rgb(0, 0, 0);")
         self.bg.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.bg.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.bg.setLineWidth(1)
 
-        self.setCentralWidget(self.centralwidget)
+        # for some reasons using stylesheet for bg doesn't work on windows but this does :)
+        bg_label = QtWidgets.QLabel(self.bg)
+        bg_label.setObjectName(f"bg_label")
+        bg_label.setGeometry(QtCore.QRect(0, 0, width, height))
+        bg_label.setText("")
+        bg_label.setPixmap(QtGui.QPixmap(get_new_path(bg_path)))
 
         ### init menu
 
@@ -78,8 +82,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ### set object's names
 
-        self.centralwidget.setObjectName("centralwidget")
-        self.bg.setObjectName("bg")
         self.menu.setObjectName("menu")
         self.menu_file.setObjectName("menu_file")
         self.menu_about.setObjectName("menu_about")
@@ -118,7 +120,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label = Label(self.centralwidget, item.index)
             label.setGeometry(QtCore.QRect(item.pos.x, item.pos.y, 32, 32))
             label.setText("")
-            label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[label.img_index]}")))
+            label.setPixmap(QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[label.img_index]}")))
             label.setObjectName(f"item_{item.index}")
             label.clicked_left.connect(self.label_clicked_left)
             label.clicked_middle.connect(self.label_clicked_middle)
@@ -165,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 label_effect.setStrength(0.0)  # disable filter
                 path_index = label.img_index
 
-            label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[path_index]}")))
+            label.setPixmap(QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}")))
         elif label_tier is not None:
             if increase:
                 label.tier_index += 1
@@ -211,7 +213,7 @@ class MainWindow(QtWidgets.QMainWindow):
 # start the app
 if __name__ == "__main__":
     app = QtWidgets.QApplication(argv)
-    mainWindow = MainWindow(TrackerConfig(get_new_path("/../config/oot/config.xml")))
+    mainWindow = MainWindow(TrackerConfig(get_new_path("config/oot/config.xml")))
 
     mainWindow.show()
     exit(app.exec())

@@ -41,7 +41,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Build Project for ${{ matrix.os }}
-      run: ${{ matrix.CMD_EXEC }} ${{ matrix.BUILD_ARGS }} -n ${{ matrix.BUILD_NAME }} ${{ matrix.CMD_EXTRAS }}
+      run: ${{ matrix.CMD_EXEC }} ${{ matrix.BUILD_ARGS }} -n ${{ matrix.BUILD_NAME }}
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
