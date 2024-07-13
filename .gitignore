@@ -5,3 +5,8 @@ __pycache__/
 *.png
 *.ttf
 *.otf
+
+# build files
+build/**
+dist/**
+*.spec

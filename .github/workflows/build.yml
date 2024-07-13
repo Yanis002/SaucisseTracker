@@ -20,14 +20,14 @@ jobs:
             FILE_TYPE: ".exe"
           - os: ubuntu-latest
             BUILD_NAME: SaucisseTracker_Linux
-            BUILD_ARGS: -F -w --add-data "res:res" -i "res/icon.png" src/main.py
+            BUILD_ARGS: -F -w --add-data "res:res" src/main.py
             CMD_EXEC: pyinstaller
             FILE_TYPE: ""
           - os: macos-latest
             BUILD_NAME: SaucisseTracker_Mac
             BUILD_ARGS: -F -w --add-data "res:res" -i "res/icon.png" src/main.py
             CMD_EXEC: pyinstaller
-            FILE_TYPE: ""
+            FILE_TYPE: ".app"
     steps:
     - uses: actions/checkout@v3
       with:
