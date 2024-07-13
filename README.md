@@ -4,5 +4,5 @@ Work in progress item tracker for randomizers. Aims to be customizable easily wi
 
 ## Requirements
 
-- Python (tested under 3.10)
+- Python (3.10+)
 - PyQt6
