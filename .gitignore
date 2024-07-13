@@ -1,0 +1,7 @@
+# cache files
+__pycache__/
+
+# specific files
+*.png
+*.ttf
+*.otf

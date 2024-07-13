@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 
 from typing import Optional
-from PyQt6 import uic, QtWidgets, QtGui, QtCore
+from PyQt6 import QtWidgets, QtGui, QtCore
 from sys import exit, argv
-from os import path, name as osName
+from os import name as osName
+from PIL import Image
 
-def get_new_path(new_path: str):
-    new_path = path.dirname(path.abspath(__file__)) + new_path
-    if not path.isfile(new_path):
-        # temp fix for executables
-        new_path = new_path.replace("/..", "")
-    return new_path
+from config import TrackerConfig
+from common import Label, get_new_path
+
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, config: TrackerConfig):
         """Main initialisation function"""
 
         super(MainWindow, self).__init__()
@@ -25,9 +23,12 @@ class MainWindow(QtWidgets.QMainWindow):
             # encoding probably useless but just in case
             windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
 
-        self.resize(335, 474)
-        self.setMinimumSize(QtCore.QSize(335, 474))
-        self.setMaximumSize(QtCore.QSize(335, 474))
+        self.config = config
+        bg_path = get_new_path(f'/../config/oot/{self.config.cosmetics.bg_path}')
+        width, height = Image.open(bg_path).size
+        self.resize(width, height + 20)
+        self.setMinimumSize(QtCore.QSize(width, height + 20))
+        self.setMaximumSize(QtCore.QSize(width, height + 20))
         self.setAutoFillBackground(False)
         self.setStyleSheet("")
 
@@ -42,14 +43,14 @@ class MainWindow(QtWidgets.QMainWindow):
         ### init background frame
 
         self.bg = QtWidgets.QFrame(self.centralwidget)
-        self.bg.setGeometry(QtCore.QRect(0, 0, 335, 433))
-        self.bg.setMinimumSize(QtCore.QSize(335, 433))
-        self.bg.setMaximumSize(QtCore.QSize(335, 433))
+        self.bg.setGeometry(QtCore.QRect(0, 0, width, height))
+        self.bg.setMinimumSize(QtCore.QSize(width, height))
+        self.bg.setMaximumSize(QtCore.QSize(width, height))
         self.bg.setLayoutDirection(QtCore.Qt.LayoutDirection.LeftToRight)
         self.bg.setAutoFillBackground(False)
         self.bg.setStyleSheet(
             f"""
-                background-image: url({get_new_path('/../res/background.png')});
+                background-image: url({bg_path});
                 background-color: rgb(0, 0, 0);
             """
         )
@@ -87,21 +88,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_save.setObjectName("action_save")
         self.action_exit.setObjectName("action_exit")
 
-        ### init temp dummy label
+        ### init items
 
-        self.label = QtWidgets.QLabel(parent=self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(114, 239, 32, 32))
-        self.label.setText("")
-        self.label.setPixmap(QtGui.QPixmap(get_new_path("/../res/item.png")))
-        self.label.setObjectName("label")
-
-        self.label.mousePressEvent = self.item_update
-
-        # black & white effect, todo find something better? idk
-        self.label_effect = QtWidgets.QGraphicsColorizeEffect(self.label)
-        self.label_effect.setStrength(0.0)
-        self.label_effect.setColor(QtGui.QColor('black'))
-        self.label.setGraphicsEffect(self.label_effect)
+        self.create_labels()
 
         ### end init
 
@@ -116,21 +105,39 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_save.setText(_translate("MainWindow", "Save (Ctrl + S)"))
         self.action_exit.setText(_translate("MainWindow", "Exit"))
 
+    def create_labels(self):
+        for item in self.config.inventory.items:
+            label = Label(self.centralwidget, item.index)
+            label.setGeometry(QtCore.QRect(item.pos.x, item.pos.y, 32, 32))
+            label.setText("")
+            label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[0]}")))
+            label.setObjectName(f"item_{item.index}")
+            label.clicked.connect(self.label_clicked)
+
+            # black & white effect, todo find something better? idk
+            label_effect = QtWidgets.QGraphicsColorizeEffect(label)
+            label_effect.setStrength(0.0)
+            label_effect.setColor(QtGui.QColor('black'))
+            label_effect.setObjectName(f"itemfx_{item.index}")
+            label.setGraphicsEffect(label_effect)
+
+            self.config.inventory.label_map[item.index] = label_effect
+
     # connections callbacks
 
-    def item_update(self, event: Optional[QtGui.QMouseEvent]):
-        if event is not None:
-            match event.button():
-                case QtCore.Qt.MouseButton.LeftButton | QtCore.Qt.MouseButton.RightButton:
-                    if self.label_effect.strength() > 0.0:
-                        self.label_effect.setStrength(0.0)
-                    else:
-                        self.label_effect.setStrength(1.0)
+    def label_clicked(self):
+        label: Label = self.sender()
+        label_effect = self.config.inventory.label_map[label.index]
+        if label_effect.strength() > 0.0:
+            label_effect.setStrength(0.0)
+        else:
+            label_effect.setStrength(1.0)
+
 
 # start the app
 if __name__ == "__main__":
     app = QtWidgets.QApplication(argv)
-    mainWindow = MainWindow()
+    mainWindow = MainWindow(TrackerConfig(get_new_path("/../config/oot/config.xml")))
 
     mainWindow.show()
     exit(app.exec())

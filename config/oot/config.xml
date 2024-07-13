@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    ### Quick documentation ###
+
+    # General stuff
+
+    Background: the image that will be used for the background
+    Fonts: list of fonts to use
+    Colors: the color settings (do not change the value of "Key")
+    Inventory: Defines the inventory items/equipment/other
+
+    # Inventory
+    Font: the font index to use when drawing text
+    Tiers: the different tier of the current item (example for OoT's bow: "30;40;50")
+    Pos: the position of the current item, in the format "Pos X;Pos Y" (example: 0;0 for top-left corner)
+    -> if "Sources" contains only one item the first one will be used by default
+    -> use ``;`` to separate the filenames/tiers values
+-->
+<Table>
+    <Informations Name="Ocarina of Time (N64)"/>
+    <Background Source="background.png"/>
+    <Fonts>
+        <Item Index="0" Source="fonts/LEMONMILK-Bold.otf"/>
+        <Item Index="1" Source="fonts/upheavtt.ttf"/>
+        <Item Index="2" Source="fonts/visitor1.ttf"/>
+    </Fonts>
+    <Colors>
+        <Item Index="0" Key="inventory_max" Value="0x00FF00"/>
+    </Colors>
+    <Inventory Font="2">
+        <Item Index="0" Pos="10;10" Name="Deku Sticks" Sources="items/deku_stick.png" Tiers="10;20;30"/>
+        <Item Index="1" Pos="49;10" Name="Deku Nuts" Sources="items/deku_nut.png" Tiers="20;30;40"/>
+        <Item Index="2" Pos="91;10" Name="Bombs" Sources="items/bomb.png" Tiers="20;30;40"/>
+        <Item Index="3" Pos="132;10" Name="Fairy Bow" Sources="items/fairy_bow.png" Tiers="30;40;50"/>
+        <Item Index="4" Pos="173;10" Name="Fire Arrow" Sources="items/fire_arrow.png"/>
+        <Item Index="5" Pos="214;10" Name="Din's Fire" Sources="items/dins_fire.png"/>
+        <Item Index="6" Pos="10;49" Name="Fairy Slingshot" Sources="items/fairy_slingshot.png" Tiers="30;40;50"/>
+        <Item Index="7" Pos="49;49" Name="Ocarina" Sources="items/fairy_ocarina.png;items/ocarina_of_time.png"/>
+        <Item Index="8" Pos="91;49" Name="Bombchus" Sources="items/bombchu.png"/>
+        <Item Index="9" Pos="132;49" Name="Hookshot" Sources="items/hookshot.png;items/longshot.png"/>
+        <Item Index="10" Pos="173;49" Name="Ice Arrow" Sources="items/ice_arrow.png"/>
+        <Item Index="11" Pos="214;49" Name="Farore's Wind" Sources="items/farores_wind.png"/>
+        <Item Index="12" Pos="10;91" Name="Boomerang" Sources="items/boomerang.png"/>
+        <Item Index="13" Pos="50;91" Name="Lens of Truth" Sources="items/lens_of_truth.png"/>
+        <Item Index="14" Pos="91;91" Name="Magic Beans" Sources="items/magic_beans.png"/>
+        <Item Index="15" Pos="132;91" Name="Megaton Hammer" Sources="items/hammer.png"/>
+        <Item Index="16" Pos="173;91" Name="Light Arrow" Sources="items/light_arrow.png"/>
+        <Item Index="17" Pos="214;91" Name="Nayru's Love" Sources="items/nayrus_love.png"/>
+    </Inventory>
+</Table>
