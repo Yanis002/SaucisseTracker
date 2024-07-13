@@ -33,7 +33,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # set the windows's title
         self.title = "SaucisseTracker"
-        self.icon = QtGui.QIcon(get_new_path("/../res/icon.png"))
+        self.icon = QtGui.QIcon(get_new_path("/../res/icon.png", True))
         self.centralwidget = QtWidgets.QWidget(self)
 
         self.setWindowTitle(self.title)

@@ -52,13 +52,19 @@ def get_app_path():
         raise RuntimeError("ERROR: couldn't determine the execution type")
 
 
-def get_new_path(new_path: str):
-    new_path = path.join(get_app_path(), new_path)
+def get_new_path(new_path: str, is_bundled: bool = False):
+    if is_bundled:
+        new_path = path.join(path.dirname(path.abspath(__file__)), new_path) 
+    else: 
+        new_path = path.join(get_app_path(), new_path)
+
     if not path.isfile(new_path):
         # temp fix for executables
         new_path = new_path.replace("/..", ".")
+
     if not path.isfile(new_path):
         raise RuntimeError(f"ERROR: invalid path: '{new_path}'")
+
     return new_path
 
 
