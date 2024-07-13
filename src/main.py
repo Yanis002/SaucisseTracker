@@ -141,13 +141,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if label.img_index < -1:
             label.img_index = len(item.paths) - 1
 
-        print(label.img_index, len(item.paths)-1)
+        print(label.img_index, len(item.paths) - 1)
 
         if label.img_index < 0:
-            label_effect.setStrength(1.0) # enable filter
+            label_effect.setStrength(1.0)  # enable filter
             index = 0
         else:
-            label_effect.setStrength(0.0) # disable filter
+            label_effect.setStrength(0.0)  # disable filter
             index = label.img_index
         label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[index]}")))
 
