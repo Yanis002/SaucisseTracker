@@ -18,7 +18,8 @@ class Label(QLabel):
 
         self.setParent(parent)
         self.index = index
-        self.img_index = 0
+        self.img_index = -1
+        self.tier_index = -1
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)
@@ -42,3 +43,7 @@ def get_new_path(new_path: str):
         # temp fix for executables
         new_path = new_path.replace("/..", "")
     return new_path
+
+
+def unpack_color(color: int):
+    return (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF

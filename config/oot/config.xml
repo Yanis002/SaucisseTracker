@@ -25,7 +25,8 @@
         <Item Index="2" Source="fonts/visitor1.ttf"/>
     </Fonts>
     <Colors>
-        <Item Index="0" Key="inventory_max" Value="0x00FF00"/>
+        <Item Index="0" Key="inventory" Value="0xFFFFFF"/>
+        <Item Index="1" Key="inventory_max" Value="0x00FF00"/>
     </Colors>
     <Inventory Font="2">
         <Item Index="0" Pos="10;10" Name="Deku Sticks" Sources="items/deku_stick.png" Tiers="10;20;30"/>

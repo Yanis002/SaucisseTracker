@@ -3,13 +3,19 @@
 from xml.etree import ElementTree as ET
 from dataclasses import dataclass
 from typing import Optional
-from PyQt6 import QtWidgets
+from PyQt6 import QtWidgets, QtGui
+
+from common import Label, get_new_path
 
 
 @dataclass
 class Font:
     index: int
-    path: Optional[str]
+    path: str
+
+    def __post_init__(self):
+        if self.path is None:
+            raise ValueError("ERROR: the font's path is none")
 
 
 @dataclass
@@ -52,7 +58,8 @@ class TrackerInventory:
     items: list[InventoryItem]
 
     def __post_init__(self):
-        self.label_map: dict[int, QtWidgets.QGraphicsColorizeEffect] = {}
+        self.label_effect_map: dict[int, QtWidgets.QGraphicsColorizeEffect] = {}
+        self.label_tier_map: dict[int, Label] = {}
 
 
 class TrackerConfig:
@@ -124,3 +131,7 @@ class TrackerConfig:
         if cosmetic_bg_path is None:
             raise ValueError("ERROR: the background image path is None")
         self.cosmetics = TrackerCosmetics(cosmetic_fonts, cosmetic_colors, cosmetic_bg_path)
+
+        # register external fonts
+        for font in self.cosmetics.fonts:
+            QtGui.QFontDatabase.addApplicationFont(get_new_path(f"/../config/oot/{font.path}"))

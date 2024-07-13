@@ -6,7 +6,7 @@ from os import name as osName
 from PIL import Image
 
 from config import TrackerConfig
-from common import Label, get_new_path
+from common import Label, get_new_path, unpack_color
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -104,6 +104,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_save.setText(_translate("MainWindow", "Save (Ctrl + S)"))
         self.action_exit.setText(_translate("MainWindow", "Exit"))
 
+    def set_tier_style(self, label_tier: Label, color: int):
+        r, g, b = unpack_color(color)
+        label_tier.setStyleSheet(
+            f"""
+                font: 75 13pt "Visitor TT1 BRK";
+                color: rgb({r}, {g}, {b});
+            """
+        )
+
     def create_labels(self):
         for item in self.config.inventory.items:
             label = Label(self.centralwidget, item.index)
@@ -115,6 +124,14 @@ class MainWindow(QtWidgets.QMainWindow):
             label.clicked_middle.connect(self.label_clicked_middle)
             label.clicked_right.connect(self.label_clicked_right)
 
+            if len(item.tiers) > 0:
+                label_tier = Label(label, item.index)
+                label_tier.setGeometry(QtCore.QRect(item.pos.x - 10, item.pos.y, 32, 32))
+                label_tier.setText("")
+                label.setObjectName(f"itemtier_{item.index}")
+                self.set_tier_style(label_tier, 0xFFFFFF)
+                self.config.inventory.label_tier_map[item.index] = label_tier
+
             # black & white effect, todo find something better? idk, enabled by default
             label_effect = QtWidgets.QGraphicsColorizeEffect(label)
             label_effect.setStrength(1.0)
@@ -122,45 +139,73 @@ class MainWindow(QtWidgets.QMainWindow):
             label_effect.setObjectName(f"itemfx_{item.index}")
             label.setGraphicsEffect(label_effect)
 
-            self.config.inventory.label_map[item.index] = label_effect
+            self.config.inventory.label_effect_map[item.index] = label_effect
+
+    def update_label(self, label: Label, increase: bool):
+        label_effect = self.config.inventory.label_effect_map[label.index]
+        label_tier = self.config.inventory.label_tier_map.get(label.index)
+        item = self.config.inventory.items[label.index]
+        path_index = 0
+
+        if len(item.paths) > 1:
+            if increase:
+                label.img_index += 1
+            else:
+                label.img_index -= 1
+
+            if label.img_index > len(item.paths) - 1:
+                label.img_index = -1
+            if label.img_index < -1:
+                label.img_index = len(item.paths) - 1
+
+            if label.img_index < 0:
+                label_effect.setStrength(1.0)  # enable filter
+                path_index = 0
+            else:
+                label_effect.setStrength(0.0)  # disable filter
+                path_index = label.img_index
+
+            label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[path_index]}")))
+        elif label_tier is not None:
+            if increase:
+                label.tier_index += 1
+            else:
+                label.tier_index -= 1
+
+            if label.tier_index > len(item.tiers) - 1:
+                label.tier_index = -1
+            if label.tier_index < -1:
+                label.tier_index = len(item.tiers) - 1
+
+            if label.tier_index < 0:
+                label_effect.setStrength(1.0)  # enable filter
+                label_tier.setText("")
+            else:
+                label_effect.setStrength(0.0)  # disable filter
+                label_tier.setText(f"{item.tiers[label.tier_index]}")
+
+                if label.tier_index == len(item.tiers) - 1:
+                    self.set_tier_style(label_tier, int(self.config.cosmetics.colors[1].value, 0))
+                else:
+                    self.set_tier_style(label_tier, int(self.config.cosmetics.colors[0].value, 0))
+        else:
+            if label_effect.strength() > 0.0:
+                label_effect.setStrength(0.0)
+            else:
+                label_effect.setStrength(1.0)
 
     # connections callbacks
 
-    def update_pixmap(self, label: Label, increase: bool):
-        label_effect = self.config.inventory.label_map[label.index]
-        item = self.config.inventory.items[label.index]
-        index = 0
-
-        if increase:
-            label.img_index += 1
-        else:
-            label.img_index -= 1
-
-        if label.img_index > len(item.paths) - 1:
-            label.img_index = -1
-        if label.img_index < -1:
-            label.img_index = len(item.paths) - 1
-
-        print(label.img_index, len(item.paths) - 1)
-
-        if label.img_index < 0:
-            label_effect.setStrength(1.0)  # enable filter
-            index = 0
-        else:
-            label_effect.setStrength(0.0)  # disable filter
-            index = label.img_index
-        label.setPixmap(QtGui.QPixmap(get_new_path(f"/../config/oot/{item.paths[index]}")))
-
     def label_clicked_left(self):
         label: Label = self.sender()
-        self.update_pixmap(label, True)
+        self.update_label(label, True)
 
     def label_clicked_middle(self):
         label: Label = self.sender()
 
     def label_clicked_right(self):
         label: Label = self.sender()
-        self.update_pixmap(label, False)
+        self.update_label(label, False)
 
 
 # start the app
