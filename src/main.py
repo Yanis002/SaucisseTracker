@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from typing import Optional
 from PyQt6 import QtWidgets, QtGui, QtCore
 from sys import exit, argv
 from os import name as osName
@@ -24,7 +23,7 @@ class MainWindow(QtWidgets.QMainWindow):
             windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
 
         self.config = config
-        bg_path = get_new_path(f'/../config/oot/{self.config.cosmetics.bg_path}')
+        bg_path = get_new_path(f"/../config/oot/{self.config.cosmetics.bg_path}")
         width, height = Image.open(bg_path).size
         self.resize(width, height + 20)
         self.setMinimumSize(QtCore.QSize(width, height + 20))
@@ -61,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         ### init menu
-    
+
         self.menu = QtWidgets.QMenuBar(parent=self)
         self.menu_file = QtWidgets.QMenu(parent=self.menu)
         self.menu_about = QtWidgets.QMenu(parent=self.menu)
@@ -117,7 +116,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # black & white effect, todo find something better? idk
             label_effect = QtWidgets.QGraphicsColorizeEffect(label)
             label_effect.setStrength(0.0)
-            label_effect.setColor(QtGui.QColor('black'))
+            label_effect.setColor(QtGui.QColor("black"))
             label_effect.setObjectName(f"itemfx_{item.index}")
             label.setGraphicsEffect(label_effect)
 

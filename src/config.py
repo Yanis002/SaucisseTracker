@@ -2,9 +2,8 @@
 
 from xml.etree import ElementTree as ET
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING
-from PyQt6 import QtWidgets, QtGui, QtCore
-
+from typing import Optional
+from PyQt6 import QtWidgets
 
 
 @dataclass
@@ -12,16 +11,19 @@ class Font:
     index: int
     path: Optional[str]
 
+
 @dataclass
 class Color:
     index: int
     key: str
     value: str
 
+
 @dataclass
 class Pos:
     x: int
     y: int
+
 
 @dataclass
 class InventoryItem:
@@ -31,15 +33,18 @@ class InventoryItem:
     tiers: list[int]
     pos: Pos
 
+
 @dataclass
 class TrackerInfos:
     name: str
+
 
 @dataclass
 class TrackerCosmetics:
     fonts: list[Font]
     colors: list[Color]
     bg_path: Optional[str]
+
 
 @dataclass
 class TrackerInventory:
@@ -48,6 +53,7 @@ class TrackerInventory:
 
     def __post_init__(self):
         self.label_map: dict[int, QtWidgets.QGraphicsColorizeEffect] = {}
+
 
 class TrackerConfig:
     def __init__(self, path: str):
@@ -87,7 +93,9 @@ class TrackerConfig:
                             if node.tag == "Fonts":
                                 cosmetic_fonts.append(Font(index, item.get("Source")))
                             else:
-                                cosmetic_colors.append(Color(index, item.get("Key", "unk"), item.get("Value", "0x000000")))
+                                cosmetic_colors.append(
+                                    Color(index, item.get("Key", "unk"), item.get("Value", "0x000000"))
+                                )
                 case "Inventory":
                     inv_items: list[InventoryItem] = []
                     for item in node:
@@ -108,7 +116,7 @@ class TrackerConfig:
                                 name,
                                 paths.split(";"),
                                 tiers.split(";") if tiers is not None else list(),
-                                Pos(int(pos_list[0]), int(pos_list[1]))
+                                Pos(int(pos_list[0]), int(pos_list[1])),
                             )
                         )
                     self.inventory = TrackerInventory(int(node.get("Font", "-1")), inv_items)

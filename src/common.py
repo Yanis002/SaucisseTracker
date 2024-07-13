@@ -4,6 +4,7 @@ from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QLabel, QWidget
 from PyQt6.QtGui import QMouseEvent
 
+
 class Label(QLabel):
     """Custom QLabel, adds clicked signal and an index"""
 
@@ -20,6 +21,7 @@ class Label(QLabel):
             match e.button():
                 case Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton:
                     self.clicked.emit()
+
 
 def get_new_path(new_path: str):
     new_path = path.dirname(path.abspath(__file__)) + new_path
