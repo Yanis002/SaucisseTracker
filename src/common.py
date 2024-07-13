@@ -4,7 +4,7 @@ from os import getcwd, path
 from typing import Optional
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QLabel, QWidget
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QPixmap
 
 
 class Label(QLabel):
@@ -22,6 +22,7 @@ class Label(QLabel):
         self.index = index
         self.img_index = -1
         self.tier_index = -1
+        self.original_pixmap: Optional[QPixmap] = None
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)

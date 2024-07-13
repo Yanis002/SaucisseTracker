@@ -115,22 +115,34 @@ class MainWindow(QtWidgets.QMainWindow):
             """
         )
 
+    def set_pixmap_opacity(self, label: Label, opacity: float):
+        pixmap = label.pixmap().copy()
+        pixmap.fill(QtCore.Qt.GlobalColor.transparent)
+        painter = QtGui.QPainter(pixmap)
+        painter.setOpacity(opacity)
+        painter.drawPixmap(QtCore.QPoint(), label.pixmap())
+        painter.end()
+        label.setPixmap(pixmap)
+
     def create_labels(self):
+        offset = -1 if osName == "nt" else 0
         for item in self.config.inventory.items:
             label = Label(self.centralwidget, item.index)
-            label.setGeometry(QtCore.QRect(item.pos.x, item.pos.y, 32, 32))
-            label.setText("")
-            label.setPixmap(QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[label.img_index]}")))
             label.setObjectName(f"item_{item.index}")
+            label.setGeometry(QtCore.QRect(item.pos.x + offset, item.pos.y + offset, 32, 32))
+            label.setText("")
+            label.original_pixmap = QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[0]}"))
+            label.setPixmap(label.original_pixmap)
+            self.set_pixmap_opacity(label, 0.75)
             label.clicked_left.connect(self.label_clicked_left)
             label.clicked_middle.connect(self.label_clicked_middle)
             label.clicked_right.connect(self.label_clicked_right)
 
             if len(item.tiers) > 0:
                 label_tier = Label(label, item.index)
-                label_tier.setGeometry(QtCore.QRect(item.pos.x - 10, item.pos.y, 32, 32))
+                label_tier.setObjectName(f"itemtier_{item.index}")
+                label_tier.setGeometry(QtCore.QRect(item.pos.x - 9, item.pos.y, 32, 32))
                 label_tier.setText("")
-                label.setObjectName(f"itemtier_{item.index}")
                 self.set_tier_style(label_tier, 0xFFFFFF)
                 self.config.inventory.label_tier_map[item.index] = label_tier
 
@@ -162,12 +174,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
             if label.img_index < 0:
                 label_effect.setStrength(1.0)  # enable filter
+                self.set_pixmap_opacity(label, 0.75)
                 path_index = 0
             else:
                 label_effect.setStrength(0.0)  # disable filter
+                label.setPixmap(label.original_pixmap)
                 path_index = label.img_index
 
-            label.setPixmap(QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}")))
+            label.original_pixmap = QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}"))
+            label.setPixmap(label.original_pixmap)
+
+            if label.img_index < 0:
+                self.set_pixmap_opacity(label, 0.75)
+            else:
+                label.setPixmap(label.original_pixmap)
         elif label_tier is not None:
             if increase:
                 label.tier_index += 1
@@ -181,9 +201,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
             if label.tier_index < 0:
                 label_effect.setStrength(1.0)  # enable filter
+                self.set_pixmap_opacity(label, 0.75)
                 label_tier.setText("")
             else:
                 label_effect.setStrength(0.0)  # disable filter
+                label.setPixmap(label.original_pixmap)
                 label_tier.setText(f"{item.tiers[label.tier_index]}")
 
                 if label.tier_index == len(item.tiers) - 1:
@@ -193,8 +215,10 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             if label_effect.strength() > 0.0:
                 label_effect.setStrength(0.0)
+                label.setPixmap(label.original_pixmap)
             else:
                 label_effect.setStrength(1.0)
+                self.set_pixmap_opacity(label, 0.75)
 
     # connections callbacks
 

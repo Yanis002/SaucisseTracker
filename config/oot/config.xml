@@ -29,7 +29,7 @@
         <Item Index="1" Key="inventory_max" Value="0x00FF00"/>
     </Colors>
     <Inventory Font="2">
-        <Item Index="0" Pos="9;9" Name="Deku Sticks" Sources="items/deku_stick.png" Tiers="9;20;30"/>
+        <Item Index="0" Pos="9;9" Name="Deku Sticks" Sources="items/deku_stick.png" Tiers="10;20;30"/>
         <Item Index="1" Pos="48;9" Name="Deku Nuts" Sources="items/deku_nut.png" Tiers="20;30;40"/>
         <Item Index="2" Pos="90;9" Name="Bombs" Sources="items/bomb.png" Tiers="20;30;40"/>
         <Item Index="3" Pos="131;9" Name="Fairy Bow" Sources="items/fairy_bow.png" Tiers="30;40;50"/>
