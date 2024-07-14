@@ -157,19 +157,20 @@ class MainWindow(QMainWindow):
             label.clicked_middle.connect(self.label_clicked_middle)
             label.clicked_right.connect(self.label_clicked_right)
 
-            for tier in item.tiers:
-                label_tier = OutlinedLabel(label)
-                label_tier.setObjectName(f"item_{item.index}_tier_{tier}")
-                label_tier.setGeometry(QRect(0, item.pos.y, 32, 32))
-                label_tier.setText("")
-                label_tier.set_tier_style(self.config, Color(255, 255, 255))
-                self.config.active_inv.label_tier_map[item.index] = label_tier
+            if item.counter is not None:
+                counter_settings = self.config.text_settings[item.counter.text_settings_index]
+                label_counter = OutlinedLabel(label)
+                label_counter.setObjectName(f"item_{item.index}_counter")
+                label_counter.setGeometry(QRect(0, item.pos.y, 32, 32))
+                label_counter.setText("")
+                label_counter.set_counter_style(self.config, counter_settings, False)
+                self.config.active_inv.label_counter_map[item.index] = label_counter
 
             # black & white effect, todo find something better? idk, enabled by default
             label_effect = QGraphicsColorizeEffect(label)
             label_effect.setStrength(0.0 if item.enabled else 1.0)
             label_effect.setColor(QColor("black"))
-            label_effect.setObjectName(f"itemfx_{item.index}")
+            label_effect.setObjectName(f"item_{item.index}_fx")
             label.setGraphicsEffect(label_effect)
 
             self.config.active_inv.label_effect_map[item.index] = label_effect
@@ -177,7 +178,7 @@ class MainWindow(QMainWindow):
 
     def update_label(self, label: Label, increase: bool):
         label_effect = self.config.active_inv.label_effect_map[label.index]
-        label_tier = self.config.active_inv.label_tier_map.get(label.index)
+        label_counter = self.config.active_inv.label_counter_map.get(label.index)
         item = self.config.active_inv.items[label.index]
         path_index = 0
 
@@ -208,31 +209,22 @@ class MainWindow(QMainWindow):
                 label.set_pixmap_opacity(0.75)
             else:
                 label.setPixmap(label.original_pixmap)
-        elif label_tier is not None:
+        elif label_counter is not None:
             if increase:
-                label.tier_index += 1
+                item.counter.incr()
             else:
-                label.tier_index -= 1
+                item.counter.decr()
 
-            if label.tier_index > len(item.tiers) - 1:
-                label.tier_index = -1
-            if label.tier_index < -1:
-                label.tier_index = len(item.tiers) - 1
-
-            if label.tier_index < 0:
-                label_effect.setStrength(1.0)  # enable filter
-                label.set_pixmap_opacity(0.75)
-                label_tier.setText("")
-            else:
-                tier_settings = self.config.text_settings[self.config.active_inv.tier_text]
+            if item.counter.show:
+                counter_settings = self.config.text_settings[item.counter.text_settings_index]
                 label_effect.setStrength(0.0)  # disable filter
                 label.setPixmap(label.original_pixmap)
-                label_tier.setText(f"{item.tiers[label.tier_index]}")
-
-                if label.tier_index == len(item.tiers) - 1:
-                    label_tier.set_tier_style(self.config, tier_settings.color_max)
-                else:
-                    label_tier.set_tier_style(self.config, tier_settings.color)
+                label_counter.setText(f"{item.counter.value}")
+                label_counter.set_counter_style(self.config, counter_settings, item.counter.value == item.counter.max)
+            else:
+                label_effect.setStrength(1.0)  # enable filter
+                label.set_pixmap_opacity(0.75)
+                label_counter.setText("")
         else:
             if label_effect.strength() > 0.0:
                 label_effect.setStrength(0.0)

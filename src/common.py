@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QLabel, QWidget
 from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
 
 if TYPE_CHECKING:
-    from config import Config, Color
+    from config import Config, TextSettings
 
 
 # from https://stackoverflow.com/a/64291055
@@ -92,16 +92,16 @@ class OutlinedLabel(QLabel):
             qp.fillPath(path, self.palette().window())
         qp.fillPath(path, self.brush)
 
-    def set_tier_style(self, config: "Config", color: "Color"):
-        tier_settings = config.text_settings[config.active_inv.tier_text]
-        font = config.fonts[tier_settings.font]
+    def set_counter_style(self, config: "Config", counter_settings: "TextSettings", is_max: bool):
+        font = config.fonts[counter_settings.font]
+        color = counter_settings.color_max if is_max else counter_settings.color
 
         self.setScaledOutlineMode(False)
         self.setOutlineThickness(2)
         self.setBrush(QColor(color.r, color.g, color.b))
         self.setStyleSheet(
             f"""
-                font: {'75' if tier_settings.bold else ''} {tier_settings.size}pt "{font.name}";
+                font: {'75' if counter_settings.bold else ''} {counter_settings.size}pt "{font.name}";
                 color: rgb({color.r}, {color.g}, {color.b});
             """
         )
@@ -122,7 +122,6 @@ class Label(QLabel):
         self.index = index
         self.name = name
         self.img_index = -1
-        self.tier_index = -1
         self.original_pixmap: Optional[QPixmap] = None
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):

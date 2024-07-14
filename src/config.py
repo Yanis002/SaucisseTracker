@@ -59,11 +59,43 @@ class TextSettings:
 
 
 @dataclass
+class Counter:
+    min: int
+    max: int
+    increment: int
+    text_settings_index: int
+
+    def __post_init__(self):
+        self.value = self.min
+        self.show = False
+
+    def incr(self):
+        if self.show:
+            self.value += self.increment
+
+            if self.value > self.max:
+                self.show = False
+        else:
+            self.value = self.min
+            self.show = True
+
+    def decr(self):
+        if self.show:
+            self.value -= self.increment
+
+            if self.value < self.min:
+                self.show = False
+        else:
+            self.value = self.max
+            self.show = True
+
+
+@dataclass
 class InventoryItem:
     index: int
     name: str
     paths: list[str]
-    tiers: list[int]
+    counter: Optional[Counter]
     pos: Pos
     enabled: bool
 
@@ -73,11 +105,10 @@ class Inventory:
         self.index = int()
         self.name = str()
         self.background: Optional[str] = None
-        self.tier_text = int()
         self.items: list[InventoryItem] = []
 
         self.label_effect_map: dict[int, QGraphicsColorizeEffect] = {}
-        self.label_tier_map: dict[int, OutlinedLabel] = {}
+        self.label_counter_map: dict[int, OutlinedLabel] = {}
         self.label_map: dict[int, Label] = {}
 
 
@@ -149,15 +180,21 @@ class Config:
                     inventory.index = int(elem.get("Index", "0"))
                     inventory.name = elem.get("Name", "Unknown")
                     inventory.background = elem.get("Background")
-                    inventory.tier_text = int(elem.get("TierText", "0"))
 
                     for i, item in enumerate(elem.iterfind("Item")):
                         name = item.get("Name", "Unknown")
-                        paths = item.get("Sources")
-                        tiers = item.get("Tiers")
+                        path = item.get("Source")
                         pos = item.get("Pos")
+                        paths: list[str] = []
 
-                        if paths is None:
+                        if path is None:
+                            sources = item.find("Sources")
+                            for sub_item in sources:
+                                paths.append(sub_item.get("Path"))
+                        else:
+                            paths.append(path)
+
+                        if None in paths:
                             raise ValueError(f"ERROR: Missing path(s) for item '{name}'")
 
                         if pos is None:
@@ -167,12 +204,22 @@ class Config:
                         if len(pos_list) > 2:
                             raise ValueError(f"ERROR: Found more than 2 positions for item '{name}'")
 
+                        counter = None
+                        c = item.find("Counter")
+                        if c is not None:
+                            counter = Counter(
+                                int(c.get("Min", "0")),
+                                int(c.get("Max", "0")),
+                                int(c.get("Increment", "0")),
+                                int(c.get("TextSettings", "0")),
+                            )
+
                         inventory.items.append(
                             InventoryItem(
                                 i,
                                 name,
-                                paths.split(";"),
-                                tiers.split(";") if tiers is not None else list(),
+                                paths,
+                                counter,
                                 Pos(int(pos_list[0]), int(pos_list[1])),
                                 self.get_bool_from_string(item.get("Enabled", "False")),
                             )
@@ -186,7 +233,7 @@ class Config:
             raise RuntimeError("ERROR: you need at least one font")
 
         if len(self.text_settings) == 0:
-            raise RuntimeError("ERROR: you need at least one text setting for tiers display")
+            raise RuntimeError("ERROR: you need at least one text setting for counter display")
 
         for inv in self.inventories.values():
             if len(inv.items) == 0:
