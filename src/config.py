@@ -87,7 +87,7 @@ class Config:
         self.fonts: list[Font] = []
         self.text_settings: list[TextSettings] = []
         self.inventories: dict[int, Inventory] = {}
-        self.state_path = str()
+        self.state_path: Optional[str] = None
 
         if self.config_file.endswith(".xml"):
             self.parse_xml_config()
@@ -122,11 +122,7 @@ class Config:
             raise RuntimeError("ERROR: config settings not found")
 
         self.default_inv = int(config.get("DefaultInventory", "0"))
-
-        state_path = config.get("StatePath", "unknown")
-        if state_path == "unknown":
-            raise RuntimeError("ERROR: the path to the state file is wrong")
-        self.state_path = get_new_path(state_path, check_exists=False)
+        self.state_path = config.get("StatePath")
 
         for elem in config:
             match elem.tag:

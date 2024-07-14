@@ -18,6 +18,9 @@ class State:
         self.config = config
         self.states: list[LabelState] = []
 
+        if not self.config.state_path.endswith(".txt"):
+            self.config.state_path = f"{self.config.state_path}.txt"
+
     def get_states_from_labels(self):
         for index, label in self.config.active_inv.label_map.items():
             self.states.append(
@@ -59,6 +62,9 @@ class State:
                     new_state.tier_index = int(value)
 
     def open(self):
+        if self.config.state_path is None:
+            raise RuntimeError("ERROR: import path not set")
+
         with open(self.config.state_path, "r") as file:
             filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
 
@@ -92,6 +98,9 @@ class State:
             self.config.active_inv.label_effect_map[state.index].setStrength(0.0 if state.enabled else 1.0)
 
     def save(self):
+        if self.config.state_path is None:
+            raise RuntimeError("ERROR: export path not set")
+
         self.get_states_from_labels()
 
         with open(self.config.state_path, "w") as file:

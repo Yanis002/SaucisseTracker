@@ -4,15 +4,34 @@ from PyQt6 import QtWidgets, QtGui, QtCore
 from sys import exit, argv
 from os import name as osName
 from PIL import Image
+from pathlib import Path
 
 from common import OutlinedLabel, Label, get_new_path
 from config import Config, Color
 from state import State
 
 
+class AboutWindow(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(QtWidgets.QLabel("Made with ♥ by Yanis.\n\nLicensed under GNU General Public License v3.0"))
+        self.setLayout(layout)
+        self.create_window(320, 100)
+
+    def create_window(self, width: int, height: int):
+        # initialize the window's basic informations
+        self.setWindowTitle("SaucisseTracker - About")
+        self.setWindowIcon(QtGui.QIcon(get_new_path("res/icon.png", True)))
+        self.resize(width, height)
+        self.setMinimumSize(QtCore.QSize(width, height))
+        self.setMaximumSize(QtCore.QSize(width, height))
+        self.setAutoFillBackground(False)
+
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, config: Config):
-        super(MainWindow, self).__init__()
+        super().__init__()
 
         self.config = config
         self.bg_path = get_new_path(f"config/oot/{self.config.active_inv.background}")
@@ -31,6 +50,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # create the necessary labels based on the config
         self.create_labels()
+
+        # create the about window
+        self.about_window = AboutWindow()
+        self.about_window.setObjectName("about_window")
 
     def create_window(self, width: int, height: int):
         # accounts for platform differences for the windows' size
@@ -206,18 +229,29 @@ class MainWindow(QtWidgets.QMainWindow):
     # connections callbacks
 
     def file_open_triggered(self):
-        state = State(self.config)
-        state.open()
+        if self.config.state_path is None:
+            self.config.state_path = QtWidgets.QFileDialog.getOpenFileName(None, "Open State File", str(Path.home()), "*.txt")[0]
+
+        if len(self.config.state_path) > 0:
+            state = State(self.config)
+            state.open()
 
     def file_save_triggered(self):
-        state = State(self.config)
-        state.save()
+        if self.config.state_path is None:
+            self.config.state_path = QtWidgets.QFileDialog.getSaveFileName(None, "Save State File", str(Path.home()), "*.txt")[0]
+
+        if len(self.config.state_path) > 0:
+            state = State(self.config)
+            state.save()
 
     def file_exit_triggered(self):
         exit()
 
     def about_triggered(self):
-        print("You triggered about")
+        if self.about_window.isVisible():
+            self.about_window.hide()
+        else:
+            self.about_window.show()
 
     def label_clicked_left(self):
         label: Label = self.sender()
