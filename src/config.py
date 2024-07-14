@@ -171,7 +171,7 @@ class Config:
                                 paths.split(";"),
                                 tiers.split(";") if tiers is not None else list(),
                                 Pos(int(pos_list[0]), int(pos_list[1])),
-                                self.get_bool_from_string(item.get("Enabled", "False"))
+                                self.get_bool_from_string(item.get("Enabled", "False")),
                             )
                         )
                     self.inventories[inventory.index] = inventory
