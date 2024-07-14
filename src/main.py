@@ -6,7 +6,7 @@ from os import name as osName
 from PIL import Image
 
 from config import TrackerConfig
-from common import Label, get_new_path, unpack_color
+from common import OutlinedLabel, Label, get_new_path, unpack_color
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -106,8 +106,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_save.setText(_translate("MainWindow", "Save (Ctrl + S)"))
         self.action_exit.setText(_translate("MainWindow", "Exit"))
 
-    def set_tier_style(self, label_tier: Label, color: int):
+    def set_tier_style(self, label_tier: OutlinedLabel, color: int):
         r, g, b = unpack_color(color)
+        label_tier.setScaledOutlineMode(False)
+        label_tier.setOutlineThickness(2)
+        label_tier.setBrush(QtGui.QColor(r, g, b))
         label_tier.setStyleSheet(
             f"""
                 font: 75 13pt "Visitor TT1 BRK";
@@ -138,10 +141,10 @@ class MainWindow(QtWidgets.QMainWindow):
             label.clicked_middle.connect(self.label_clicked_middle)
             label.clicked_right.connect(self.label_clicked_right)
 
-            if len(item.tiers) > 0:
-                label_tier = Label(label, item.index)
-                label_tier.setObjectName(f"itemtier_{item.index}")
-                label_tier.setGeometry(QtCore.QRect(item.pos.x - 9, item.pos.y, 32, 32))
+            for tier in item.tiers:
+                label_tier = OutlinedLabel(label)
+                label_tier.setObjectName(f"item_{item.index}_tier_{tier}")
+                label_tier.setGeometry(QtCore.QRect(0, item.pos.y, 32, 32))
                 label_tier.setText("")
                 self.set_tier_style(label_tier, 0xFFFFFF)
                 self.config.inventory.label_tier_map[item.index] = label_tier
