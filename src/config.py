@@ -148,7 +148,7 @@ class Config:
                     inventory.background = elem.get("Background")
                     inventory.tier_text = int(elem.get("TierText", "0"))
 
-                    for item in elem:
+                    for i, item in enumerate(elem.iterfind("Item")):
                         name = item.get("Name", "Unknown")
                         paths = item.get("Sources")
                         tiers = item.get("Tiers")
@@ -166,7 +166,7 @@ class Config:
 
                         inventory.items.append(
                             InventoryItem(
-                                int(item.get("Index", "-1")),
+                                i,
                                 name,
                                 paths.split(";"),
                                 tiers.split(";") if tiers is not None else list(),

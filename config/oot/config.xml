@@ -27,24 +27,36 @@
             <Item Index="0" Name="Tiers" FontIndex="2" Size="13" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
         </TextSettings>
         <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png" TierText="0">
-            <Item Index="0" Pos="9;9" Name="Deku Sticks" Sources="items/deku_stick.png" Tiers="10;20;30"/>
-            <Item Index="1" Pos="48;9" Name="Deku Nuts" Sources="items/deku_nut.png" Tiers="20;30;40"/>
-            <Item Index="2" Pos="90;9" Name="Bombs" Sources="items/bomb.png" Tiers="20;30;40"/>
-            <Item Index="3" Pos="131;9" Name="Fairy Bow" Sources="items/fairy_bow.png" Tiers="30;40;50"/>
-            <Item Index="4" Pos="172;9" Name="Fire Arrow" Sources="items/fire_arrow.png"/>
-            <Item Index="5" Pos="213;9" Name="Din's Fire" Sources="items/dins_fire.png"/>
-            <Item Index="6" Pos="9;48" Name="Fairy Slingshot" Sources="items/fairy_slingshot.png" Tiers="30;40;50"/>
-            <Item Index="7" Pos="48;48" Name="Ocarina" Sources="items/fairy_ocarina.png;items/ocarina_of_time.png"/>
-            <Item Index="8" Pos="90;48" Name="Bombchus" Sources="items/bombchu.png"/>
-            <Item Index="9" Pos="131;48" Name="Hookshot" Sources="items/hookshot.png;items/longshot.png"/>
-            <Item Index="10" Pos="172;48" Name="Ice Arrow" Sources="items/ice_arrow.png"/>
-            <Item Index="11" Pos="213;48" Name="Farore's Wind" Sources="items/farores_wind.png"/>
-            <Item Index="12" Pos="9;90" Name="Boomerang" Sources="items/boomerang.png"/>
-            <Item Index="13" Pos="49;90" Name="Lens of Truth" Sources="items/lens_of_truth.png"/>
-            <Item Index="14" Pos="90;90" Name="Magic Beans" Sources="items/magic_beans.png"/>
-            <Item Index="15" Pos="131;90" Name="Megaton Hammer" Sources="items/hammer.png"/>
-            <Item Index="16" Pos="172;90" Name="Light Arrow" Sources="items/light_arrow.png"/>
-            <Item Index="17" Pos="213;90" Name="Nayru's Love" Sources="items/nayrus_love.png"/>
+            <Item Pos="9;9" Name="Deku Sticks" Sources="items/deku_stick.png" Tiers="10;20;30"/>
+            <Item Pos="48;9" Name="Deku Nuts" Sources="items/deku_nut.png" Tiers="20;30;40"/>
+            <Item Pos="90;9" Name="Bombs" Sources="items/bomb.png" Tiers="20;30;40"/>
+            <Item Pos="131;9" Name="Fairy Bow" Sources="items/fairy_bow.png" Tiers="30;40;50"/>
+            <Item Pos="172;9" Name="Fire Arrow" Sources="items/fire_arrow.png"/>
+            <Item Pos="213;9" Name="Din's Fire" Sources="items/dins_fire.png"/>
+            <Item Pos="9;48" Name="Fairy Slingshot" Sources="items/fairy_slingshot.png" Tiers="30;40;50"/>
+            <Item Pos="48;48" Name="Ocarina" Sources="items/fairy_ocarina.png;items/ocarina_of_time.png"/>
+            <Item Pos="90;48" Name="Bombchus" Sources="items/bombchu.png"/>
+            <Item Pos="131;48" Name="Hookshot" Sources="items/hookshot.png;items/longshot.png"/>
+            <Item Pos="172;48" Name="Ice Arrow" Sources="items/ice_arrow.png"/>
+            <Item Pos="213;48" Name="Farore's Wind" Sources="items/farores_wind.png"/>
+            <Item Pos="9;90" Name="Boomerang" Sources="items/boomerang.png"/>
+            <Item Pos="49;90" Name="Lens of Truth" Sources="items/lens_of_truth.png"/>
+            <Item Pos="90;90" Name="Magic Beans" Sources="items/magic_beans.png"/>
+            <Item Pos="131;90" Name="Megaton Hammer" Sources="items/hammer.png"/>
+            <Item Pos="172;90" Name="Light Arrow" Sources="items/light_arrow.png"/>
+            <Item Pos="213;90" Name="Nayru's Love" Sources="items/nayrus_love.png"/>
+            <Item Pos="8;176" Name="Kokiri Sword" Sources="items/kokiri_sword.png"/>
+            <Item Pos="49;176" Name="Master Sword" Sources="items/master_sword.png"/>
+            <Item Pos="90;176" Name="Biggoron's Sword" Sources="items/biggoron_sword.png"/>
+            <Item Pos="8;216" Name="Deku Shield" Sources="items/deku_shield.png"/>
+            <Item Pos="48;217" Name="Hylian Shield" Sources="items/hylian_shield.png"/>
+            <Item Pos="91;217" Name="Mirror Shield" Sources="items/mirror_shield.png"/>
+            <Item Pos="8;258" Name="Kokiri Tunic" Sources="items/kokiri_tunic.png" Enabled="True"/>
+            <Item Pos="48;258" Name="Goron Tunic" Sources="items/goron_tunic.png"/>
+            <Item Pos="90;258" Name="Zora Tunic" Sources="items/zora_tunic.png"/>
+            <Item Pos="8;300" Name="Kokiri Boots" Sources="items/kokiri_boots.png" Enabled="True"/>
+            <Item Pos="48;300" Name="Iron Boots" Sources="items/iron_boots.png"/>
+            <Item Pos="90;300" Name="Hover Boots" Sources="items/hover_boots.png"/>
         </Inventory>
     </Config>
 </Table>
