@@ -11,100 +11,25 @@ from common import OutlinedLabel, Label, get_new_path
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, config: Config):
-        """Main initialisation function"""
-
         super(MainWindow, self).__init__()
 
-        # taskbar icon trick for Windows
-        if osName == "nt":
-            from ctypes import windll
-
-            # encoding probably useless but just in case
-            windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
-
         self.config = config
-        offset = 34 if osName == "nt" else 20
-        bg_path = get_new_path(f"config/oot/{self.config.active_inv.background}")
-        width, height = Image.open(bg_path).size
-        self.resize(width, height + offset)
-        self.setMinimumSize(QtCore.QSize(width, height + offset))
-        self.setMaximumSize(QtCore.QSize(width, height + offset))
-        self.setAutoFillBackground(False)
-        self.setStyleSheet("")
+        self.bg_path = get_new_path(f"config/oot/{self.config.active_inv.background}")
 
-        # set the windows's title
-        self.title = "SaucisseTracker"
-        self.icon = QtGui.QIcon(get_new_path("res/icon.png", True))
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.centralwidget.setObjectName("centralwidget")
-        self.setCentralWidget(self.centralwidget)
+        # get the background's size
+        width, height = Image.open(self.bg_path).size
 
-        self.setWindowTitle(self.title)
-        self.setWindowIcon(self.icon)
+        # create the window itself
+        self.create_window(width, height)
 
-        ### init background frame
+        # create the background image
+        self.create_background(width, height)
 
-        self.bg = QtWidgets.QFrame(self.centralwidget)
-        self.bg.setObjectName("bg")
-        self.bg.setGeometry(QtCore.QRect(0, 0, width, height))
-        self.bg.setMinimumSize(QtCore.QSize(width, height))
-        self.bg.setMaximumSize(QtCore.QSize(width, height))
-        self.bg.setLayoutDirection(QtCore.Qt.LayoutDirection.LeftToRight)
-        self.bg.setAutoFillBackground(False)
-        self.bg.setStyleSheet("background-color: rgb(0, 0, 0);")
-        self.bg.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.bg.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.bg.setLineWidth(1)
+        # create the top menu bar
+        self.create_menubar()
 
-        # for some reasons using stylesheet for bg doesn't work on windows but this does :)
-        bg_label = QtWidgets.QLabel(self.bg)
-        bg_label.setObjectName(f"bg_label")
-        bg_label.setGeometry(QtCore.QRect(0, 0, width, height))
-        bg_label.setText("")
-        bg_label.setPixmap(QtGui.QPixmap(get_new_path(bg_path)))
-
-        ### init menu
-
-        self.menu = QtWidgets.QMenuBar(parent=self)
-        self.menu_file = QtWidgets.QMenu(parent=self.menu)
-        self.menu_about = QtWidgets.QMenu(parent=self.menu)
-        self.action_open = QtGui.QAction(parent=self)
-        self.action_save = QtGui.QAction(parent=self)
-        self.action_exit = QtGui.QAction(parent=self)
-
-        self.menu.setGeometry(QtCore.QRect(0, 0, 335, 21))
-        self.setMenuBar(self.menu)
-        self.menu_file.addAction(self.action_open)
-        self.menu_file.addAction(self.action_save)
-        self.menu_file.addAction(self.action_exit)
-        self.menu.addAction(self.menu_file.menuAction())
-        self.menu.addAction(self.menu_about.menuAction())
-
-        ### set object's names
-
-        self.menu.setObjectName("menu")
-        self.menu_file.setObjectName("menu_file")
-        self.menu_about.setObjectName("menu_about")
-        self.action_open.setObjectName("action_open")
-        self.action_save.setObjectName("action_save")
-        self.action_exit.setObjectName("action_exit")
-
-        ### init items
-
+        # create the necessary labels based on the config
         self.create_labels()
-
-        ### end init
-
-        self.retranslateUi()
-        QtCore.QMetaObject.connectSlotsByName(self)
-
-    def retranslateUi(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.menu_file.setTitle(_translate("MainWindow", "File"))
-        self.menu_about.setTitle(_translate("MainWindow", "About"))
-        self.action_open.setText(_translate("MainWindow", "Open (Ctrl + O)"))
-        self.action_save.setText(_translate("MainWindow", "Save (Ctrl + S)"))
-        self.action_exit.setText(_translate("MainWindow", "Exit"))
 
     def set_tier_style(self, label_tier: OutlinedLabel, color: Color):
         tier_settings = self.config.text_settings[self.config.active_inv.tier_text]
@@ -128,6 +53,79 @@ class MainWindow(QtWidgets.QMainWindow):
         painter.drawPixmap(QtCore.QPoint(), label.pixmap())
         painter.end()
         label.setPixmap(pixmap)
+
+    def create_window(self, width: int, height: int):
+        # accounts for platform differences for the windows' size
+        offset = 34 if osName == "nt" else 20
+
+        # initialize the window's basic informations
+        self.setWindowTitle("SaucisseTracker")
+        self.setWindowIcon(QtGui.QIcon(get_new_path("res/icon.png", True)))
+        self.resize(width, height + offset)
+        self.setMinimumSize(QtCore.QSize(width, height + offset))
+        self.setMaximumSize(QtCore.QSize(width, height + offset))
+        self.setAutoFillBackground(False)
+
+        # create the central widget
+        self.centralwidget = QtWidgets.QWidget(self)
+        self.centralwidget.setObjectName("centralwidget")
+        self.setCentralWidget(self.centralwidget)
+
+    def create_background(self, width: int, height: int):
+        self.bg = QtWidgets.QFrame(self.centralwidget)
+        self.bg.setObjectName("bg")
+        self.bg.setGeometry(QtCore.QRect(0, 0, width, height))
+        self.bg.setMinimumSize(QtCore.QSize(width, height))
+        self.bg.setMaximumSize(QtCore.QSize(width, height))
+        self.bg.setLayoutDirection(QtCore.Qt.LayoutDirection.LeftToRight)
+        self.bg.setAutoFillBackground(False)
+        self.bg.setStyleSheet("background-color: rgb(0, 0, 0);")
+        self.bg.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.bg.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
+        self.bg.setLineWidth(1)
+
+        # for some reasons using stylesheet for bg doesn't work on windows but this does :)
+        bg_label = QtWidgets.QLabel(self.bg)
+        bg_label.setObjectName(f"bg_label")
+        bg_label.setGeometry(QtCore.QRect(0, 0, width, height))
+        bg_label.setText("")
+        bg_label.setPixmap(QtGui.QPixmap(get_new_path(self.bg_path)))
+
+    def create_menubar(self):
+        self.menu = QtWidgets.QMenuBar(parent=self)
+        self.menu.setObjectName("menu")
+        self.menu.setGeometry(QtCore.QRect(0, 0, 335, 21))
+
+        self.menu_file = QtWidgets.QMenu(parent=self.menu)
+        self.menu_file.setObjectName("menu_file")
+        self.menu_file.setTitle("File")
+
+        self.action_about = QtGui.QAction(parent=self.menu)
+        self.action_about.setObjectName("action_about")
+        self.action_about.setText("About")
+        self.action_about.triggered.connect(self.about_triggered)
+
+        self.action_open = QtGui.QAction(self.menu_file)
+        self.action_open.setObjectName("action_open")
+        self.action_open.setText("Open (Ctrl + O)")
+        self.action_open.triggered.connect(self.file_open_triggered)
+
+        self.action_save = QtGui.QAction(self.menu_file)
+        self.action_save.setObjectName("action_save")
+        self.action_save.setText("Save (Ctrl + S)")
+        self.action_save.triggered.connect(self.file_save_triggered)
+
+        self.action_exit = QtGui.QAction(self.menu_file)
+        self.action_exit.setObjectName("action_exit")
+        self.action_exit.setText("Exit")
+        self.action_exit.triggered.connect(self.file_exit_triggered)
+
+        self.menu_file.addAction(self.action_open)
+        self.menu_file.addAction(self.action_save)
+        self.menu_file.addAction(self.action_exit)
+        self.menu.addAction(self.menu_file.menuAction())
+        self.menu.addAction(self.action_about)
+        self.setMenuBar(self.menu)
 
     def create_labels(self):
         offset = -1 if osName == "nt" else 0
@@ -228,6 +226,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # connections callbacks
 
+    def file_open_triggered(self):
+        print("You triggered open")
+
+    def file_save_triggered(self):
+        print("You triggered save")
+
+    def file_exit_triggered(self):
+        exit()
+
+    def about_triggered(self):
+        print("You triggered about")
+
     def label_clicked_left(self):
         label: Label = self.sender()
         self.update_label(label, True)
@@ -240,10 +250,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_label(label, False)
 
 
-# start the app
-if __name__ == "__main__":
+def main():
+    # taskbar icon trick for Windows
+    if osName == "nt":
+        from ctypes import windll
+
+        # encoding probably useless but just in case
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
+
     app = QtWidgets.QApplication(argv)
     mainWindow = MainWindow(Config(get_new_path("config/oot/config.xml")))
 
     mainWindow.show()
     exit(app.exec())
+
+
+# start the app
+if __name__ == "__main__":
+    main()
