@@ -86,7 +86,7 @@ class Config:
         self.default_inv = 0
         self.fonts: list[Font] = []
         self.text_settings: list[TextSettings] = []
-        self.inventory = Inventory()
+        self.inventories: dict[int, Inventory] = {}
 
         if self.config_file.endswith(".xml"):
             self.parse_xml_config()
@@ -98,6 +98,9 @@ class Config:
         # register external fonts
         for font in self.fonts:
             QtGui.QFontDatabase.addApplicationFont(get_new_path(f"config/oot/{font.path}"))
+
+        # set the active inventory from default value
+        self.active_inv = self.inventories[self.default_inv]
 
     def parse_xml_config(self):
         try:
@@ -130,10 +133,11 @@ class Config:
                             )
                         )
                 case "Inventory":
-                    self.inventory.index = int(elem.get("Index", "0"))
-                    self.inventory.name = elem.get("Name", "Unknown")
-                    self.inventory.background = elem.get("Background")
-                    self.inventory.tier_text = int(elem.get("TierText", "0"))
+                    inventory = Inventory()
+                    inventory.index = int(elem.get("Index", "0"))
+                    inventory.name = elem.get("Name", "Unknown")
+                    inventory.background = elem.get("Background")
+                    inventory.tier_text = int(elem.get("TierText", "0"))
 
                     for item in elem:
                         name = item.get("Name", "Unknown")
@@ -151,7 +155,7 @@ class Config:
                         if len(pos_list) > 2:
                             raise ValueError(f"ERROR: Found more than 2 positions for item '{name}'")
 
-                        self.inventory.items.append(
+                        inventory.items.append(
                             InventoryItem(
                                 int(item.get("Index", "-1")),
                                 name,
@@ -160,6 +164,7 @@ class Config:
                                 Pos(int(pos_list[0]), int(pos_list[1])),
                             )
                         )
+                    self.inventories[inventory.index] = inventory
                 case _:
                     raise RuntimeError(f"ERROR: unknown configuration tag: '{elem.tag}'")
 
@@ -170,8 +175,9 @@ class Config:
         if len(self.text_settings) == 0:
             raise RuntimeError("ERROR: you need at least one text setting for tiers display")
 
-        if len(self.inventory.items) == 0:
-            raise RuntimeError("ERROR: there's no inventory items")
+        for inv in self.inventories.values():
+            if len(inv.items) == 0:
+                raise RuntimeError(f"ERROR: there's no inventory items for inventory at index {inv.index}")
 
-        if self.inventory.background is None:
-            raise RuntimeError("ERROR: the background's path is none")
+            if inv.background is None:
+                raise RuntimeError(f"ERROR: the background's path is none for inventory at index {inv.index}")

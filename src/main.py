@@ -24,7 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.config = config
         offset = 34 if osName == "nt" else 20
-        bg_path = get_new_path(f"config/oot/{self.config.inventory.background}")
+        bg_path = get_new_path(f"config/oot/{self.config.active_inv.background}")
         width, height = Image.open(bg_path).size
         self.resize(width, height + offset)
         self.setMinimumSize(QtCore.QSize(width, height + offset))
@@ -107,7 +107,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_exit.setText(_translate("MainWindow", "Exit"))
 
     def set_tier_style(self, label_tier: OutlinedLabel, color: Color):
-        tier_settings = self.config.text_settings[self.config.inventory.tier_text]
+        tier_settings = self.config.text_settings[self.config.active_inv.tier_text]
         font = self.config.fonts[tier_settings.font]
 
         label_tier.setScaledOutlineMode(False)
@@ -131,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def create_labels(self):
         offset = -1 if osName == "nt" else 0
-        for item in self.config.inventory.items:
+        for item in self.config.active_inv.items:
             label = Label(self.centralwidget, item.index)
             label.setObjectName(f"item_{item.index}")
             label.setGeometry(QtCore.QRect(item.pos.x + offset, item.pos.y + offset, 32, 32))
@@ -149,7 +149,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 label_tier.setGeometry(QtCore.QRect(0, item.pos.y, 32, 32))
                 label_tier.setText("")
                 self.set_tier_style(label_tier, Color(255, 255, 255))
-                self.config.inventory.label_tier_map[item.index] = label_tier
+                self.config.active_inv.label_tier_map[item.index] = label_tier
 
             # black & white effect, todo find something better? idk, enabled by default
             label_effect = QtWidgets.QGraphicsColorizeEffect(label)
@@ -158,12 +158,12 @@ class MainWindow(QtWidgets.QMainWindow):
             label_effect.setObjectName(f"itemfx_{item.index}")
             label.setGraphicsEffect(label_effect)
 
-            self.config.inventory.label_effect_map[item.index] = label_effect
+            self.config.active_inv.label_effect_map[item.index] = label_effect
 
     def update_label(self, label: Label, increase: bool):
-        label_effect = self.config.inventory.label_effect_map[label.index]
-        label_tier = self.config.inventory.label_tier_map.get(label.index)
-        item = self.config.inventory.items[label.index]
+        label_effect = self.config.active_inv.label_effect_map[label.index]
+        label_tier = self.config.active_inv.label_tier_map.get(label.index)
+        item = self.config.active_inv.items[label.index]
         path_index = 0
 
         if len(item.paths) > 1:
@@ -209,7 +209,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.set_pixmap_opacity(label, 0.75)
                 label_tier.setText("")
             else:
-                tier_settings = self.config.text_settings[self.config.inventory.tier_text]
+                tier_settings = self.config.text_settings[self.config.active_inv.tier_text]
                 label_effect.setStrength(0.0)  # disable filter
                 label.setPixmap(label.original_pixmap)
                 label_tier.setText(f"{item.tiers[label.tier_index]}")
