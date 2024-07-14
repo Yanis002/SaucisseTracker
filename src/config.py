@@ -65,6 +65,7 @@ class InventoryItem:
     paths: list[str]
     tiers: list[int]
     pos: Pos
+    enabled: bool
 
 
 class Inventory:
@@ -102,6 +103,14 @@ class Config:
         # set the active inventory from default value
         self.active_inv = self.inventories[self.default_inv]
 
+    def get_bool_from_string(self, value: str):
+        if value == "True":
+            return True
+        elif value == "False":
+            return False
+        else:
+            raise ValueError(f"ERROR: unknown value '{value}'")
+
     def parse_xml_config(self):
         try:
             root = ET.parse(self.config_file).getroot()
@@ -127,7 +136,7 @@ class Config:
                                 item.get("Name"),
                                 int(item.get("FontIndex", "0")),
                                 int(item.get("Size", "10")),
-                                bool(item.get("Bold", "False")),
+                                self.get_bool_from_string(item.get("Bold", "False")),
                                 Color.unpack(int(item.get("Color", "0x000000"), 0)),
                                 Color.unpack(int(item.get("ColorMax", "0x000000"), 0)),
                             )
@@ -162,6 +171,7 @@ class Config:
                                 paths.split(";"),
                                 tiers.split(";") if tiers is not None else list(),
                                 Pos(int(pos_list[0]), int(pos_list[1])),
+                                self.get_bool_from_string(item.get("Enabled", "False"))
                             )
                         )
                     self.inventories[inventory.index] = inventory

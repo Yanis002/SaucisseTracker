@@ -138,7 +138,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label.setText("")
             label.original_pixmap = QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[0]}"))
             label.setPixmap(label.original_pixmap)
-            self.set_pixmap_opacity(label, 0.75)
+            self.set_pixmap_opacity(label, 1.0 if item.enabled else 0.75)
             label.clicked_left.connect(self.label_clicked_left)
             label.clicked_middle.connect(self.label_clicked_middle)
             label.clicked_right.connect(self.label_clicked_right)
@@ -153,7 +153,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # black & white effect, todo find something better? idk, enabled by default
             label_effect = QtWidgets.QGraphicsColorizeEffect(label)
-            label_effect.setStrength(1.0)
+            label_effect.setStrength(0.0 if item.enabled else 1.0)
             label_effect.setColor(QtGui.QColor("black"))
             label_effect.setObjectName(f"itemfx_{item.index}")
             label.setGraphicsEffect(label_effect)
