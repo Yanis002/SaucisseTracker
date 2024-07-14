@@ -6,6 +6,20 @@ Work in progress item tracker for randomizers. Aims to be customizable easily wi
 
 - Python (3.10+)
 - PyQt6
+- Pillow
+
+## Project Structure
+
+* Files:
+    - ``src/common.py``: hosts classes and functions that can be used in any other file
+    - ``src/config.py``: handles reading the configuration file and storing the informations in classes
+    - ``src/main.py``: the main window's logic is handled there (creating and updating the window/widgets/menus)
+
+* Folders:
+    - ``res/``: the program's resources (packed when building)
+    - ``config/``: the tracker's configurations data, currently only hosting one example config file (not packed when building)
+    - ``.github/``: hosts the GitHub workflows (to provide automated builds and releases)
+    - ``.vscode/``: settings and launch profiles for Visual Studio Code
 
 ## Creating a configuration
 
