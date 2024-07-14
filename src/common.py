@@ -3,6 +3,7 @@ import math
 
 from os import getcwd, path
 from typing import Optional, TYPE_CHECKING
+
 from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint
 from PyQt6.QtWidgets import QLabel, QWidget
 from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor

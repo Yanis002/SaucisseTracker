@@ -1,7 +1,9 @@
 from xml.etree import ElementTree as ET
 from dataclasses import dataclass
 from typing import Optional
-from PyQt6 import QtWidgets, QtGui
+
+from PyQt6.QtWidgets import QGraphicsColorizeEffect
+from PyQt6.QtGui import QFontDatabase
 
 from common import OutlinedLabel, Label, get_new_path
 
@@ -74,7 +76,7 @@ class Inventory:
         self.tier_text = int()
         self.items: list[InventoryItem] = []
 
-        self.label_effect_map: dict[int, QtWidgets.QGraphicsColorizeEffect] = {}
+        self.label_effect_map: dict[int, QGraphicsColorizeEffect] = {}
         self.label_tier_map: dict[int, OutlinedLabel] = {}
         self.label_map: dict[int, Label] = {}
 
@@ -98,7 +100,7 @@ class Config:
 
         # register external fonts
         for font in self.fonts:
-            QtGui.QFontDatabase.addApplicationFont(get_new_path(f"config/oot/{font.path}"))
+            QFontDatabase.addApplicationFont(get_new_path(f"config/oot/{font.path}"))
 
         # set the active inventory from default value
         self.active_inv = self.inventories[self.default_inv]

@@ -4,6 +4,7 @@ from config import Config
 
 WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING !!!\n" + "!" * 63 + "\n\n"
 
+
 @dataclass
 class LabelState:
     index: int
@@ -29,7 +30,7 @@ class State:
                     self.config.active_inv.items[index].name,
                     label.img_index,
                     label.tier_index,
-                    self.config.active_inv.label_effect_map[index].strength() == 0.0
+                    self.config.active_inv.label_effect_map[index].strength() == 0.0,
                 )
             )
 
@@ -111,7 +112,8 @@ class State:
                     + f"name = '{s.name}'\n\t"
                     + f"enabled = {s.enabled}\n\t"
                     + f"img_index = {s.img_index}\n\t"
-                    + f"tier_index = {s.tier_index}" for s in self.states
+                    + f"tier_index = {s.tier_index}"
+                    for s in self.states
                 )
                 + "\n"
             )
