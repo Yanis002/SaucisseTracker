@@ -5,12 +5,12 @@ from sys import exit, argv
 from os import name as osName
 from PIL import Image
 
-from config import TrackerConfig
-from common import OutlinedLabel, Label, get_new_path, unpack_color
+from config import Config, Color
+from common import OutlinedLabel, Label, get_new_path
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, config: TrackerConfig):
+    def __init__(self, config: Config):
         """Main initialisation function"""
 
         super(MainWindow, self).__init__()
@@ -24,7 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.config = config
         offset = 34 if osName == "nt" else 20
-        bg_path = get_new_path(f"config/oot/{self.config.cosmetics.bg_path}")
+        bg_path = get_new_path(f"config/oot/{self.config.inventory.background}")
         width, height = Image.open(bg_path).size
         self.resize(width, height + offset)
         self.setMinimumSize(QtCore.QSize(width, height + offset))
@@ -106,15 +106,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_save.setText(_translate("MainWindow", "Save (Ctrl + S)"))
         self.action_exit.setText(_translate("MainWindow", "Exit"))
 
-    def set_tier_style(self, label_tier: OutlinedLabel, color: int):
-        r, g, b = unpack_color(color)
+    def set_tier_style(self, label_tier: OutlinedLabel, color: Color):
+        tier_settings = self.config.text_settings[self.config.inventory.tier_text]
+        font = self.config.fonts[tier_settings.font]
+
         label_tier.setScaledOutlineMode(False)
         label_tier.setOutlineThickness(2)
-        label_tier.setBrush(QtGui.QColor(r, g, b))
+        label_tier.setBrush(QtGui.QColor(color.r, color.g, color.b))
         label_tier.setStyleSheet(
             f"""
-                font: 75 13pt "Visitor TT1 BRK";
-                color: rgb({r}, {g}, {b});
+                font: {'75' if tier_settings.bold else ''} {tier_settings.size}pt "{font.name}";
+                color: rgb({color.r}, {color.g}, {color.b});
             """
         )
 
@@ -146,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 label_tier.setObjectName(f"item_{item.index}_tier_{tier}")
                 label_tier.setGeometry(QtCore.QRect(0, item.pos.y, 32, 32))
                 label_tier.setText("")
-                self.set_tier_style(label_tier, 0xFFFFFF)
+                self.set_tier_style(label_tier, Color(255, 255, 255))
                 self.config.inventory.label_tier_map[item.index] = label_tier
 
             # black & white effect, todo find something better? idk, enabled by default
@@ -207,14 +209,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.set_pixmap_opacity(label, 0.75)
                 label_tier.setText("")
             else:
+                tier_settings = self.config.text_settings[self.config.inventory.tier_text]
                 label_effect.setStrength(0.0)  # disable filter
                 label.setPixmap(label.original_pixmap)
                 label_tier.setText(f"{item.tiers[label.tier_index]}")
 
                 if label.tier_index == len(item.tiers) - 1:
-                    self.set_tier_style(label_tier, int(self.config.cosmetics.colors[1].value, 0))
+                    self.set_tier_style(label_tier, tier_settings.color_max)
                 else:
-                    self.set_tier_style(label_tier, int(self.config.cosmetics.colors[0].value, 0))
+                    self.set_tier_style(label_tier, tier_settings.color)
         else:
             if label_effect.strength() > 0.0:
                 label_effect.setStrength(0.0)
@@ -240,7 +243,7 @@ class MainWindow(QtWidgets.QMainWindow):
 # start the app
 if __name__ == "__main__":
     app = QtWidgets.QApplication(argv)
-    mainWindow = MainWindow(TrackerConfig(get_new_path("config/oot/config.xml")))
+    mainWindow = MainWindow(Config(get_new_path("config/oot/config.xml")))
 
     mainWindow.show()
     exit(app.exec())

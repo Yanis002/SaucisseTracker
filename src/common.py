@@ -43,7 +43,7 @@ class OutlinedLabel(QLabel):
     def sizeHint(self):
         w = math.ceil(self.outlineThickness() * 2)
         return super().sizeHint() + QSize(w, w)
-    
+
     def minimumSizeHint(self):
         w = math.ceil(self.outlineThickness() * 2)
         return super().minimumSizeHint() + QSize(w, w)
@@ -57,7 +57,7 @@ class OutlinedLabel(QLabel):
         tr = metrics.boundingRect(self.text()).adjusted(0, 0, int(w), int(w))
         if self.indent() == -1:
             if self.frameWidth():
-                indent = (metrics.boundingRect('x').width() + w * 2) / 2
+                indent = (metrics.boundingRect("x").width() + w * 2) / 2
             else:
                 indent = w
         else:
@@ -69,7 +69,7 @@ class OutlinedLabel(QLabel):
             x = rect.x() + rect.width() - indent - tr.width()
         else:
             x = (rect.width() - tr.width()) / 2
-            
+
         if self.alignment() & Qt.AlignmentFlag.AlignTop:
             y = rect.top() + indent + metrics.ascent()
         elif self.alignment() & Qt.AlignmentFlag.AlignBottom:
@@ -124,7 +124,7 @@ class Label(QLabel):
 
 # adapted from https://stackoverflow.com/a/42615559
 def get_app_path():
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         return getcwd()
     elif __file__:
         return path.dirname(path.abspath(__file__)).removesuffix("src")
@@ -134,15 +134,11 @@ def get_app_path():
 
 def get_new_path(new_path: str, is_bundled: bool = False):
     if is_bundled:
-        new_path = path.join(path.dirname(path.abspath(__file__)).removesuffix("src"), new_path) 
-    else: 
+        new_path = path.join(path.dirname(path.abspath(__file__)).removesuffix("src"), new_path)
+    else:
         new_path = path.join(get_app_path(), new_path)
 
     if not path.isfile(new_path):
         raise RuntimeError(f"ERROR: invalid path: '{new_path}'")
 
     return new_path
-
-
-def unpack_color(color: int):
-    return (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF
