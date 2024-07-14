@@ -2,10 +2,13 @@ import sys
 import math
 
 from os import getcwd, path
-from typing import Optional
-from PyQt6.QtCore import pyqtSignal, Qt, QSize
+from typing import Optional, TYPE_CHECKING
+from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint
 from PyQt6.QtWidgets import QLabel, QWidget
-from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics
+from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
+
+if TYPE_CHECKING:
+    from config import Config, Color
 
 
 # from https://stackoverflow.com/a/64291055
@@ -88,6 +91,20 @@ class OutlinedLabel(QLabel):
             qp.fillPath(path, self.palette().window())
         qp.fillPath(path, self.brush)
 
+    def set_tier_style(self, config: "Config", color: "Color"):
+        tier_settings = config.text_settings[config.active_inv.tier_text]
+        font = config.fonts[tier_settings.font]
+
+        self.setScaledOutlineMode(False)
+        self.setOutlineThickness(2)
+        self.setBrush(QColor(color.r, color.g, color.b))
+        self.setStyleSheet(
+            f"""
+                font: {'75' if tier_settings.bold else ''} {tier_settings.size}pt "{font.name}";
+                color: rgb({color.r}, {color.g}, {color.b});
+            """
+        )
+
 
 class Label(QLabel):
     """Custom QLabel, adds clicked signals and an index to identify easily which inventory item it is"""
@@ -97,11 +114,12 @@ class Label(QLabel):
     clicked_middle = pyqtSignal()
     clicked_right = pyqtSignal()
 
-    def __init__(self, parent: Optional[QWidget], index: int):
+    def __init__(self, parent: Optional[QWidget], index: int, name: str):
         super(QLabel, self).__init__()
 
         self.setParent(parent)
         self.index = index
+        self.name = name
         self.img_index = -1
         self.tier_index = -1
         self.original_pixmap: Optional[QPixmap] = None
@@ -121,6 +139,15 @@ class Label(QLabel):
                     else:
                         self.clicked_right.emit()
 
+    def set_pixmap_opacity(self, opacity: float):
+        pixmap = self.pixmap().copy()
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setOpacity(opacity)
+        painter.drawPixmap(QPoint(), self.pixmap())
+        painter.end()
+        self.setPixmap(pixmap)
+
 
 # adapted from https://stackoverflow.com/a/42615559
 def get_app_path():
@@ -132,13 +159,13 @@ def get_app_path():
         raise RuntimeError("ERROR: couldn't determine the execution type")
 
 
-def get_new_path(new_path: str, is_bundled: bool = False):
+def get_new_path(new_path: str, is_bundled: bool = False, check_exists: bool = True):
     if is_bundled:
         new_path = path.join(path.dirname(path.abspath(__file__)).removesuffix("src"), new_path)
     else:
         new_path = path.join(get_app_path(), new_path)
 
-    if not path.isfile(new_path):
+    if check_exists and not path.isfile(new_path):
         raise RuntimeError(f"ERROR: invalid path: '{new_path}'")
 
     return new_path

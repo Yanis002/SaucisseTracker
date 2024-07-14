@@ -5,8 +5,9 @@ from sys import exit, argv
 from os import name as osName
 from PIL import Image
 
-from config import Config, Color
 from common import OutlinedLabel, Label, get_new_path
+from config import Config, Color
+from state import State
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -30,29 +31,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # create the necessary labels based on the config
         self.create_labels()
-
-    def set_tier_style(self, label_tier: OutlinedLabel, color: Color):
-        tier_settings = self.config.text_settings[self.config.active_inv.tier_text]
-        font = self.config.fonts[tier_settings.font]
-
-        label_tier.setScaledOutlineMode(False)
-        label_tier.setOutlineThickness(2)
-        label_tier.setBrush(QtGui.QColor(color.r, color.g, color.b))
-        label_tier.setStyleSheet(
-            f"""
-                font: {'75' if tier_settings.bold else ''} {tier_settings.size}pt "{font.name}";
-                color: rgb({color.r}, {color.g}, {color.b});
-            """
-        )
-
-    def set_pixmap_opacity(self, label: Label, opacity: float):
-        pixmap = label.pixmap().copy()
-        pixmap.fill(QtCore.Qt.GlobalColor.transparent)
-        painter = QtGui.QPainter(pixmap)
-        painter.setOpacity(opacity)
-        painter.drawPixmap(QtCore.QPoint(), label.pixmap())
-        painter.end()
-        label.setPixmap(pixmap)
 
     def create_window(self, width: int, height: int):
         # accounts for platform differences for the windows' size
@@ -107,12 +85,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.action_open = QtGui.QAction(self.menu_file)
         self.action_open.setObjectName("action_open")
-        self.action_open.setText("Open (Ctrl + O)")
+        self.action_open.setText("Open State")
         self.action_open.triggered.connect(self.file_open_triggered)
 
         self.action_save = QtGui.QAction(self.menu_file)
         self.action_save.setObjectName("action_save")
-        self.action_save.setText("Save (Ctrl + S)")
+        self.action_save.setText("Save State")
         self.action_save.triggered.connect(self.file_save_triggered)
 
         self.action_exit = QtGui.QAction(self.menu_file)
@@ -130,13 +108,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def create_labels(self):
         offset = -1 if osName == "nt" else 0
         for item in self.config.active_inv.items:
-            label = Label(self.centralwidget, item.index)
+            label = Label(self.centralwidget, item.index, item.name)
             label.setObjectName(f"item_{item.index}")
             label.setGeometry(QtCore.QRect(item.pos.x + offset, item.pos.y + offset, 32, 32))
             label.setText("")
             label.original_pixmap = QtGui.QPixmap(get_new_path(f"config/oot/{item.paths[0]}"))
             label.setPixmap(label.original_pixmap)
-            self.set_pixmap_opacity(label, 1.0 if item.enabled else 0.75)
+            label.set_pixmap_opacity(1.0 if item.enabled else 0.75)
             label.clicked_left.connect(self.label_clicked_left)
             label.clicked_middle.connect(self.label_clicked_middle)
             label.clicked_right.connect(self.label_clicked_right)
@@ -146,7 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 label_tier.setObjectName(f"item_{item.index}_tier_{tier}")
                 label_tier.setGeometry(QtCore.QRect(0, item.pos.y, 32, 32))
                 label_tier.setText("")
-                self.set_tier_style(label_tier, Color(255, 255, 255))
+                label_tier.set_tier_style(self.config, Color(255, 255, 255))
                 self.config.active_inv.label_tier_map[item.index] = label_tier
 
             # black & white effect, todo find something better? idk, enabled by default
@@ -157,6 +135,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label.setGraphicsEffect(label_effect)
 
             self.config.active_inv.label_effect_map[item.index] = label_effect
+            self.config.active_inv.label_map[item.index] = label
 
     def update_label(self, label: Label, increase: bool):
         label_effect = self.config.active_inv.label_effect_map[label.index]
@@ -177,7 +156,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             if label.img_index < 0:
                 label_effect.setStrength(1.0)  # enable filter
-                self.set_pixmap_opacity(label, 0.75)
+                label.set_pixmap_opacity(0.75)
                 path_index = 0
             else:
                 label_effect.setStrength(0.0)  # disable filter
@@ -188,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label.setPixmap(label.original_pixmap)
 
             if label.img_index < 0:
-                self.set_pixmap_opacity(label, 0.75)
+                label.set_pixmap_opacity(0.75)
             else:
                 label.setPixmap(label.original_pixmap)
         elif label_tier is not None:
@@ -204,7 +183,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             if label.tier_index < 0:
                 label_effect.setStrength(1.0)  # enable filter
-                self.set_pixmap_opacity(label, 0.75)
+                label.set_pixmap_opacity(0.75)
                 label_tier.setText("")
             else:
                 tier_settings = self.config.text_settings[self.config.active_inv.tier_text]
@@ -213,24 +192,26 @@ class MainWindow(QtWidgets.QMainWindow):
                 label_tier.setText(f"{item.tiers[label.tier_index]}")
 
                 if label.tier_index == len(item.tiers) - 1:
-                    self.set_tier_style(label_tier, tier_settings.color_max)
+                    label_tier.set_tier_style(self.config, tier_settings.color_max)
                 else:
-                    self.set_tier_style(label_tier, tier_settings.color)
+                    label_tier.set_tier_style(self.config, tier_settings.color)
         else:
             if label_effect.strength() > 0.0:
                 label_effect.setStrength(0.0)
                 label.setPixmap(label.original_pixmap)
             else:
                 label_effect.setStrength(1.0)
-                self.set_pixmap_opacity(label, 0.75)
+                label.set_pixmap_opacity(0.75)
 
     # connections callbacks
 
     def file_open_triggered(self):
-        print("You triggered open")
+        state = State(self.config)
+        state.open()
 
     def file_save_triggered(self):
-        print("You triggered save")
+        state = State(self.config)
+        state.save()
 
     def file_exit_triggered(self):
         exit()

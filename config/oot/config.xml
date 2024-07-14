@@ -17,7 +17,7 @@
     -> use ``;`` to separate the filenames/tiers values
 -->
 <Table>
-    <Config DefaultInventory="0">
+    <Config DefaultInventory="0" StatePath="config/oot/state.txt">
         <Fonts>
             <Item Index="0" Name="LEMON MILK Bold" Source="fonts/LEMONMILK-Bold.otf"/>
             <Item Index="1" Name="Upheaval TT (BRK)" Source="fonts/upheavtt.ttf"/>

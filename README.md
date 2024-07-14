@@ -8,6 +8,23 @@ Work in progress item tracker for randomizers. Aims to be customizable easily wi
 - PyQt6
 - Pillow
 
+## Features
+
+Available:
+- Use a configuration file to define the background image, the different elements of the tracker and the cosmetics
+- External font support
+- The windows' size is based on the background size
+- Setting several paths (separated by a ``;``) will make the item "progressive"
+- Setting upgrade tiers will turn the item into an upgrade 
+- Import and export the tracker's state
+
+Planned:
+- Editor to make configurations easier
+- Reward system (like medallions and stones for OoT)
+- Improve the progressive system to allow one to use lots of paths (for instance for OoT's bottles)
+- Counter feature (for small keys or something else)
+- "About" window
+
 ## Project Structure
 
 * Files:

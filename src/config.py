@@ -1,11 +1,9 @@
-# hosts the parsing process and the data organisation of the config file
-
 from xml.etree import ElementTree as ET
 from dataclasses import dataclass
 from typing import Optional
 from PyQt6 import QtWidgets, QtGui
 
-from common import Label, get_new_path
+from common import OutlinedLabel, Label, get_new_path
 
 
 @dataclass
@@ -77,7 +75,8 @@ class Inventory:
         self.items: list[InventoryItem] = []
 
         self.label_effect_map: dict[int, QtWidgets.QGraphicsColorizeEffect] = {}
-        self.label_tier_map: dict[int, Label] = {}
+        self.label_tier_map: dict[int, OutlinedLabel] = {}
+        self.label_map: dict[int, Label] = {}
 
 
 class Config:
@@ -88,6 +87,7 @@ class Config:
         self.fonts: list[Font] = []
         self.text_settings: list[TextSettings] = []
         self.inventories: dict[int, Inventory] = {}
+        self.state_path = str()
 
         if self.config_file.endswith(".xml"):
             self.parse_xml_config()
@@ -122,6 +122,11 @@ class Config:
             raise RuntimeError("ERROR: config settings not found")
 
         self.default_inv = int(config.get("DefaultInventory", "0"))
+
+        state_path = config.get("StatePath", "unknown")
+        if state_path == "unknown":
+            raise RuntimeError("ERROR: the path to the state file is wrong")
+        self.state_path = get_new_path(state_path, check_exists=False)
 
         for elem in config:
             match elem.tag:
