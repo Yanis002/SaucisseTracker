@@ -28,6 +28,7 @@ Planned:
     - ``src/common.py``: hosts classes and functions that can be used in any other file
     - ``src/config.py``: handles reading the configuration file and storing the informations in classes
     - ``src/main.py``: the main window's logic is handled there (creating and updating the window/widgets/menus)
+    - ``src/state.py``: handles importing and exporting savestates
 
 * Folders:
     - ``res/``: the program's resources (packed when building)
