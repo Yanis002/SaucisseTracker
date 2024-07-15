@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QLabel, QWidget
 from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
 
 if TYPE_CHECKING:
-    from config import Config, TextSettings
+    from config import Config, TextSettings, InventoryItem
 
 
 # from https://stackoverflow.com/a/64291055
@@ -147,6 +147,76 @@ class Label(QLabel):
         painter.drawPixmap(QPoint(), self.pixmap())
         painter.end()
         self.setPixmap(pixmap)
+
+    def update_label(self, config: "Config", item: "InventoryItem", increase: bool):
+        label_effect = None
+
+        for i, _ in enumerate(item.positions):
+            label_effect = config.active_inv.label_effect_map[self.index][i]
+            if self.objectName() in label_effect.objectName():
+                break
+            else:
+                label_effect = None
+
+        if label_effect is not None:
+            path_index = 0
+
+            label_counter_map = config.active_inv.label_counter_map.get(self.index)
+            if label_counter_map is not None:
+                label_counter = label_counter_map.get(i)
+            else:
+                label_counter = None
+
+            if len(item.paths) > 1:
+                if increase:
+                    self.img_index += 1
+                else:
+                    self.img_index -= 1
+
+                if self.img_index > len(item.paths) - 1:
+                    self.img_index = -1
+                if self.img_index < -1:
+                    self.img_index = len(item.paths) - 1
+
+                if self.img_index < 0:
+                    label_effect.setStrength(1.0)  # enable filter
+                    self.set_pixmap_opacity(0.75)
+                    path_index = 0
+                else:
+                    label_effect.setStrength(0.0)  # disable filter
+                    self.setPixmap(self.original_pixmap)
+                    path_index = self.img_index
+
+                self.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}"))
+                self.setPixmap(self.original_pixmap)
+
+                if self.img_index < 0:
+                    self.set_pixmap_opacity(0.75)
+                else:
+                    self.setPixmap(self.original_pixmap)
+            elif label_counter is not None:
+                if increase:
+                    item.counter.incr()
+                else:
+                    item.counter.decr()
+
+                if item.counter.show:
+                    counter_settings = config.text_settings[item.counter.text_settings_index]
+                    label_effect.setStrength(0.0)  # disable filter
+                    self.setPixmap(self.original_pixmap)
+                    label_counter.setText(f"{item.counter.value}")
+                    label_counter.set_counter_style(config, counter_settings, item.counter.value == item.counter.max)
+                else:
+                    label_effect.setStrength(1.0)  # enable filter
+                    self.set_pixmap_opacity(0.75)
+                    label_counter.setText("")
+            else:
+                if label_effect.strength() > 0.0:
+                    label_effect.setStrength(0.0)
+                    self.setPixmap(self.original_pixmap)
+                else:
+                    label_effect.setStrength(1.0)
+                    self.set_pixmap_opacity(0.75)
 
 
 # adapted from https://stackoverflow.com/a/42615559

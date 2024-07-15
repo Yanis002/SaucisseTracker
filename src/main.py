@@ -146,92 +146,48 @@ class MainWindow(QMainWindow):
     def create_labels(self):
         offset = -1 if os.name == "nt" else 0
         for item in self.config.active_inv.items:
-            label = Label(self.centralwidget, item.index, item.name)
-            label.setObjectName(f"item_{item.index}")
-            label.setGeometry(QRect(item.pos.x + offset, item.pos.y + offset, 32, 32))
-            label.setText("")
-            label.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[0]}"))
-            label.setPixmap(label.original_pixmap)
-            label.set_pixmap_opacity(1.0 if item.enabled else 0.75)
-            label.clicked_left.connect(self.label_clicked_left)
-            label.clicked_middle.connect(self.label_clicked_middle)
-            label.clicked_right.connect(self.label_clicked_right)
+            label_counter_map: dict[int, OutlinedLabel] = {}
+            label_effect_map: dict[int, QGraphicsColorizeEffect] = {}
+            label_map: dict[int, Label] = {}
 
-            if item.counter is not None:
-                counter_settings = self.config.text_settings[item.counter.text_settings_index]
-                label_counter = OutlinedLabel(label)
-                label_counter.setObjectName(f"item_{item.index}_counter")
-                label_counter.setGeometry(QRect(0, item.pos.y, 32, 32))
-                label_counter.setText("")
-                label_counter.set_counter_style(self.config, counter_settings, False)
-                self.config.active_inv.label_counter_map[item.index] = label_counter
-
-            # black & white effect, todo find something better? idk, enabled by default
-            label_effect = QGraphicsColorizeEffect(label)
-            label_effect.setStrength(0.0 if item.enabled else 1.0)
-            label_effect.setColor(QColor("black"))
-            label_effect.setObjectName(f"item_{item.index}_fx")
-            label.setGraphicsEffect(label_effect)
-
-            self.config.active_inv.label_effect_map[item.index] = label_effect
-            self.config.active_inv.label_map[item.index] = label
-
-    def update_label(self, label: Label, increase: bool):
-        label_effect = self.config.active_inv.label_effect_map[label.index]
-        label_counter = self.config.active_inv.label_counter_map.get(label.index)
-        item = self.config.active_inv.items[label.index]
-        path_index = 0
-
-        if len(item.paths) > 1:
-            if increase:
-                label.img_index += 1
-            else:
-                label.img_index -= 1
-
-            if label.img_index > len(item.paths) - 1:
-                label.img_index = -1
-            if label.img_index < -1:
-                label.img_index = len(item.paths) - 1
-
-            if label.img_index < 0:
-                label_effect.setStrength(1.0)  # enable filter
-                label.set_pixmap_opacity(0.75)
-                path_index = 0
-            else:
-                label_effect.setStrength(0.0)  # disable filter
+            for i, pos in enumerate(item.positions):
+                obj_name = f"item{item.index}_pos_{i}"
+                label = Label(self.centralwidget, item.index, item.name)
+                label.setObjectName(obj_name)
+                label.setGeometry(QRect(pos.x + offset, pos.y + offset, 32, 32))
+                label.setText("")
+                label.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[0]}"))
                 label.setPixmap(label.original_pixmap)
-                path_index = label.img_index
+                label.set_pixmap_opacity(1.0 if item.enabled else 0.75)
+                label.clicked_left.connect(self.label_clicked_left)
+                label.clicked_middle.connect(self.label_clicked_middle)
+                label.clicked_right.connect(self.label_clicked_right)
 
-            label.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}"))
-            label.setPixmap(label.original_pixmap)
+                if item.counter is not None:
+                    counter_settings = self.config.text_settings[item.counter.text_settings_index]
+                    label_counter = OutlinedLabel(label)
+                    label_counter.setObjectName(f"{obj_name}_counter")
+                    label_counter.setGeometry(QRect(0, pos.y, 32, 32))
+                    label_counter.setText("")
+                    label_counter.set_counter_style(self.config, counter_settings, False)
 
-            if label.img_index < 0:
-                label.set_pixmap_opacity(0.75)
-            else:
-                label.setPixmap(label.original_pixmap)
-        elif label_counter is not None:
-            if increase:
-                item.counter.incr()
-            else:
-                item.counter.decr()
+                    label_counter_map[i] = label_counter
 
-            if item.counter.show:
-                counter_settings = self.config.text_settings[item.counter.text_settings_index]
-                label_effect.setStrength(0.0)  # disable filter
-                label.setPixmap(label.original_pixmap)
-                label_counter.setText(f"{item.counter.value}")
-                label_counter.set_counter_style(self.config, counter_settings, item.counter.value == item.counter.max)
-            else:
-                label_effect.setStrength(1.0)  # enable filter
-                label.set_pixmap_opacity(0.75)
-                label_counter.setText("")
-        else:
-            if label_effect.strength() > 0.0:
-                label_effect.setStrength(0.0)
-                label.setPixmap(label.original_pixmap)
-            else:
-                label_effect.setStrength(1.0)
-                label.set_pixmap_opacity(0.75)
+                # black & white effect, todo find something better? idk, enabled by default
+                label_effect = QGraphicsColorizeEffect(label)
+                label_effect.setStrength(0.0 if item.enabled else 1.0)
+                label_effect.setColor(QColor("black"))
+                label_effect.setObjectName(f"{obj_name}_fx")
+                label.setGraphicsEffect(label_effect)
+
+                label_effect_map[i] = label_effect
+                label_map[i] = label
+
+            if len(label_counter_map) > 0:
+                self.config.active_inv.label_counter_map[item.index] = label_counter_map
+
+            self.config.active_inv.label_effect_map[item.index] = label_effect_map
+            self.config.active_inv.label_map[item.index] = label_map
 
     # connections callbacks
 
@@ -262,14 +218,14 @@ class MainWindow(QMainWindow):
 
     def label_clicked_left(self):
         label: Label = self.sender()
-        self.update_label(label, True)
+        label.update_label(self.config, self.config.active_inv.items[label.index], True)
 
     def label_clicked_middle(self):
         label: Label = self.sender()
 
     def label_clicked_right(self):
         label: Label = self.sender()
-        self.update_label(label, False)
+        label.update_label(self.config, self.config.active_inv.items[label.index], False)
 
 
 def main():

@@ -1,21 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    ### Quick documentation ###
-
-    # General stuff
-
-    Background: the image that will be used for the background
-    Fonts: list of fonts to use (the "Name" part is simply the name that displays at the top when you preview the font)
-    Colors: the color settings (do not change the value of "Key")
-    Inventory: Defines the inventory items/equipment/other
-
-    # Inventory
-    Font: the font index to use when drawing text
-    Tiers: the different tier of the current item (example for OoT's bow: "30;40;50")
-    Pos: the position of the current item, in the format "Pos X;Pos Y" (example: 0;0 for top-left corner)
-    -> if "Sources" contains only one item the first one will be used by default
-    -> use ``;`` to separate the filenames/tiers values
--->
 <Table>
     <Config DefaultInventory="0" StatePath="config/oot/state.txt">
         <Fonts>
@@ -65,6 +48,28 @@
             <Item Pos="131;90" Name="Megaton Hammer" Source="items/hammer.png"/>
             <Item Pos="172;90" Name="Light Arrow" Source="items/light_arrow.png"/>
             <Item Pos="213;90" Name="Nayru's Love" Source="items/nayrus_love.png"/>
+            <Item Name="Bottle Slots">
+                <Sources>
+                    <Item Path="items/bottles/empty_bottle.png"/>
+                    <Item Path="items/bottles/red_potion.png"/>
+                    <Item Path="items/bottles/green_potion.png"/>
+                    <Item Path="items/bottles/blue_potion.png"/>
+                    <Item Path="items/bottles/fairy.png"/>
+                    <Item Path="items/bottles/fish.png"/>
+                    <Item Path="items/bottles/milk.png"/>
+                    <Item Path="items/bottles/rutos_letter.png"/>
+                    <Item Path="items/bottles/blue_fire.png"/>
+                    <Item Path="items/bottles/bug.png"/>
+                    <Item Path="items/bottles/big_poe.png"/>
+                    <Item Path="items/bottles/poe.png"/>
+                </Sources>
+                <Positions>
+                    <Item X="7" Y="131"/>
+                    <Item X="48" Y="131"/>
+                    <Item X="89" Y="131"/>
+                    <Item X="130" Y="131"/>
+                </Positions>
+            </Item>
             <Item Pos="8;176" Name="Kokiri Sword" Source="items/kokiri_sword.png"/>
             <Item Pos="49;176" Name="Master Sword" Source="items/master_sword.png"/>
             <Item Pos="90;176" Name="Biggoron's Sword" Source="items/biggoron_sword.png"/>

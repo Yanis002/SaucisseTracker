@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from config import Config
 
+from PyQt6.QtGui import QPixmap
+
+from common import get_new_path
+
 
 WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING !!!\n" + "!" * 63 + "\n\n"
 
@@ -8,6 +12,7 @@ WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU A
 @dataclass
 class LabelState:
     index: int
+    pos_index: int
     name: str
     img_index: int
     counter_value: int
@@ -24,18 +29,20 @@ class State:
             self.config.state_path = f"{self.config.state_path}.txt"
 
     def get_states_from_labels(self):
-        for index, label in self.config.active_inv.label_map.items():
-            item = self.config.active_inv.items[index]
-            self.states.append(
-                LabelState(
-                    index,
-                    item.name,
-                    label.img_index,
-                    (item.counter.value if item.counter is not None else 0),
-                    (item.counter.show if item.counter is not None else False),
-                    self.config.active_inv.label_effect_map[index].strength() == 0.0,
+        for index, sub_map in self.config.active_inv.label_map.items():
+            for i, label in sub_map.items():
+                item = self.config.active_inv.items[index]
+                self.states.append(
+                    LabelState(
+                        index,
+                        i,
+                        item.name,
+                        label.img_index,
+                        (item.counter.value if item.counter is not None else 0),
+                        (item.counter.show if item.counter is not None else False),
+                        self.config.active_inv.label_effect_map[index][i].strength() == 0.0,
+                    )
                 )
-            )
 
     def get_states_from_file(self, filedata: str):
         new_state = None
@@ -49,14 +56,16 @@ class State:
             if line.startswith("Label #"):
                 if new_state is not None:
                     self.states.append(new_state)
-                new_state = LabelState(int(line.split("#")[1].removesuffix(":")), "", 0, 0, False, False)
+                new_state = LabelState(int(line.split("#")[1].removesuffix(":")), 0, "", 0, 0, False, False)
             else:
                 if new_state is None:
                     raise RuntimeError("ERROR: something unexpected happened...")
 
                 value = line.split(" = ")[1]
 
-                if line.startswith("name"):
+                if line.startswith("pos_index"):
+                    new_state.pos_index = int(value)
+                elif line.startswith("name"):
                     new_state.name = value.removeprefix("'").removesuffix("'")
                 elif line.startswith("enabled"):
                     new_state.enabled = True if value == "True" else False
@@ -77,31 +86,48 @@ class State:
         self.get_states_from_file(filedata)
 
         for state in self.states:
-            label = self.config.active_inv.label_map[state.index]
             item = self.config.active_inv.items[state.index]
+            label = None
 
-            if label.name != state.name:
-                print(f"WARNING: name mismatch! ignoring the current label... ('{label.name}', '{state.name}')")
-                continue
+            for i, _ in enumerate(item.positions):
+                if i == state.pos_index:
+                    label = self.config.active_inv.label_map[state.index][i]
+                    break
+                else:
+                    label = None
 
-            label.img_index = state.img_index
-            if item.counter is not None:
-                item.counter.value = state.counter_value
-                item.counter.show = state.counter_show
+            if label is not None:
+                if label.name != state.name:
+                    print(f"WARNING: name mismatch! ignoring the current label... ('{label.name}', '{state.name}')")
+                    continue
 
-                if item.counter.show:
-                    counter_settings = self.config.text_settings[item.counter.text_settings_index]
-                    label_counter = self.config.active_inv.label_counter_map[state.index]
-                    label_counter.setText(f"{item.counter.value}")
-                    label_counter.set_counter_style(
-                        self.config, counter_settings, item.counter.value == item.counter.max
-                    )
+                if item.counter is not None:
+                    item.counter.value = state.counter_value
+                    item.counter.show = state.counter_show
 
-            label.setPixmap(label.original_pixmap)
-            if not state.enabled:
-                label.set_pixmap_opacity(0.75)
+                    if item.counter.value % item.counter.increment:
+                        print("WARNING: the counter's value doesn't match how it's incremented")
 
-            self.config.active_inv.label_effect_map[state.index].setStrength(0.0 if state.enabled else 1.0)
+                    if item.counter.show:
+                        counter_settings = self.config.text_settings[item.counter.text_settings_index]
+                        label_counter = self.config.active_inv.label_counter_map[state.index][i]
+                        label_counter.setText(f"{item.counter.value}")
+                        label_counter.set_counter_style(
+                            self.config, counter_settings, item.counter.value == item.counter.max
+                        )
+
+                if state.img_index < 0:
+                    path_index = 0
+                else:
+                    path_index = state.img_index
+
+                label.img_index = state.img_index
+                label.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}"))
+                label.setPixmap(label.original_pixmap)
+                if not state.enabled:
+                    label.set_pixmap_opacity(0.75)
+
+                self.config.active_inv.label_effect_map[state.index][i].setStrength(0.0 if state.enabled else 1.0)
 
     def save(self):
         if self.config.state_path is None:
@@ -114,6 +140,7 @@ class State:
                 WARNING_TEXT
                 + "\n\n".join(
                     f"Label #{s.index:02}:\n\t"
+                    + f"pos_index = {s.pos_index}\n\t"
                     + f"name = '{s.name}'\n\t"
                     + f"enabled = {s.enabled}\n\t"
                     + f"img_index = {s.img_index}\n\t"

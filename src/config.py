@@ -96,7 +96,7 @@ class InventoryItem:
     name: str
     paths: list[str]
     counter: Optional[Counter]
-    pos: Pos
+    positions: list[Pos]
     enabled: bool
 
 
@@ -107,9 +107,10 @@ class Inventory:
         self.background: Optional[str] = None
         self.items: list[InventoryItem] = []
 
-        self.label_effect_map: dict[int, QGraphicsColorizeEffect] = {}
-        self.label_counter_map: dict[int, OutlinedLabel] = {}
-        self.label_map: dict[int, Label] = {}
+        # { item_index: { pos_index: data } }
+        self.label_effect_map: dict[int, dict[int, QGraphicsColorizeEffect]] = {}
+        self.label_counter_map: dict[int, dict[int, OutlinedLabel]] = {}
+        self.label_map: dict[int, dict[int, Label]] = {}
 
 
 class Config:
@@ -186,6 +187,7 @@ class Config:
                         path = item.get("Source")
                         pos = item.get("Pos")
                         paths: list[str] = []
+                        positions: list[Pos] = []
 
                         if path is None:
                             sources = item.find("Sources")
@@ -194,15 +196,21 @@ class Config:
                         else:
                             paths.append(path)
 
+                        if pos is None:
+                            pos_node = item.find("Positions")
+                            for sub_item in pos_node:
+                                positions.append(Pos(int(sub_item.get("X", "0")), int(sub_item.get("Y", "0"))))
+                        else:
+                            pos_list = pos.split(";")
+                            if len(pos_list) > 2:
+                                raise ValueError(f"ERROR: Found more than 2 positions for item '{name}'")
+                            positions.append(Pos(int(pos_list[0]), int(pos_list[1])))
+
                         if None in paths:
                             raise ValueError(f"ERROR: Missing path(s) for item '{name}'")
 
-                        if pos is None:
+                        if len(positions) == 0:
                             raise ValueError(f"ERROR: Missing positions for item '{name}'")
-
-                        pos_list = pos.split(";")
-                        if len(pos_list) > 2:
-                            raise ValueError(f"ERROR: Found more than 2 positions for item '{name}'")
 
                         counter = None
                         c = item.find("Counter")
@@ -220,7 +228,7 @@ class Config:
                                 name,
                                 paths,
                                 counter,
-                                Pos(int(pos_list[0]), int(pos_list[1])),
+                                positions,
                                 self.get_bool_from_string(item.get("Enabled", "False")),
                             )
                         )
