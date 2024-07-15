@@ -35,6 +35,47 @@ Planned:
     - ``.github/``: hosts the GitHub workflows (to provide automated builds and releases)
     - ``.vscode/``: settings and launch profiles for Visual Studio Code
 
+## Config File Structure
+
+* ``<Config>``: declares a new config
+    - ``DefaultInventory``: the index to the default inventory settings to use
+    - ``StatePath``: optional, can be used to set a path to save and load the tracker's state, skips the file dialogs if used
+* ``<Fonts>``: list of external fonts to use
+    - ``<Item>``: an element of the list
+        * ``Index``: the index of the font
+        * ``Name``: the name of the font (same name as the one that shows in the font preview)
+        * ``Source``: the path to the font file (.ttf/.otf)
+* ``<TextSettings>``: list of text settings, controls bold, size, default/max colors and the font to use
+    - ``<Item>``: an element of the list
+        * ``Index``: the index of the setting
+        * ``Name``: the name of the setting
+        * ``FontIndex``: the font index to specify which font to use
+        * ``Size``: the size of the text
+        * ``Bold``: toggles bold on the text
+        * ``Color``: the default color, usually white (0xFFFFFF)
+        * ``ColorMax``: the color to use when reaching the maximum value (for counters for instance), usually green (0x00FF00)
+* ``<Inventory>``:
+    - ``Index``: the index of the inventory
+    - ``Name``: the name of the inventory configuration
+    - ``Background``: the background image to use for this inventory
+    - ``<Item>``: an element of the list
+        * ``Pos``: optional if using ``<Positions>``, defines the X and Y position in the window (format: ``Pos="X;Y"``)
+        * ``Name``: the name of the inventory item
+        * ``Source``: optional if using ``<Sources>``, defines the path to the texture to use for this item
+        * ``Enabled``: optional, can be used to enable an item by default
+        * ``<Counter>``: optional, declares a new counter for this item
+            - ``TextSettings``: the index of the text setting to use for this counter
+            - ``Min``: the lowest amount the counter can take
+            - ``Max``: the highest amount the counter can take
+            - ``Increment``: how much it's adding/substracting when the item gets updated
+        * ``<Sources>``: optional if using ``Source``, list of texture paths
+            - ``<Item>``: an element of the list
+                * ``Path``: the path to the texture
+        * ``<Positions>``: optional if using ``Pos``, list of positions, this will use the same set of sources to draw N items, N being the number of elements of that list
+            - ``<Item>``: an element of the list
+                * ``X``: the position on the X axis
+                * ``Y``: the position on the Y axis
+
 ## Creating a configuration
 
 To create your own configuration, start by creating a directory named ``config``. For executable builds you need to place it in the folder where the executable is located, if running from source it needs to be in the same folder where the ``src`` folder is (see how this repository does this)
