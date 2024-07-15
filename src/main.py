@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
                         QRect(pos.x + offset - 6, pos.y + 22, 32, 15),
                         "",
                         1,
-                        item.counter.text_settings_index
+                        item.counter.text_settings_index,
                     )
 
                     # emit a click if the counter label is clicked (workaround for priority)
@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
                         QRect(pos.x + offset - 6, pos.y + offset + 23, 45, 32),
                         reward.name,
                         1.8,
-                        reward.text_settings_index
+                        reward.text_settings_index,
                     )
                     label.raise_()
 

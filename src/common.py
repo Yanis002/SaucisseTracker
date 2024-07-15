@@ -33,7 +33,15 @@ class OutlinedLabel(QLabel):
         self.item_label: Optional["Label"] = None
 
     @staticmethod
-    def new(parent: "Label", config: "Config", obj_name: str, geometry: QRect, text: str, thickness: float, text_settings_index: int):
+    def new(
+        parent: "Label",
+        config: "Config",
+        obj_name: str,
+        geometry: QRect,
+        text: str,
+        thickness: float,
+        text_settings_index: int,
+    ):
         text_settings = config.text_settings[text_settings_index]
 
         new_label = OutlinedLabel(parent)
@@ -233,7 +241,9 @@ class Label(QLabel):
                         self.label_effect.setStrength(0.0)  # disable filter
                         self.setPixmap(self.original_pixmap)
                         self.label_counter.setText(f"{item.counter.value}")
-                        self.label_counter.set_text_style(config, counter_settings, item.counter.value == item.counter.max, 2)
+                        self.label_counter.set_text_style(
+                            config, counter_settings, item.counter.value == item.counter.max, 2
+                        )
                     else:
                         self.label_effect.setStrength(1.0)  # enable filter
                         self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
