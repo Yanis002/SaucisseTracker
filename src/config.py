@@ -124,7 +124,6 @@ class Inventory:
 
         # { item_index: { pos_index: data } }
         self.label_effect_map: dict[int, dict[int, QGraphicsColorizeEffect]] = {}
-        self.label_counter_map: dict[int, dict[int, OutlinedLabel]] = {}
         self.label_map: dict[int, dict[int, Label]] = {}
 
 

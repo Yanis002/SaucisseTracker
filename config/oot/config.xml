@@ -8,8 +8,9 @@
             <Item Index="3" Name="Windows Command Prompt" Source="fonts/windows_command_prompt.ttf"/>
         </Fonts>
         <TextSettings>
-            <Item Index="0" Name="Counters" FontIndex="2" Size="13" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
+            <Item Index="0" Name="Counters" FontIndex="2" Size="12.3" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
             <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF"/>
+            <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="13" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
         </TextSettings>
         <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png">
             <!-- Items -->
@@ -116,6 +117,28 @@
             <Item Pos="8;300" Name="Kokiri Boots" Source="items/kokiri_boots.png" Enabled="True"/>
             <Item Pos="48;300" Name="Iron Boots" Source="items/iron_boots.png"/>
             <Item Pos="90;300" Name="Hover Boots" Source="items/hover_boots.png"/>
+            <!-- Quest -->
+            <Item Pos="131;217" Name="Magic Meter" ScaleContent="True">
+                <Sources>
+                    <Item Path="items/magic.png"/>
+                    <Item Path="items/double_magic.png"/>
+                </Sources>
+            </Item>
+            <Item Pos="213;217" Name="Gerudo Card" Source="items/gerudo_card.png" ScaleContent="True"/>
+            <Item Pos="131;259" Name="Stone of Agony" Source="items/stone_of_agony.png"/>
+            <Item Pos="172;258" Name="Zora Scales">
+                <Sources>
+                    <Item Path="items/silver_scale.png"/>
+                    <Item Path="items/gold_scale.png"/>
+                </Sources>
+            </Item>
+            <Item Pos="213;258" Name="Strengths">
+                <Sources>
+                    <Item Path="items/goron_bracelet.png"/>
+                    <Item Path="items/silver_gauntlets.png"/>
+                    <Item Path="items/golden_gauntlets.png"/>
+                </Sources>
+            </Item>
             <!-- Rewards -->
             <Item Pos="131;300" Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png" Reward="True"/>
             <Item Pos="172;300" Name="Goron Ruby" Source="items/rewards/goron_ruby.png" Reward="True"/>
@@ -138,6 +161,32 @@
                 <Item Name="SHADOW" TextSettings="1"/>
                 <Item Name="SPIRIT" TextSettings="1"/>
             </Rewards>
+            <!-- Alternative way to handle rewards
+            <Item Name="Rewards">
+                <Sources>
+                    <Item Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png"/>
+                    <Item Name="Goron Ruby" Source="items/rewards/goron_ruby.png"/>
+                    <Item Name="Zora Sapphire" Source="items/rewards/zora_sapphire.png"/>
+                    <Item Name="Forest Medallion" Source="items/rewards/forest_medallion.png"/>
+                    <Item Name="Fire Medallion" Source="items/rewards/fire_medallion.png"/>
+                    <Item Name="Water Medallion" Source="items/rewards/water_medallion.png"/>
+                    <Item Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png"/>
+                    <Item Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png"/>
+                    <Item Name="Light Medallion" Source="items/rewards/light_medallion.png"/>
+                </Sources>
+                <Positions>
+                    <Item X="131" Y="300"/>
+                    <Item X="172" Y="300"/>
+                    <Item X="213" Y="300"/>
+                    <Item X="8" Y="345"/>
+                    <Item X="48" Y="345"/>
+                    <Item X="90" Y="345"/>
+                    <Item X="131" Y="345"/>
+                    <Item X="172" Y="345"/>
+                    <Item X="213" Y="345"/>
+                </Positions>
+            </Item> 
+            Alternative way to handle rewards -->
             <!-- Songs -->
         </Inventory>
     </Config>

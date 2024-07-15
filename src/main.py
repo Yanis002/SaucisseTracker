@@ -146,45 +146,61 @@ class MainWindow(QMainWindow):
     def create_labels(self):
         offset = -1 if os.name == "nt" else 0
         for item in self.config.active_inv.items:
-            label_counter_map: dict[int, OutlinedLabel] = {}
             label_effect_map: dict[int, QGraphicsColorizeEffect] = {}
             label_map: dict[int, Label] = {}
 
             for i, pos in enumerate(item.positions):
                 obj_name = f"item{item.index}_pos_{i}"
+                img_path = get_new_path(f"config/oot/{item.paths[0]}")
+
+                if item.scale_content:
+                    width = 32
+                    height = 32
+                else:
+                    width, height = Image.open(img_path).size
+
                 label = Label(self.centralwidget, item.index, item.name)
                 label.setObjectName(obj_name)
-                label.setGeometry(QRect(pos.x + offset, pos.y + offset, 32, 32))
+                label.setGeometry(QRect(pos.x + offset, pos.y + offset, width, height))
                 label.setText("")
-                label.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[0]}"))
+                label.original_pixmap = QPixmap(img_path)
                 label.setPixmap(label.original_pixmap)
                 label.set_pixmap_opacity(1.0 if item.enabled else GLOBAL_HALF_OPACITY)
                 label.setScaledContents(item.scale_content)
+
                 label.clicked_left.connect(self.label_clicked_left)
                 label.clicked_middle.connect(self.label_clicked_middle)
                 label.clicked_right.connect(self.label_clicked_right)
 
                 if item.counter is not None:
-                    text_settings = self.config.text_settings[item.counter.text_settings_index]
-                    label_counter = OutlinedLabel(label)
-                    label_counter.setObjectName(f"{obj_name}_counter")
-                    label_counter.setGeometry(QRect(0, pos.y, 32, 32))
-                    label_counter.setText("")
-                    label_counter.set_text_style(self.config, text_settings, False, 1)
+                    label.label_counter = OutlinedLabel.new(
+                        self.centralwidget,
+                        self.config,
+                        f"{obj_name}_counter",
+                        QRect(pos.x + offset - 6, pos.y + 22, 32, 15),
+                        "",
+                        1,
+                        item.counter.text_settings_index
+                    )
 
-                    label_counter_map[i] = label_counter
+                    # emit a click if the counter label is clicked (workaround for priority)
+                    label.label_counter.item_label = label
+                    label.label_counter.clicked_left.connect(self.outlinedLabel_clicked_left)
+                    label.label_counter.clicked_middle.connect(self.outlinedLabel_clicked_middle)
+                    label.label_counter.clicked_right.connect(self.outlinedLabel_clicked_right)
 
                 if item.is_reward:
                     reward = self.config.active_inv.rewards.items[0]
-                    text_settings = self.config.text_settings[reward.text_settings_index]
-                    label_reward = OutlinedLabel(self.centralwidget)
-                    label_reward.setObjectName(f"{obj_name}_reward")
-                    label_reward.setGeometry(QRect(pos.x + offset - 6, pos.y + offset + 23, 45, 32))
-                    label_reward.setText(reward.name)
-                    label_reward.set_text_style(self.config, text_settings, False, 1.8)
-                    label_reward.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    label.label_reward = OutlinedLabel.new(
+                        self.centralwidget,
+                        self.config,
+                        f"{obj_name}_reward",
+                        QRect(pos.x + offset - 6, pos.y + offset + 23, 45, 32),
+                        reward.name,
+                        1.8,
+                        reward.text_settings_index
+                    )
                     label.raise_()
-                    label.label_reward = label_reward
 
                 # black & white effect, todo find something better? idk, enabled by default
                 label_effect = QGraphicsColorizeEffect(label)
@@ -195,9 +211,6 @@ class MainWindow(QMainWindow):
 
                 label_effect_map[i] = label_effect
                 label_map[i] = label
-
-            if len(label_counter_map) > 0:
-                self.config.active_inv.label_counter_map[item.index] = label_counter_map
 
             self.config.active_inv.label_effect_map[item.index] = label_effect_map
             self.config.active_inv.label_map[item.index] = label_map
@@ -228,6 +241,24 @@ class MainWindow(QMainWindow):
             self.about_window.hide()
         else:
             self.about_window.show()
+
+    def outlinedLabel_clicked_left(self):
+        label: OutlinedLabel = self.sender()
+
+        if label.item_label is not None:
+            label.item_label.clicked_left.emit()
+
+    def outlinedLabel_clicked_middle(self):
+        label: OutlinedLabel = self.sender()
+
+        if label.item_label is not None:
+            label.item_label.clicked_middle.emit()
+
+    def outlinedLabel_clicked_right(self):
+        label: OutlinedLabel = self.sender()
+
+        if label.item_label is not None:
+            label.item_label.clicked_right.emit()
 
     def label_clicked_left(self):
         label: Label = self.sender()

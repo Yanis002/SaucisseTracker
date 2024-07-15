@@ -4,7 +4,7 @@ import math
 from os import getcwd, path
 from typing import Optional, TYPE_CHECKING
 
-from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint
+from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect
 from PyQt6.QtWidgets import QLabel, QWidget
 from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
 
@@ -17,6 +17,11 @@ GLOBAL_HALF_OPACITY = 0.6
 
 # from https://stackoverflow.com/a/64291055
 class OutlinedLabel(QLabel):
+    clicked = pyqtSignal()
+    clicked_left = pyqtSignal()
+    clicked_middle = pyqtSignal()
+    clicked_right = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.w = 1 / 25
@@ -25,6 +30,35 @@ class OutlinedLabel(QLabel):
         self.setPen(Qt.GlobalColor.black)
 
         self.reward_index = 0
+        self.item_label: Optional["Label"] = None
+
+    @staticmethod
+    def new(parent: "Label", config: "Config", obj_name: str, geometry: QRect, text: str, thickness: float, text_settings_index: int):
+        text_settings = config.text_settings[text_settings_index]
+
+        new_label = OutlinedLabel(parent)
+        new_label.setObjectName(obj_name)
+        new_label.setGeometry(geometry)
+        new_label.setText(text)
+        new_label.set_text_style(config, text_settings, False, thickness)
+        new_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        return new_label
+
+    def mousePressEvent(self, e: Optional[QMouseEvent]):
+        super(QLabel, self).mousePressEvent(e)
+
+        if e is not None:
+            match e.button():
+                case Qt.MouseButton.LeftButton | Qt.MouseButton.MiddleButton | Qt.MouseButton.RightButton:
+                    self.clicked.emit()
+
+                    if e.button() == Qt.MouseButton.LeftButton:
+                        self.clicked_left.emit()
+                    elif e.button() == Qt.MouseButton.MiddleButton:
+                        self.clicked_middle.emit()
+                    else:
+                        self.clicked_right.emit()
 
     def scaledOutlineMode(self):
         return self.mode
@@ -128,6 +162,7 @@ class Label(QLabel):
         self.name = name
         self.img_index = -1
         self.original_pixmap: Optional[QPixmap] = None
+        self.label_counter: Optional[OutlinedLabel] = None
         self.label_reward: Optional[OutlinedLabel] = None
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
@@ -167,12 +202,6 @@ class Label(QLabel):
         if label_effect is not None:
             path_index = 0
 
-            label_counter_map = config.active_inv.label_counter_map.get(self.index)
-            if label_counter_map is not None:
-                label_counter = label_counter_map.get(i)
-            else:
-                label_counter = None
-
             if len(item.paths) > 1:
                 if increase:
                     self.img_index += 1
@@ -200,7 +229,7 @@ class Label(QLabel):
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                 else:
                     self.setPixmap(self.original_pixmap)
-            elif label_counter is not None:
+            elif self.label_counter is not None:
                 if increase:
                     item.counter.incr()
                 else:
@@ -210,12 +239,12 @@ class Label(QLabel):
                     counter_settings = config.text_settings[item.counter.text_settings_index]
                     label_effect.setStrength(0.0)  # disable filter
                     self.setPixmap(self.original_pixmap)
-                    label_counter.setText(f"{item.counter.value}")
-                    label_counter.set_text_style(config, counter_settings, item.counter.value == item.counter.max, 2)
+                    self.label_counter.setText(f"{item.counter.value}")
+                    self.label_counter.set_text_style(config, counter_settings, item.counter.value == item.counter.max, 2)
                 else:
                     label_effect.setStrength(1.0)  # enable filter
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
-                    label_counter.setText("")
+                    self.label_counter.setText("")
             else:
                 if label_effect.strength() > 0.0:
                     label_effect.setStrength(0.0)

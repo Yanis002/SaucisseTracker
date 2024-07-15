@@ -115,10 +115,9 @@ class State:
 
                     if item.counter.show:
                         counter_settings = self.config.text_settings[item.counter.text_settings_index]
-                        label_counter = self.config.active_inv.label_counter_map[state.index][i]
-                        label_counter.setText(f"{item.counter.value}")
-                        label_counter.set_text_style(
-                            self.config, counter_settings, item.counter.value == item.counter.max
+                        label.label_counter.setText(f"{item.counter.value}")
+                        label.label_counter.set_text_style(
+                            self.config, counter_settings, item.counter.value == item.counter.max, 2
                         )
 
                 if state.img_index < 0:
