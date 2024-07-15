@@ -5,11 +5,14 @@
             <Item Index="0" Name="LEMON MILK Bold" Source="fonts/LEMONMILK-Bold.otf"/>
             <Item Index="1" Name="Upheaval TT (BRK)" Source="fonts/upheavtt.ttf"/>
             <Item Index="2" Name="Visitor TT1 BRK" Source="fonts/visitor1.ttf"/>
+            <Item Index="3" Name="Windows Command Prompt" Source="fonts/windows_command_prompt.ttf"/>
         </Fonts>
         <TextSettings>
             <Item Index="0" Name="Counters" FontIndex="2" Size="13" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
+            <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF"/>
         </TextSettings>
         <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png">
+            <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
                 <Counter TextSettings="0" Min="10" Max="30" Increment="10"/>
             </Item>
@@ -70,6 +73,37 @@
                     <Item X="130" Y="131"/>
                 </Positions>
             </Item>
+            <Item Pos="172;131" Name="Trade Adult">
+                <Sources>
+                    <Item Path="items/trade_adult/weird_egg.png"/>
+                    <Item Path="items/trade_adult/cucco.png"/>
+                    <Item Path="items/trade_adult/cojiro.png"/>
+                    <Item Path="items/trade_adult/odd_mushroom.png"/>
+                    <Item Path="items/trade_adult/odd_potion.png"/>
+                    <Item Path="items/trade_adult/poachers_saw.png"/>
+                    <Item Path="items/trade_adult/broken_goron_sword.png"/>
+                    <Item Path="items/trade_adult/prescription.png"/>
+                    <Item Path="items/trade_adult/eyball_frog.png"/>
+                    <Item Path="items/trade_adult/eyedrops.png"/>
+                    <Item Path="items/trade_adult/claim_check.png"/>
+                </Sources>
+            </Item>
+            <Item Pos="213;131" Name="Trade Child">
+                <Sources>
+                    <Item Path="items/trade_child/weird_egg.png"/>
+                    <Item Path="items/trade_child/cucco.png"/>
+                    <Item Path="items/trade_child/zeldas_letter.png"/>
+                    <Item Path="items/trade_child/keaton_mask.png"/>
+                    <Item Path="items/trade_child/skull_mask.png"/>
+                    <Item Path="items/trade_child/spooky_mask.png"/>
+                    <Item Path="items/trade_child/bunny_hood.png"/>
+                    <Item Path="items/trade_child/goron_mask.png"/>
+                    <Item Path="items/trade_child/zora_mask.png"/>
+                    <Item Path="items/trade_child/gerudo_mask.png"/>
+                    <Item Path="items/trade_child/mask_of_truth.png"/>
+                </Sources>
+            </Item>
+            <!-- Equipment -->
             <Item Pos="8;176" Name="Kokiri Sword" Source="items/kokiri_sword.png"/>
             <Item Pos="49;176" Name="Master Sword" Source="items/master_sword.png"/>
             <Item Pos="90;176" Name="Biggoron's Sword" Source="items/biggoron_sword.png"/>
@@ -82,6 +116,29 @@
             <Item Pos="8;300" Name="Kokiri Boots" Source="items/kokiri_boots.png" Enabled="True"/>
             <Item Pos="48;300" Name="Iron Boots" Source="items/iron_boots.png"/>
             <Item Pos="90;300" Name="Hover Boots" Source="items/hover_boots.png"/>
+            <!-- Rewards -->
+            <Item Pos="131;300" Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png" Reward="True"/>
+            <Item Pos="172;300" Name="Goron Ruby" Source="items/rewards/goron_ruby.png" Reward="True"/>
+            <Item Pos="213;300" Name="Zora Sapphire" Source="items/rewards/zora_sapphire.png" Reward="True"/>
+            <Item Pos="8;345" Name="Forest Medallion" Source="items/rewards/forest_medallion.png" Reward="True"/>
+            <Item Pos="48;345" Name="Fire Medallion" Source="items/rewards/fire_medallion.png" Reward="True"/>
+            <Item Pos="90;345" Name="Water Medallion" Source="items/rewards/water_medallion.png" Reward="True"/>
+            <Item Pos="131;345" Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png" Reward="True"/>
+            <Item Pos="172;345" Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png" Reward="True"/>
+            <Item Pos="213;345" Name="Light Medallion" Source="items/rewards/light_medallion.png" Reward="True"/>
+            <Rewards>
+                <Item Name="????" TextSettings="1"/>
+                <Item Name="FREE" TextSettings="1"/>
+                <Item Name="DEKU" TextSettings="1"/>
+                <Item Name="DC" TextSettings="1"/>
+                <Item Name="JABU" TextSettings="1"/>
+                <Item Name="FOREST" TextSettings="1"/>
+                <Item Name="FIRE" TextSettings="1"/>
+                <Item Name="WATER" TextSettings="1"/>
+                <Item Name="SHADOW" TextSettings="1"/>
+                <Item Name="SPIRIT" TextSettings="1"/>
+            </Rewards>
+            <!-- Songs -->
         </Inventory>
     </Config>
 </Table>

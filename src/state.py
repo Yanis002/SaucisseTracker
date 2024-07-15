@@ -3,7 +3,7 @@ from config import Config
 
 from PyQt6.QtGui import QPixmap
 
-from common import get_new_path
+from common import get_new_path, GLOBAL_HALF_OPACITY
 
 
 WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING !!!\n" + "!" * 63 + "\n\n"
@@ -18,6 +18,7 @@ class LabelState:
     counter_value: int
     counter_show: bool
     enabled: bool
+    reward_index: int
 
 
 class State:
@@ -41,6 +42,7 @@ class State:
                         (item.counter.value if item.counter is not None else 0),
                         (item.counter.show if item.counter is not None else False),
                         self.config.active_inv.label_effect_map[index][i].strength() == 0.0,
+                        label.label_reward.reward_index if label.label_reward is not None else 0,
                     )
                 )
 
@@ -53,7 +55,7 @@ class State:
             if line == "" or i == 0:
                 if new_state is not None:
                     self.states.append(new_state)
-                new_state = LabelState(0, 0, "", 0, 0, False, False)
+                new_state = LabelState(0, 0, "", 0, 0, False, False, 0)
 
                 if line == "":
                     continue
@@ -76,6 +78,8 @@ class State:
                         new_state.counter_value = int(value)
                     elif line.startswith("counter_show"):
                         new_state.counter_show = True if value == "True" else False
+                    elif line.startswith("reward_index"):
+                        new_state.reward_index = int(value)
 
     def open(self):
         if self.config.state_path is None:
@@ -113,7 +117,7 @@ class State:
                         counter_settings = self.config.text_settings[item.counter.text_settings_index]
                         label_counter = self.config.active_inv.label_counter_map[state.index][i]
                         label_counter.setText(f"{item.counter.value}")
-                        label_counter.set_counter_style(
+                        label_counter.set_text_style(
                             self.config, counter_settings, item.counter.value == item.counter.max
                         )
 
@@ -126,7 +130,12 @@ class State:
                 label.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}"))
                 label.setPixmap(label.original_pixmap)
                 if not state.enabled:
-                    label.set_pixmap_opacity(0.75)
+                    label.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
+
+                if label.label_reward is not None:
+                    label.label_reward.reward_index = state.reward_index
+                    reward = self.config.active_inv.rewards.items[label.label_reward.reward_index]
+                    label.label_reward.setText(reward.name)
 
                 self.config.active_inv.label_effect_map[state.index][i].setStrength(0.0 if state.enabled else 1.0)
 
@@ -146,7 +155,8 @@ class State:
                     + f"enabled = {s.enabled}\n\t"
                     + f"img_index = {s.img_index}\n\t"
                     + f"counter_value = {s.counter_value}\n\t"
-                    + f"counter_show = {s.counter_show}"
+                    + f"counter_show = {s.counter_show}\n\t"
+                    + f"reward_index = {s.reward_index}"
                     for s in self.states
                 )
                 + "\n"

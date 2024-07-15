@@ -12,6 +12,9 @@ if TYPE_CHECKING:
     from config import Config, TextSettings, InventoryItem
 
 
+GLOBAL_HALF_OPACITY = 0.6
+
+
 # from https://stackoverflow.com/a/64291055
 class OutlinedLabel(QLabel):
     def __init__(self, *args, **kwargs):
@@ -20,6 +23,8 @@ class OutlinedLabel(QLabel):
         self.mode = True
         self.setBrush(Qt.GlobalColor.white)
         self.setPen(Qt.GlobalColor.black)
+
+        self.reward_index = 0
 
     def scaledOutlineMode(self):
         return self.mode
@@ -92,16 +97,16 @@ class OutlinedLabel(QLabel):
             qp.fillPath(path, self.palette().window())
         qp.fillPath(path, self.brush)
 
-    def set_counter_style(self, config: "Config", counter_settings: "TextSettings", is_max: bool):
-        font = config.fonts[counter_settings.font]
-        color = counter_settings.color_max if is_max else counter_settings.color
+    def set_text_style(self, config: "Config", text_settings: "TextSettings", is_max: bool, thickness: int):
+        font = config.fonts[text_settings.font]
+        color = text_settings.color_max if is_max else text_settings.color
 
         self.setScaledOutlineMode(False)
-        self.setOutlineThickness(2)
+        self.setOutlineThickness(thickness)
         self.setBrush(QColor(color.r, color.g, color.b))
         self.setStyleSheet(
             f"""
-                font: {'75' if counter_settings.bold else ''} {counter_settings.size}pt "{font.name}";
+                font: {'75' if text_settings.bold else ''} {text_settings.size}pt "{font.name}";
                 color: rgb({color.r}, {color.g}, {color.b});
             """
         )
@@ -123,6 +128,7 @@ class Label(QLabel):
         self.name = name
         self.img_index = -1
         self.original_pixmap: Optional[QPixmap] = None
+        self.label_reward: Optional[OutlinedLabel] = None
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)
@@ -180,7 +186,7 @@ class Label(QLabel):
 
                 if self.img_index < 0:
                     label_effect.setStrength(1.0)  # enable filter
-                    self.set_pixmap_opacity(0.75)
+                    self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                     path_index = 0
                 else:
                     label_effect.setStrength(0.0)  # disable filter
@@ -191,7 +197,7 @@ class Label(QLabel):
                 self.setPixmap(self.original_pixmap)
 
                 if self.img_index < 0:
-                    self.set_pixmap_opacity(0.75)
+                    self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                 else:
                     self.setPixmap(self.original_pixmap)
             elif label_counter is not None:
@@ -205,10 +211,10 @@ class Label(QLabel):
                     label_effect.setStrength(0.0)  # disable filter
                     self.setPixmap(self.original_pixmap)
                     label_counter.setText(f"{item.counter.value}")
-                    label_counter.set_counter_style(config, counter_settings, item.counter.value == item.counter.max)
+                    label_counter.set_text_style(config, counter_settings, item.counter.value == item.counter.max, 2)
                 else:
                     label_effect.setStrength(1.0)  # enable filter
-                    self.set_pixmap_opacity(0.75)
+                    self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                     label_counter.setText("")
             else:
                 if label_effect.strength() > 0.0:
@@ -216,7 +222,7 @@ class Label(QLabel):
                     self.setPixmap(self.original_pixmap)
                 else:
                     label_effect.setStrength(1.0)
-                    self.set_pixmap_opacity(0.75)
+                    self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
 
 
 # adapted from https://stackoverflow.com/a/42615559

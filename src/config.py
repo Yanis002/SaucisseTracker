@@ -48,7 +48,7 @@ class TextSettings:
     index: int
     name: str
     font: int
-    size: int
+    size: float
     bold: bool
     color: Color
     color_max: Color
@@ -98,6 +98,20 @@ class InventoryItem:
     counter: Optional[Counter]
     positions: list[Pos]
     enabled: bool
+    scale_content: bool
+    is_reward: bool
+
+
+@dataclass
+class RewardItem:
+    name: str
+    text_settings_index: int
+
+
+class Rewards:
+    def __init__(self):
+        self.index = 0
+        self.items: list[RewardItem] = []
 
 
 class Inventory:
@@ -106,6 +120,7 @@ class Inventory:
         self.name = str()
         self.background: Optional[str] = None
         self.items: list[InventoryItem] = []
+        self.rewards = Rewards()
 
         # { item_index: { pos_index: data } }
         self.label_effect_map: dict[int, dict[int, QGraphicsColorizeEffect]] = {}
@@ -170,7 +185,7 @@ class Config:
                                 int(item.get("Index", "0")),
                                 item.get("Name"),
                                 int(item.get("FontIndex", "0")),
-                                int(item.get("Size", "10")),
+                                float(item.get("Size", "10")),
                                 self.get_bool_from_string(item.get("Bold", "False")),
                                 Color.unpack(int(item.get("Color", "0x000000"), 0)),
                                 Color.unpack(int(item.get("ColorMax", "0x000000"), 0)),
@@ -230,8 +245,21 @@ class Config:
                                 counter,
                                 positions,
                                 self.get_bool_from_string(item.get("Enabled", "False")),
+                                self.get_bool_from_string(item.get("ScaleContent", "False")),
+                                self.get_bool_from_string(item.get("Reward", "False")),
                             )
                         )
+
+                    rewards = elem.find("Rewards")
+                    if rewards is not None:
+                        for i, item in enumerate(rewards.iterfind("Item")):
+                            inventory.rewards.items.append(
+                                RewardItem(
+                                    item.get("Name", "Unk"),
+                                    int(item.get("TextSettings", "0")),
+                                )
+                            )
+
                     self.inventories[inventory.index] = inventory
                 case _:
                     raise RuntimeError(f"ERROR: unknown configuration tag: '{elem.tag}'")

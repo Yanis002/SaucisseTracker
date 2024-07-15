@@ -101,6 +101,16 @@ See the configuration file's documentation to learn more about how to create you
 
 The background image's width and height will be used to set the window's width and height.
 
+## Contributing
+
+Any help is welcome!
+
+If you wish to add support for another file format (for config files):
+- go in the ``__init__`` function of the class named ``Config`` in ``config.py``
+- create a new function called ``parse_FORMAT_config``, it requires at least one parameter called ``self`` (``def parse_FORMAT_config(self)``)
+- find for ``if self.config_file.endswith(".xml")``, then add ``elif self.config_file.endswith(".FORMAT")``, where FORMAT is the file extension of the format you want to add (like ``.json`` or ``.yml`` for example)
+- call the function you created in this else-if case (``self.parse_FORMAT_config()``)
+
 ## Credits
 
-Made with ♥ by me, some concepts come from [LinSoTracker](https://github.com/linsorak/LinSoTracker) (like the "Go Mode" thing for instance)
+Made with ♥ by me, some concepts comes from [LinSoTracker](https://github.com/linsorak/LinSoTracker) (like the "Go Mode" thing for instance)

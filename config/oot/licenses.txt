@@ -1,4 +1,4 @@
---- BACKGROUND IMAGE ---
+--- BACKGROUND/GOMODE/LIGHT/CHECK IMAGES ---
 
 Taken with explicit permission from LinSoTracker (https://github.com/linsorak/LinSoTracker)
 
@@ -37,3 +37,7 @@ intact with the Font.
 
 -You may not Sell or Distribute my Fonts for profit or alter them in
 any way without asking me first.  [e-mail -  kentpw@norwich.net]
+
+--- WINDOWS COMMAND PROMPT FONT ---
+
+This font's license is unknown but it seems to be free? Please let me know if you know!
