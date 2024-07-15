@@ -100,3 +100,7 @@ Next, add a subfolder in the folder you just created, the name doesn't matter. E
 See the configuration file's documentation to learn more about how to create your own configuration (manually at least), an example is provided in this repo (look inside the ``config`` folder)
 
 The background image's width and height will be used to set the window's width and height.
+
+## Credits
+
+Made with ♥ by me, some concepts come from [LinSoTracker](https://github.com/linsorak/LinSoTracker) (like the "Go Mode" thing for instance)
