@@ -146,7 +146,6 @@ class MainWindow(QMainWindow):
     def create_labels(self):
         offset = -1 if os.name == "nt" else 0
         for item in self.config.active_inv.items:
-            label_effect_map: dict[int, QGraphicsColorizeEffect] = {}
             label_map: dict[int, Label] = {}
 
             for i, pos in enumerate(item.positions):
@@ -209,10 +208,9 @@ class MainWindow(QMainWindow):
                 label_effect.setObjectName(f"{obj_name}_fx")
                 label.setGraphicsEffect(label_effect)
 
-                label_effect_map[i] = label_effect
+                label.label_effect = label_effect
                 label_map[i] = label
 
-            self.config.active_inv.label_effect_map[item.index] = label_effect_map
             self.config.active_inv.label_map[item.index] = label_map
 
     # connections callbacks

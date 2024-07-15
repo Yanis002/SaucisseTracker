@@ -123,7 +123,6 @@ class Inventory:
         self.rewards = Rewards()
 
         # { item_index: { pos_index: data } }
-        self.label_effect_map: dict[int, dict[int, QGraphicsColorizeEffect]] = {}
         self.label_map: dict[int, dict[int, Label]] = {}
 
 

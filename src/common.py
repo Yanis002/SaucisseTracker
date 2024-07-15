@@ -5,7 +5,7 @@ from os import getcwd, path
 from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect
-from PyQt6.QtWidgets import QLabel, QWidget
+from PyQt6.QtWidgets import QLabel, QWidget, QGraphicsColorizeEffect
 from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
 
 if TYPE_CHECKING:
@@ -163,6 +163,7 @@ class Label(QLabel):
         self.img_index = -1
         self.original_pixmap: Optional[QPixmap] = None
         self.label_counter: Optional[OutlinedLabel] = None
+        self.label_effect: Optional[QGraphicsColorizeEffect] = None
         self.label_reward: Optional[OutlinedLabel] = None
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
@@ -190,16 +191,7 @@ class Label(QLabel):
         self.setPixmap(pixmap)
 
     def update_label(self, config: "Config", item: "InventoryItem", increase: bool):
-        label_effect = None
-
-        for i, _ in enumerate(item.positions):
-            label_effect = config.active_inv.label_effect_map[self.index][i]
-            if self.objectName() in label_effect.objectName():
-                break
-            else:
-                label_effect = None
-
-        if label_effect is not None:
+        if self.label_effect is not None:
             path_index = 0
 
             if len(item.paths) > 1:
@@ -214,11 +206,11 @@ class Label(QLabel):
                     self.img_index = len(item.paths) - 1
 
                 if self.img_index < 0:
-                    label_effect.setStrength(1.0)  # enable filter
+                    self.label_effect.setStrength(1.0)  # enable filter
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                     path_index = 0
                 else:
-                    label_effect.setStrength(0.0)  # disable filter
+                    self.label_effect.setStrength(0.0)  # disable filter
                     self.setPixmap(self.original_pixmap)
                     path_index = self.img_index
 
@@ -235,23 +227,25 @@ class Label(QLabel):
                 else:
                     item.counter.decr()
 
-                if item.counter.show:
-                    counter_settings = config.text_settings[item.counter.text_settings_index]
-                    label_effect.setStrength(0.0)  # disable filter
-                    self.setPixmap(self.original_pixmap)
-                    self.label_counter.setText(f"{item.counter.value}")
-                    self.label_counter.set_text_style(config, counter_settings, item.counter.value == item.counter.max, 2)
-                else:
-                    label_effect.setStrength(1.0)  # enable filter
-                    self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
-                    self.label_counter.setText("")
+                if self.label_effect is not None:
+                    if item.counter.show:
+                        counter_settings = config.text_settings[item.counter.text_settings_index]
+                        self.label_effect.setStrength(0.0)  # disable filter
+                        self.setPixmap(self.original_pixmap)
+                        self.label_counter.setText(f"{item.counter.value}")
+                        self.label_counter.set_text_style(config, counter_settings, item.counter.value == item.counter.max, 2)
+                    else:
+                        self.label_effect.setStrength(1.0)  # enable filter
+                        self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
+                        self.label_counter.setText("")
             else:
-                if label_effect.strength() > 0.0:
-                    label_effect.setStrength(0.0)
-                    self.setPixmap(self.original_pixmap)
-                else:
-                    label_effect.setStrength(1.0)
-                    self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
+                if self.label_effect is not None:
+                    if self.label_effect.strength() > 0.0:
+                        self.label_effect.setStrength(0.0)
+                        self.setPixmap(self.original_pixmap)
+                    else:
+                        self.label_effect.setStrength(1.0)
+                        self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
 
 
 # adapted from https://stackoverflow.com/a/42615559

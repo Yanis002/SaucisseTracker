@@ -41,7 +41,7 @@ class State:
                         label.img_index,
                         (item.counter.value if item.counter is not None else 0),
                         (item.counter.show if item.counter is not None else False),
-                        self.config.active_inv.label_effect_map[index][i].strength() == 0.0,
+                        label.label_effect.strength() == 0.0 if label.label_effect is not None else False,
                         label.label_reward.reward_index if label.label_reward is not None else 0,
                     )
                 )
@@ -136,7 +136,8 @@ class State:
                     reward = self.config.active_inv.rewards.items[label.label_reward.reward_index]
                     label.label_reward.setText(reward.name)
 
-                self.config.active_inv.label_effect_map[state.index][i].setStrength(0.0 if state.enabled else 1.0)
+                if label.label_effect is not None:
+                    label.label_effect.setStrength(0.0 if state.enabled else 1.0)
 
     def save(self):
         if self.config.state_path is None:
