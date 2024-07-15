@@ -47,34 +47,35 @@ class State:
     def get_states_from_file(self, filedata: str):
         new_state = None
 
-        for line in filedata:
+        for i, line in enumerate(filedata):
             line = line.strip()
 
-            if line == "":
-                continue
-
-            if line.startswith("Label #"):
+            if line == "" or i == 0:
                 if new_state is not None:
                     self.states.append(new_state)
-                new_state = LabelState(int(line.split("#")[1].removesuffix(":")), 0, "", 0, 0, False, False)
-            else:
-                if new_state is None:
-                    raise RuntimeError("ERROR: something unexpected happened...")
+                new_state = LabelState(0, 0, "", 0, 0, False, False)
 
-                value = line.split(" = ")[1]
+                if line == "":
+                    continue
 
-                if line.startswith("pos_index"):
-                    new_state.pos_index = int(value)
-                elif line.startswith("name"):
-                    new_state.name = value.removeprefix("'").removesuffix("'")
-                elif line.startswith("enabled"):
-                    new_state.enabled = True if value == "True" else False
-                elif line.startswith("img_index"):
-                    new_state.img_index = int(value)
-                elif line.startswith("counter_value"):
-                    new_state.counter_value = int(value)
-                elif line.startswith("counter_show"):
-                    new_state.counter_show = True if value == "True" else False
+            if new_state is not None:
+                if line.startswith("Label #"):
+                    new_state.index = int(line.split("#")[1].removesuffix(":"))
+                else:
+                    value = line.split(" = ")[1]
+
+                    if line.startswith("pos_index"):
+                        new_state.pos_index = int(value)
+                    elif line.startswith("name"):
+                        new_state.name = value.removeprefix("'").removesuffix("'")
+                    elif line.startswith("enabled"):
+                        new_state.enabled = True if value == "True" else False
+                    elif line.startswith("img_index"):
+                        new_state.img_index = int(value)
+                    elif line.startswith("counter_value"):
+                        new_state.counter_value = int(value)
+                    elif line.startswith("counter_show"):
+                        new_state.counter_show = True if value == "True" else False
 
     def open(self):
         if self.config.state_path is None:
