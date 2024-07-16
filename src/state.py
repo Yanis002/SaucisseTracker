@@ -131,10 +131,9 @@ class State:
                         print("WARNING: the counter's value doesn't match how it's incremented")
 
                     if item.counter.show:
-                        counter_settings = self.config.text_settings[item.counter.text_settings_index]
                         label.label_counter.setText(f"{item.counter.value}")
                         label.label_counter.set_text_style(
-                            self.config, counter_settings, item.counter.value == item.counter.max, 2
+                            item.counter.text_settings_index, item.counter.value == item.counter.max, 2
                         )
 
                 if state.img_index < 0:
@@ -162,11 +161,10 @@ class State:
                 if item.flag_index is not None and label.label_flag is not None:
                     flag = self.config.flags[item.flag_index]
                     total = len(flag.texts) - 1
-                    text_settings = self.config.text_settings[flag.text_settings_index]
                     is_max = False if item.is_reward else label.flag_text_index == total
 
                     label.label_flag.setText(flag.texts[label.flag_text_index])
-                    label.label_flag.set_text_style(self.config, text_settings, is_max, 1.8)
+                    label.label_flag.set_text_style(flag.text_settings_index, is_max, 1.8)
                     label.label_flag.setVisible(state.show_flag)
 
                 if label.label_check is not None:

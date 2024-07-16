@@ -2,10 +2,9 @@ from xml.etree import ElementTree as ET
 from dataclasses import dataclass
 from typing import Optional
 
-from PyQt6.QtWidgets import QGraphicsColorizeEffect
 from PyQt6.QtGui import QFontDatabase
 
-from common import OutlinedLabel, Label, get_new_path
+from common import Label, get_new_path
 
 
 @dataclass
@@ -161,6 +160,15 @@ class Config:
 
         # set the active inventory from default value
         self.active_inv = self.inventories[self.default_inv]
+
+    def get_text_settings(self, text_settings_index: int):
+        return self.text_settings[text_settings_index]
+
+    def get_font(self, text_settings: TextSettings):
+        return self.fonts[text_settings.font]
+
+    def get_color(self, text_settings: TextSettings, is_max: bool = False):
+        return text_settings.color_max if is_max else text_settings.color
 
     def get_bool_from_string(self, value: str):
         if value == "True":

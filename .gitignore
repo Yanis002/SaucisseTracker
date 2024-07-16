@@ -3,6 +3,7 @@ __pycache__/
 
 # specific files
 config/oot/items/**
+state.txt
 
 # build files
 build/**

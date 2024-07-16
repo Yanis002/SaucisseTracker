@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
                 else:
                     width, height = Image.open(img_path).size
 
-                label = Label(self.centralwidget, item.index, item.name)
+                label = Label(self.config, self.centralwidget, item.index, item.name)
                 label.setObjectName(obj_name)
                 label.setGeometry(QRect(pos.x, pos.y, width, height))
                 label.setText("")
@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
                     label.raise_()
 
                 if item.use_checkmark:
-                    label.label_check = Label(self.centralwidget, item.index, item.name)
+                    label.label_check = Label(self.config, self.centralwidget, item.index, item.name)
                     label.label_check.setObjectName(obj_name)
                     label.label_check.setGeometry(QRect(pos.x + 18, pos.y - 4, 16, 16))
                     label.label_check.setText("")
@@ -298,7 +298,7 @@ class MainWindow(QMainWindow):
 
     def label_clicked_left(self):
         label: Label = self.sender()
-        label.update_label(self.config, self.config.active_inv.items[label.index], True)
+        label.update_label(True)
 
     def label_clicked_middle(self):
         label: Label = self.sender()
@@ -320,7 +320,7 @@ class MainWindow(QMainWindow):
         elif label.label_check is not None:
             label.label_check.setVisible(not label.label_check.isVisible())
         else:
-            label.update_label(self.config, self.config.active_inv.items[label.index], False)
+            label.update_label(False)
 
 
 def main():

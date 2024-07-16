@@ -6,10 +6,10 @@ from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect
 from PyQt6.QtWidgets import QLabel, QWidget, QGraphicsColorizeEffect
-from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor, QFont
+from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
 
 if TYPE_CHECKING:
-    from config import Config, TextSettings, InventoryItem
+    from config import Config
 
 
 GLOBAL_HALF_OPACITY = 0.6
@@ -22,12 +22,14 @@ class OutlinedLabel(QLabel):
     clicked_middle = pyqtSignal()
     clicked_right = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, config: "Config", parent: Optional[QWidget]):
+        super().__init__()
         self.w = 1 / 25
         self.mode = True
         self.setBrush(Qt.GlobalColor.white)
         self.setPen(Qt.GlobalColor.black)
+        self.setParent(parent)
+        self.config = config
 
         self.reward_index = 0
         self.item_label: Optional["Label"] = None
@@ -42,13 +44,11 @@ class OutlinedLabel(QLabel):
         thickness: float,
         text_settings_index: int,
     ):
-        text_settings = config.text_settings[text_settings_index]
-
-        new_label = OutlinedLabel(parent)
+        new_label = OutlinedLabel(config, parent)
         new_label.setObjectName(obj_name)
         new_label.setGeometry(geometry)
         new_label.setText(text)
-        new_label.set_text_style(config, text_settings, False, thickness)
+        new_label.set_text_style(text_settings_index, False, thickness)
         new_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         return new_label
@@ -139,9 +139,10 @@ class OutlinedLabel(QLabel):
             qp.fillPath(path, self.palette().window())
         qp.fillPath(path, self.brush)
 
-    def set_text_style(self, config: "Config", text_settings: "TextSettings", is_max: bool, thickness: int):
-        font = config.fonts[text_settings.font]
-        color = text_settings.color_max if is_max else text_settings.color
+    def set_text_style(self, text_settings_index: int, is_max: bool, thickness: int):
+        text_settings = self.config.get_text_settings(text_settings_index)
+        font = self.config.get_font(text_settings)
+        color = self.config.get_color(text_settings, is_max)
 
         self.setScaledOutlineMode(False)
         self.setOutlineThickness(thickness)
@@ -162,9 +163,10 @@ class Label(QLabel):
     clicked_middle = pyqtSignal()
     clicked_right = pyqtSignal()
 
-    def __init__(self, parent: Optional[QWidget], index: int, name: str):
+    def __init__(self, config: "Config", parent: Optional[QWidget], index: int, name: str):
         super(QLabel, self).__init__()
 
+        self.config = config
         self.setParent(parent)
         self.index = index
         self.name = name
@@ -201,8 +203,9 @@ class Label(QLabel):
         painter.end()
         self.setPixmap(pixmap)
 
-    def update_label(self, config: "Config", item: "InventoryItem", increase: bool):
+    def update_label(self, increase: bool):
         if self.label_effect is not None:
+            item = self.config.active_inv.items[self.index]
             path_index = 0
 
             if len(item.paths) > 1:
@@ -214,9 +217,8 @@ class Label(QLabel):
                     self.flag_text_index -= 1
 
                 if self.label_flag is not None and item.flag_index is not None:
-                    flag = config.flags[item.flag_index]
+                    flag = self.config.flags[item.flag_index]
                     total = len(flag.texts) - 1
-                    text_settings = config.text_settings[flag.text_settings_index]
 
                     if self.flag_text_index > total:
                         self.flag_text_index = 0
@@ -224,7 +226,7 @@ class Label(QLabel):
                         self.flag_text_index = total
 
                     self.label_flag.setText(flag.texts[self.flag_text_index])
-                    self.label_flag.set_text_style(config, text_settings, self.flag_text_index == total, 1.8)
+                    self.label_flag.set_text_style(flag.text_settings_index, self.flag_text_index == total, 1.8)
 
                 if self.img_index > len(item.paths) - 1:
                     self.img_index = -1
@@ -255,12 +257,11 @@ class Label(QLabel):
 
                 if self.label_effect is not None:
                     if item.counter.show:
-                        counter_settings = config.text_settings[item.counter.text_settings_index]
                         self.label_effect.setStrength(0.0)  # disable filter
                         self.setPixmap(self.original_pixmap)
                         self.label_counter.setText(f"{item.counter.value}")
                         self.label_counter.set_text_style(
-                            config, counter_settings, item.counter.value == item.counter.max, 2
+                            item.counter.text_settings_index, item.counter.value == item.counter.max, 2
                         )
                     else:
                         self.label_effect.setStrength(1.0)  # enable filter
