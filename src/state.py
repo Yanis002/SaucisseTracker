@@ -4,7 +4,7 @@ from typing import Optional
 from PyQt6.QtGui import QPixmap
 
 from config import Config
-from common import get_new_path, GLOBAL_HALF_OPACITY
+from common import GLOBAL_HALF_OPACITY
 
 
 WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING !!!\n" + "!" * 63 + "\n\n"
@@ -180,7 +180,7 @@ class State:
                     path_index = state.img_index
 
                 label.img_index = state.img_index
-                label.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}"))
+                label.original_pixmap = QPixmap(str(item.paths[path_index]))
                 label.setPixmap(label.original_pixmap)
                 if not state.enabled:
                     label.set_pixmap_opacity(GLOBAL_HALF_OPACITY)

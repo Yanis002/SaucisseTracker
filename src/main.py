@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from PIL import Image
-from PyQt6.QtGui import QIcon, QPixmap, QAction, QColor
+from PyQt6.QtGui import QIcon, QPixmap, QAction
 from PyQt6.QtCore import QSize, Qt, QRect
 from PyQt6.QtWidgets import (
     QWidget,
@@ -18,10 +18,9 @@ from PyQt6.QtWidgets import (
     QMenuBar,
     QApplication,
     QFileDialog,
-    QGraphicsColorizeEffect,
 )
 
-from common import OutlinedLabel, Label, get_new_path, GLOBAL_HALF_OPACITY
+from common import OutlinedLabel, Label, GLOBAL_HALF_OPACITY
 from config import Config, Pos
 from state import State
 
@@ -39,7 +38,7 @@ class AboutWindow(QWidget):
     def create_window(self, width: int, height: int):
         # initialize the window's basic informations
         self.setWindowTitle("SaucisseTracker - About")
-        self.setWindowIcon(QIcon(get_new_path("res/icon.png", True)))
+        self.setWindowIcon(QIcon(str(Path("res/icon.png").resolve())))
         self.resize(width, height)
         self.setMinimumSize(QSize(width, height))
         self.setMaximumSize(QSize(width, height))
@@ -51,7 +50,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.config = config
-        self.bg_path = get_new_path(f"config/oot/{self.config.active_inv.background}")
+        self.bg_path = self.config.active_inv.background
 
         # get the background's size
         width, height = Image.open(self.bg_path).size
@@ -78,7 +77,7 @@ class MainWindow(QMainWindow):
 
         # initialize the window's basic informations
         self.setWindowTitle("SaucisseTracker")
-        self.setWindowIcon(QIcon(get_new_path("res/icon.png", True)))
+        self.setWindowIcon(QIcon(str(Path("res/icon.png").resolve())))
         self.resize(width, height + offset)
         self.setMinimumSize(QSize(width, height + offset))
         self.setMaximumSize(QSize(width, height + offset))
@@ -107,7 +106,7 @@ class MainWindow(QMainWindow):
         bg_label.setObjectName(f"bg_label")
         bg_label.setGeometry(QRect(0, 0, width, height))
         bg_label.setText("")
-        bg_label.setPixmap(QPixmap(get_new_path(self.bg_path)))
+        bg_label.setPixmap(QPixmap(str(self.bg_path)))
 
     def create_menubar(self):
         self.menu = QMenuBar(parent=self)
@@ -151,8 +150,7 @@ class MainWindow(QMainWindow):
         # create go mode label and light stuff
         if self.config.gomode_settings is not None:
             gomode_settings = self.config.gomode_settings
-            img_path = get_new_path(f"config/oot/{gomode_settings.path}")
-            width, height = Image.open(img_path).size
+            width, height = Image.open(gomode_settings.path).size
 
             self.config.label_gomode = Label.new(
                 self.config,
@@ -161,15 +159,14 @@ class MainWindow(QMainWindow):
                 "Go Mode",
                 "label_gomode",
                 QRect(gomode_settings.pos.x, gomode_settings.pos.y, width, height),
-                img_path,
+                str(gomode_settings.path),
                 0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY,
                 False,
                 1.0,
             )
 
             if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
-                img_path = get_new_path(f"config/oot/{gomode_settings.light_path}")
-                width, height = Image.open(img_path).size
+                width, height = Image.open(gomode_settings.light_path).size
 
                 self.config.label_gomode_light = Label.new(
                     self.config,
@@ -178,7 +175,7 @@ class MainWindow(QMainWindow):
                     "Go Mode Light",
                     "label_gomode_light",
                     QRect(gomode_settings.light_pos.x, gomode_settings.light_pos.y, width, height),
-                    img_path,
+                    str(gomode_settings.light_path),
                     1.0,
                     False,
                     0.0,
@@ -196,14 +193,13 @@ class MainWindow(QMainWindow):
 
             for i, item_pos in enumerate(item.positions):
                 obj_name = f"item{item.index}_pos_{i}"
-                img_path = get_new_path(f"config/oot/{item.paths[0]}")
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
                 if item.scale_content:
                     width = 32
                     height = 32
                 else:
-                    width, height = Image.open(img_path).size
+                    width, height = Image.open(item.paths[0]).size
 
                 label = Label.new(
                     self.config,
@@ -212,7 +208,7 @@ class MainWindow(QMainWindow):
                     item.name,
                     obj_name,
                     QRect(pos.x, pos.y, width, height),
-                    img_path,
+                    str(item.paths[0]),
                     1.0 if item.enabled else GLOBAL_HALF_OPACITY,
                     item.scale_content,
                     0.0 if item.enabled else 1.0,
@@ -265,7 +261,7 @@ class MainWindow(QMainWindow):
                         item.name,
                         f"{obj_name}_checkmark",
                         QRect(pos.x + 18, pos.y - 4, 16, 16),
-                        self.config.active_inv.song_check_path,
+                        str(self.config.active_inv.song_check_path),
                         1.0,
                         False,
                         0.0,
@@ -381,6 +377,9 @@ class MainWindow(QMainWindow):
 
 
 def main():
+    app = QApplication(sys.argv)
+    configs: list[Config] = []
+
     # taskbar icon trick for Windows
     if os.name == "nt":
         from ctypes import windll
@@ -388,10 +387,13 @@ def main():
         # encoding probably useless but just in case
         windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
 
-    app = QApplication(sys.argv)
-    mainWindow = MainWindow(Config(get_new_path("config/oot/config.xml")))
+    # look for any file that is called "config." with a format extension (xml, yml, json, etc...)
+    for path in sorted(Path("config/").rglob(f"config.*")):
+        configs.append(Config(path.resolve()))
 
+    mainWindow = MainWindow(configs[0])
     mainWindow.show()
+
     sys.exit(app.exec())
 
 

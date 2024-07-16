@@ -315,7 +315,7 @@ class Label(QLabel):
                     self.setPixmap(self.original_pixmap)
                     path_index = self.img_index
 
-                self.original_pixmap = QPixmap(get_new_path(f"config/oot/{item.paths[path_index]}"))
+                self.original_pixmap = QPixmap(str(item.paths[path_index]))
                 self.setPixmap(self.original_pixmap)
 
                 if self.img_index < 0:
@@ -348,15 +348,3 @@ def get_app_path():
         return path.dirname(path.abspath(__file__)).removesuffix("src")
     else:
         raise RuntimeError("ERROR: couldn't determine the execution type")
-
-
-def get_new_path(new_path: str, is_bundled: bool = False, check_exists: bool = True):
-    if is_bundled:
-        new_path = path.join(path.dirname(path.abspath(__file__)).removesuffix("src"), new_path)
-    else:
-        new_path = path.join(get_app_path(), new_path)
-
-    if check_exists and not path.isfile(new_path):
-        raise RuntimeError(f"ERROR: invalid path: '{new_path}'")
-
-    return new_path
