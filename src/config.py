@@ -100,11 +100,19 @@ class InventoryItem:
     enabled: bool
     scale_content: bool
     is_reward: bool
+    flag_index: Optional[int]
 
 
 @dataclass
 class RewardItem:
     name: str
+    text_settings_index: int
+
+
+@dataclass
+class FlagItem:
+    text: str
+    pos: Pos
     text_settings_index: int
 
 
@@ -133,6 +141,7 @@ class Config:
         self.default_inv = 0
         self.fonts: list[Font] = []
         self.text_settings: list[TextSettings] = []
+        self.flags: list[FlagItem] = []
         self.inventories: dict[int, Inventory] = {}
         self.state_path: Optional[str] = None
 
@@ -189,6 +198,24 @@ class Config:
                                 Color.unpack(int(item.get("ColorMax", "0x000000"), 0)),
                             )
                         )
+                case "Flags":
+                    for item in elem:
+                        pos = item.get("Pos")
+
+                        if pos is None:
+                            raise ValueError(f"ERROR: Missing positions for the flag")
+
+                        pos_list = pos.split(";")
+                        if len(pos_list) > 2:
+                            raise ValueError(f"ERROR: Found more than 2 positions for the flag")
+
+                        self.flags.append(
+                            FlagItem(
+                                item.get("Text", ""),
+                                Pos(int(pos_list[0]), int(pos_list[1])),
+                                int(item.get("TextSettings", "0")),
+                            )
+                        )
                 case "Inventory":
                     inventory = Inventory()
                     inventory.index = int(elem.get("Index", "0"))
@@ -235,6 +262,7 @@ class Config:
                                 int(c.get("TextSettings", "0")),
                             )
 
+                        flag_index = item.get("FlagIndex")
                         inventory.items.append(
                             InventoryItem(
                                 i,
@@ -245,6 +273,7 @@ class Config:
                                 self.get_bool_from_string(item.get("Enabled", "False")),
                                 self.get_bool_from_string(item.get("ScaleContent", "False")),
                                 self.get_bool_from_string(item.get("Reward", "False")),
+                                int(flag_index) if flag_index is not None else None,
                             )
                         )
 

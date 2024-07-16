@@ -6,7 +6,7 @@ from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect
 from PyQt6.QtWidgets import QLabel, QWidget, QGraphicsColorizeEffect
-from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
+from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor, QFont
 
 if TYPE_CHECKING:
     from config import Config, TextSettings, InventoryItem
@@ -173,6 +173,7 @@ class Label(QLabel):
         self.label_counter: Optional[OutlinedLabel] = None
         self.label_effect: Optional[QGraphicsColorizeEffect] = None
         self.label_reward: Optional[OutlinedLabel] = None
+        self.label_flag: Optional[OutlinedLabel] = None
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)

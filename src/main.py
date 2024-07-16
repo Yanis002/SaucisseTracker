@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from common import OutlinedLabel, Label, get_new_path, GLOBAL_HALF_OPACITY
-from config import Config
+from config import Config, Pos
 from state import State
 
 
@@ -30,7 +30,9 @@ class AboutWindow(QWidget):
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Made with ♥ by Yanis.\n\nLicensed under GNU General Public License v3.0"))
+        layout.addWidget(
+            QLabel("Made with ♥ by Yanis.\n" + "Version 0.1.0.\n\n" + "Licensed under GNU General Public License v3.0.")
+        )
         self.setLayout(layout)
         self.create_window(320, 100)
 
@@ -148,9 +150,10 @@ class MainWindow(QMainWindow):
         for item in self.config.active_inv.items:
             label_map: dict[int, Label] = {}
 
-            for i, pos in enumerate(item.positions):
+            for i, item_pos in enumerate(item.positions):
                 obj_name = f"item{item.index}_pos_{i}"
                 img_path = get_new_path(f"config/oot/{item.paths[0]}")
+                pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
                 if item.scale_content:
                     width = 32
@@ -160,7 +163,7 @@ class MainWindow(QMainWindow):
 
                 label = Label(self.centralwidget, item.index, item.name)
                 label.setObjectName(obj_name)
-                label.setGeometry(QRect(pos.x + offset, pos.y + offset, width, height))
+                label.setGeometry(QRect(pos.x, pos.y, width, height))
                 label.setText("")
                 label.original_pixmap = QPixmap(img_path)
                 label.setPixmap(label.original_pixmap)
@@ -176,7 +179,7 @@ class MainWindow(QMainWindow):
                         self.centralwidget,
                         self.config,
                         f"{obj_name}_counter",
-                        QRect(pos.x + offset - 6, pos.y + 22, 32, 15),
+                        QRect(pos.x - 6, pos.y + 22, 32, 15),
                         "",
                         1,
                         item.counter.text_settings_index,
@@ -194,12 +197,30 @@ class MainWindow(QMainWindow):
                         self.centralwidget,
                         self.config,
                         f"{obj_name}_reward",
-                        QRect(pos.x + offset - 6, pos.y + offset + 23, 45, 32),
+                        QRect(pos.x - 6, pos.y + 23, 45, 32),
                         reward.name,
                         1.8,
                         reward.text_settings_index,
                     )
                     label.raise_()
+
+                    if len(self.config.flags) > 0 and item.flag_index is not None:
+                        flag = self.config.flags[item.flag_index]
+                        label.label_flag = OutlinedLabel.new(
+                            self.centralwidget,
+                            self.config,
+                            f"{obj_name}_flag",
+                            QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, 35, 15),
+                            flag.text,
+                            1.8,
+                            flag.text_settings_index,
+                        )
+                        label.label_flag.setVisible(False)
+
+                        label.label_flag.item_label = label
+                        label.label_flag.clicked_left.connect(self.outlinedLabel_clicked_left)
+                        label.label_flag.clicked_middle.connect(self.outlinedLabel_clicked_middle)
+                        label.label_flag.clicked_right.connect(self.outlinedLabel_clicked_right)
 
                 # black & white effect, todo find something better? idk, enabled by default
                 label_effect = QGraphicsColorizeEffect(label)
@@ -264,6 +285,9 @@ class MainWindow(QMainWindow):
 
     def label_clicked_middle(self):
         label: Label = self.sender()
+
+        if label.label_flag is not None:
+            label.label_flag.setVisible(not label.label_flag.isVisible())
 
     def label_clicked_right(self):
         label: Label = self.sender()

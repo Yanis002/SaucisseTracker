@@ -69,6 +69,10 @@ The save state file is a plain text file containing informations about how to re
         * ``Bold``: toggles bold on the text
         * ``Color``: the default color, usually white (0xFFFFFF)
         * ``ColorMax``: the color to use when reaching the maximum value (for counters for instance), usually green (0x00FF00)
+* ``<Flags>``: optional, list of custom extra text to display
+    - ``Text``: can be used to show an extra dungeon flag with the middle click
+    - ``Pos``: can be used set the flag's position (relative to the reward icon)
+    - ``TextSettings``: the index of the text setting to use for the flag
 * ``<Inventory>``:
     - ``Index``: the index of the inventory
     - ``Name``: the name of the inventory configuration
@@ -78,6 +82,7 @@ The save state file is a plain text file containing informations about how to re
         * ``Name``: the name of the inventory item
         * ``Source``: optional if using ``<Sources>``, defines the path to the texture to use for this item
         * ``Enabled``: optional, can be used to enable an item by default
+        * ``Reward``: optional, can be set to ``True`` to declare the item as a dungeon reward
         * ``<Counter>``: optional, declares a new counter for this item
             - ``TextSettings``: the index of the text setting to use for this counter
             - ``Min``: the lowest amount the counter can take
@@ -90,6 +95,10 @@ The save state file is a plain text file containing informations about how to re
             - ``<Item>``: an element of the list
                 * ``X``: the position on the X axis
                 * ``Y``: the position on the Y axis
+    - ``<Reward>``: dungeon reward settings
+        * ``<Item>``: adds a dungeon entry
+            - ``Name``: the display name of the dungeon
+            - ``TextSettings``: the index of the text setting to use for the name
 
 ## Creating a configuration
 

@@ -11,7 +11,13 @@
             <Item Index="0" Name="Counters" FontIndex="2" Size="12.3" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
             <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF"/>
             <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="13" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
+            <Item Index="3" Name="Dungeon Flag" FontIndex="0" Size="9" Bold="True" Color="0x00FFFF"/>
+            <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="9" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
         </TextSettings>
+        <Flags>
+            <!-- the flags' positions are relative to the item there are associate to -->
+            <Item Index="0" Pos="9;-3" Text="MQ" TextSettings="3"/>
+        </Flags>
         <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
@@ -140,15 +146,15 @@
                 </Sources>
             </Item>
             <!-- Rewards -->
-            <Item Pos="131;300" Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png" Reward="True"/>
-            <Item Pos="172;300" Name="Goron Ruby" Source="items/rewards/goron_ruby.png" Reward="True"/>
-            <Item Pos="213;300" Name="Zora Sapphire" Source="items/rewards/zora_sapphire.png" Reward="True"/>
-            <Item Pos="8;345" Name="Forest Medallion" Source="items/rewards/forest_medallion.png" Reward="True"/>
-            <Item Pos="48;345" Name="Fire Medallion" Source="items/rewards/fire_medallion.png" Reward="True"/>
-            <Item Pos="90;345" Name="Water Medallion" Source="items/rewards/water_medallion.png" Reward="True"/>
-            <Item Pos="131;345" Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png" Reward="True"/>
-            <Item Pos="172;345" Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png" Reward="True"/>
-            <Item Pos="213;345" Name="Light Medallion" Source="items/rewards/light_medallion.png" Reward="True"/>
+            <Item Reward="True" FlagIndex="0" Pos="131;300" Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="172;300" Name="Goron Ruby" Source="items/rewards/goron_ruby.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="213;300" Name="Zora Sapphire" Source="items/rewards/zora_sapphire.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="8;345" Name="Forest Medallion" Source="items/rewards/forest_medallion.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="48;345" Name="Fire Medallion" Source="items/rewards/fire_medallion.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="90;345" Name="Water Medallion" Source="items/rewards/water_medallion.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="131;345" Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="172;345" Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png"/>
+            <Item Reward="True" FlagIndex="0" Pos="213;345" Name="Light Medallion" Source="items/rewards/light_medallion.png"/>
             <Rewards>
                 <Item Name="????" TextSettings="1"/>
                 <Item Name="FREE" TextSettings="1"/>
