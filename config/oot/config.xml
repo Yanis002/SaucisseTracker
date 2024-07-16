@@ -18,6 +18,7 @@
             <!-- the flags' positions are relative to the item there are associate to -->
             <Item Index="0" Pos="9;-3" Text="MQ" TextSettings="3"/>
             <Item Index="1" Pos="9;21" Text=";H;L" TextSettings="4" Hidden="False"/>
+            <Item Index="2" Pos="-1;21" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
         <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png">
             <!-- Items -->
@@ -129,6 +130,13 @@
                 <Sources>
                     <Item Path="items/magic.png"/>
                     <Item Path="items/double_magic.png"/>
+                </Sources>
+            </Item>
+            <Item FlagIndex="2" Pos="172;217" Name="Wallets">
+                <Sources>
+                    <Item Path="items/adults_wallet.png"/>
+                    <Item Path="items/giants_wallet.png"/>
+                    <Item Path="items/giants_wallet.png"/>
                 </Sources>
             </Item>
             <Item Pos="213;217" Name="Gerudo Card" Source="items/gerudo_card.png" ScaleContent="True"/>
