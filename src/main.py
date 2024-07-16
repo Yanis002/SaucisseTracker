@@ -204,6 +204,20 @@ class MainWindow(QMainWindow):
                     )
                     label.raise_()
 
+                if item.use_checkmark:
+                    label.label_check = Label(self.centralwidget, item.index, item.name)
+                    label.label_check.setObjectName(obj_name)
+                    label.label_check.setGeometry(QRect(pos.x + 18, pos.y - 4, 16, 16))
+                    label.label_check.setText("")
+                    label.label_check.original_pixmap = QPixmap(self.config.active_inv.song_check_path)
+                    label.label_check.setPixmap(label.label_check.original_pixmap)
+                    label.label_check.setScaledContents(item.scale_content)
+                    label.label_check.setVisible(False)
+
+                    label.label_check.clicked_left.connect(self.label_clicked_left)
+                    label.label_check.clicked_middle.connect(self.label_clicked_middle)
+                    label.label_check.clicked_right.connect(self.label_clicked_right)
+
                 if len(self.config.flags) > 0 and item.flag_index is not None:
                     flag = self.config.flags[item.flag_index]
                     label.label_flag = OutlinedLabel.new(
@@ -303,6 +317,8 @@ class MainWindow(QMainWindow):
 
             reward = self.config.active_inv.rewards.items[label.label_reward.reward_index]
             label.label_reward.setText(reward.name)
+        elif label.label_check is not None:
+            label.label_check.setVisible(not label.label_check.isVisible())
         else:
             label.update_label(self.config, self.config.active_inv.items[label.index], False)
 

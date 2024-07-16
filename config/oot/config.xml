@@ -20,7 +20,7 @@
             <Item Index="1" Pos="9;21" Text=";H;L" TextSettings="4" Hidden="False"/>
             <Item Index="2" Pos="-1;21" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
-        <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png">
+        <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png" SongCheck="check.png">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
                 <Counter TextSettings="0" Min="10" Max="30" Increment="10"/>
@@ -200,9 +200,21 @@
                     <Item X="172" Y="345"/>
                     <Item X="213" Y="345"/>
                 </Positions>
-            </Item> 
+            </Item>
             Alternative way to handle rewards -->
             <!-- Songs -->
+            <Item UseCheckmark="True" Pos="258;8" Name="Zelda's Lullaby" Source="items/songs/lullaby.png"/>
+            <Item UseCheckmark="True" Pos="258;39" Name="Epona's Song" Source="items/songs/epona.png"/>
+            <Item UseCheckmark="True" Pos="258;71" Name="Saria's Song" Source="items/songs/saria.png"/>
+            <Item UseCheckmark="True" Pos="258;103" Name="Sun's Song" Source="items/songs/sun.png"/>
+            <Item UseCheckmark="True" Pos="258;135" Name="Song of Time" Source="items/songs/time.png"/>
+            <Item UseCheckmark="True" Pos="258;165" Name="Song of Storms" Source="items/songs/storms.png"/>
+            <Item UseCheckmark="True" Pos="258;196" Name="Minuet of Forest" Source="items/songs/minuet.png"/>
+            <Item UseCheckmark="True" Pos="258;228" Name="Bolero of Fire" Source="items/songs/bolero.png"/>
+            <Item UseCheckmark="True" Pos="259;258" Name="Serenade of Water" Source="items/songs/serenade.png"/>
+            <Item UseCheckmark="True" Pos="259;288" Name="Requiem of Spirit" Source="items/songs/requiem.png"/>
+            <Item UseCheckmark="True" Pos="258;318" Name="Nocturne of Shadow" Source="items/songs/nocturne.png"/>
+            <Item UseCheckmark="True" Pos="258;352" Name="Prelude of Light" Source="items/songs/prelude.png"/>
         </Inventory>
     </Config>
 </Table>

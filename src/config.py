@@ -101,6 +101,7 @@ class InventoryItem:
     scale_content: bool
     is_reward: bool
     flag_index: Optional[int]
+    use_checkmark: bool
 
 
 @dataclass
@@ -128,6 +129,7 @@ class Inventory:
         self.index = int()
         self.name = str()
         self.background: Optional[str] = None
+        self.song_check_path: Optional[str] = None
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
 
@@ -227,6 +229,10 @@ class Config:
                     inventory.name = elem.get("Name", "Unknown")
                     inventory.background = elem.get("Background")
 
+                    check_path = elem.get("SongCheck")
+                    if check_path is not None:
+                        inventory.song_check_path = get_new_path(f"config/oot/{check_path}")
+
                     for i, item in enumerate(elem.iterfind("Item")):
                         name = item.get("Name", "Unknown")
                         path = item.get("Source")
@@ -279,6 +285,7 @@ class Config:
                                 self.get_bool_from_string(item.get("ScaleContent", "False")),
                                 self.get_bool_from_string(item.get("Reward", "False")),
                                 int(flag_index) if flag_index is not None else None,
+                                self.get_bool_from_string(item.get("UseCheckmark", "False")),
                             )
                         )
 

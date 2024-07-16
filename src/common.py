@@ -175,6 +175,7 @@ class Label(QLabel):
         self.label_effect: Optional[QGraphicsColorizeEffect] = None
         self.label_reward: Optional[OutlinedLabel] = None
         self.label_flag: Optional[OutlinedLabel] = None
+        self.label_check: Optional["Label"] = None
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)
