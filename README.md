@@ -70,9 +70,10 @@ The save state file is a plain text file containing informations about how to re
         * ``Color``: the default color, usually white (0xFFFFFF)
         * ``ColorMax``: the color to use when reaching the maximum value (for counters for instance), usually green (0x00FF00)
 * ``<Flags>``: optional, list of custom extra text to display
-    - ``Text``: can be used to show an extra dungeon flag with the middle click
+    - ``Text``: can be used to show an extra dungeon flag with the middle click, you can use several texts separated by a ``;`` (that's something to improve in the future™)
     - ``Pos``: can be used set the flag's position (relative to the reward icon)
     - ``TextSettings``: the index of the text setting to use for the flag
+    - ``Hidden``: optional, used to set the default visibility
 * ``<Inventory>``:
     - ``Index``: the index of the inventory
     - ``Name``: the name of the inventory configuration

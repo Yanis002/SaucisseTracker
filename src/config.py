@@ -111,9 +111,10 @@ class RewardItem:
 
 @dataclass
 class FlagItem:
-    text: str
+    texts: list[str]
     pos: Pos
     text_settings_index: int
+    hidden: bool
 
 
 class Rewards:
@@ -200,20 +201,24 @@ class Config:
                         )
                 case "Flags":
                     for item in elem:
-                        pos = item.get("Pos")
+                        text = item.get("Text")
+                        if text is None:
+                            raise ValueError(f"ERROR: Missing texts for the flag")
+                        text_list = text.split(";")
 
+                        pos = item.get("Pos")
                         if pos is None:
                             raise ValueError(f"ERROR: Missing positions for the flag")
-
                         pos_list = pos.split(";")
                         if len(pos_list) > 2:
                             raise ValueError(f"ERROR: Found more than 2 positions for the flag")
 
                         self.flags.append(
                             FlagItem(
-                                item.get("Text", ""),
+                                text_list,
                                 Pos(int(pos_list[0]), int(pos_list[1])),
                                 int(item.get("TextSettings", "0")),
+                                self.get_bool_from_string(item.get("Hidden", "True")),
                             )
                         )
                 case "Inventory":

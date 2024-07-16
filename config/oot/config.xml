@@ -12,11 +12,12 @@
             <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF"/>
             <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="13" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
             <Item Index="3" Name="Dungeon Flag" FontIndex="0" Size="9" Bold="True" Color="0x00FFFF"/>
-            <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="9" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
+            <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
         </TextSettings>
         <Flags>
             <!-- the flags' positions are relative to the item there are associate to -->
             <Item Index="0" Pos="9;-3" Text="MQ" TextSettings="3"/>
+            <Item Index="1" Pos="9;21" Text=";H;L" TextSettings="4" Hidden="False"/>
         </Flags>
         <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png">
             <!-- Items -->
@@ -44,7 +45,7 @@
                 </Sources>
             </Item>
             <Item Pos="90;48" Name="Bombchus" Source="items/bombchu.png"/>
-            <Item Pos="131;48" Name="Hookshot">
+            <Item FlagIndex="1" Pos="131;48" Name="Hookshot">
                 <Sources>
                     <Item Path="items/hookshot.png"/>
                     <Item Path="items/longshot.png"/>

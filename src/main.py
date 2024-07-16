@@ -204,23 +204,23 @@ class MainWindow(QMainWindow):
                     )
                     label.raise_()
 
-                    if len(self.config.flags) > 0 and item.flag_index is not None:
-                        flag = self.config.flags[item.flag_index]
-                        label.label_flag = OutlinedLabel.new(
-                            self.centralwidget,
-                            self.config,
-                            f"{obj_name}_flag",
-                            QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, 35, 15),
-                            flag.text,
-                            1.8,
-                            flag.text_settings_index,
-                        )
-                        label.label_flag.setVisible(False)
+                if len(self.config.flags) > 0 and item.flag_index is not None:
+                    flag = self.config.flags[item.flag_index]
+                    label.label_flag = OutlinedLabel.new(
+                        self.centralwidget,
+                        self.config,
+                        f"{obj_name}_flag",
+                        QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, 35, 15),
+                        flag.texts[label.flag_index],
+                        1.8,
+                        flag.text_settings_index,
+                    )
+                    label.label_flag.setHidden(flag.hidden)
 
-                        label.label_flag.item_label = label
-                        label.label_flag.clicked_left.connect(self.outlinedLabel_clicked_left)
-                        label.label_flag.clicked_middle.connect(self.outlinedLabel_clicked_middle)
-                        label.label_flag.clicked_right.connect(self.outlinedLabel_clicked_right)
+                    label.label_flag.item_label = label
+                    label.label_flag.clicked_left.connect(self.outlinedLabel_clicked_left)
+                    label.label_flag.clicked_middle.connect(self.outlinedLabel_clicked_middle)
+                    label.label_flag.clicked_right.connect(self.outlinedLabel_clicked_right)
 
                 # black & white effect, todo find something better? idk, enabled by default
                 label_effect = QGraphicsColorizeEffect(label)
@@ -271,7 +271,10 @@ class MainWindow(QMainWindow):
         label: OutlinedLabel = self.sender()
 
         if label.item_label is not None:
-            label.item_label.clicked_middle.emit()
+            item = self.config.active_inv.items[label.item_label.index]
+
+            if item.is_reward:
+                label.item_label.clicked_middle.emit()
 
     def outlinedLabel_clicked_right(self):
         label: OutlinedLabel = self.sender()
