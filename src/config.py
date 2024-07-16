@@ -229,7 +229,7 @@ class Config:
                     inventory.name = elem.get("Name", "Unknown")
                     inventory.background = elem.get("Background")
 
-                    check_path = elem.get("SongCheck")
+                    check_path = elem.get("CheckmarkPath")
                     if check_path is not None:
                         inventory.song_check_path = get_new_path(f"config/oot/{check_path}")
 

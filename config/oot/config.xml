@@ -20,7 +20,7 @@
             <Item Index="1" Pos="9;21" Text=";H;L" TextSettings="4" Hidden="False"/>
             <Item Index="2" Pos="-1;21" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
-        <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png" SongCheck="check.png">
+        <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png" CheckmarkPath="check.png">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
                 <Counter TextSettings="0" Min="10" Max="30" Increment="10"/>

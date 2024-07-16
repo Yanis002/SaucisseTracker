@@ -78,12 +78,14 @@ The save state file is a plain text file containing informations about how to re
     - ``Index``: the index of the inventory
     - ``Name``: the name of the inventory configuration
     - ``Background``: the background image to use for this inventory
+    - ``CheckmarkPath``: the checkmark image to use for this inventory
     - ``<Item>``: an element of the list
         * ``Pos``: optional if using ``<Positions>``, defines the X and Y position in the window (format: ``Pos="X;Y"``)
         * ``Name``: the name of the inventory item
         * ``Source``: optional if using ``<Sources>``, defines the path to the texture to use for this item
         * ``Enabled``: optional, can be used to enable an item by default
         * ``Reward``: optional, can be set to ``True`` to declare the item as a dungeon reward
+        * ``UseCheckmark``: optional, can be set to ``True`` to draw a checkmark with the right click (used for OoT songs)
         * ``<Counter>``: optional, declares a new counter for this item
             - ``TextSettings``: the index of the text setting to use for this counter
             - ``Min``: the lowest amount the counter can take
