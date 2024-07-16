@@ -227,7 +227,12 @@ class MainWindow(QMainWindow):
                         self.centralwidget,
                         self.config,
                         f"{obj_name}_counter",
-                        QRect(pos.x - 6, pos.y + 22, 32, 15),
+                        QRect(
+                            pos.x + item.counter.pos.x,
+                            pos.y + item.counter.pos.y,
+                            item.counter.width,
+                            item.counter.height,
+                        ),
                         "",
                         1,
                         item.counter.text_settings_index,
@@ -330,10 +335,7 @@ class MainWindow(QMainWindow):
         label: OutlinedLabel = self.sender()
 
         if label.item_label is not None:
-            item = self.config.active_inv.items[label.item_label.index]
-
-            if item.is_reward:
-                label.item_label.clicked_middle.emit()
+            label.item_label.clicked_middle.emit()
 
     def outlinedLabel_clicked_right(self):
         label: OutlinedLabel = self.sender()
@@ -350,6 +352,8 @@ class MainWindow(QMainWindow):
 
         if label.label_flag is not None:
             label.label_flag.setVisible(not label.label_flag.isVisible())
+        else:
+            label.update_label(True, True)
 
     def label_clicked_right(self):
         label: Label = self.sender()

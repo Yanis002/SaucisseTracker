@@ -62,15 +62,19 @@ class Counter:
     min: int
     max: int
     increment: int
+    middle_click_increment: int
     text_settings_index: int
+    pos: Pos
+    width: int
+    height: int
 
     def __post_init__(self):
         self.value = self.min
         self.show = False
 
-    def incr(self):
+    def incr(self, middle_click: bool):
         if self.show:
-            self.value += self.increment
+            self.value += self.middle_click_increment if middle_click else self.increment
 
             if self.value > self.max:
                 self.show = False
@@ -314,11 +318,23 @@ class Config:
                         counter = None
                         c = item.find("Counter")
                         if c is not None:
+                            counter_position = c.get("Pos")
+                            if counter_position is None:
+                                raise RuntimeError("ERROR: counter position is not set")
+
+                            counter_pos = counter_position.split(";")
+                            if len(counter_pos) > 2:
+                                raise RuntimeError("ERROR: more than 2 positions found for the counter")
+
                             counter = Counter(
                                 int(c.get("Min", "0")),
                                 int(c.get("Max", "0")),
                                 int(c.get("Increment", "0")),
+                                int(c.get("MiddleIncrement", "0")),
                                 int(c.get("TextSettings", "0")),
+                                Pos(int(counter_pos[0]), int(counter_pos[1])),
+                                int(c.get("Width")),
+                                int(c.get("Height")),
                             )
 
                         flag_index = item.get("FlagIndex")

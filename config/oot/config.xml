@@ -10,7 +10,7 @@
         <TextSettings>
             <Item Index="0" Name="Counters" FontIndex="2" Size="12.3" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
             <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF"/>
-            <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="13" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
+            <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="15" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
             <Item Index="3" Name="Dungeon Flag" FontIndex="0" Size="9" Bold="True" Color="0x00FFFF"/>
             <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
         </TextSettings>
@@ -24,21 +24,21 @@
         <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png" CheckmarkPath="check.png">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
-                <Counter TextSettings="0" Min="10" Max="30" Increment="10"/>
+                <Counter TextSettings="0" Min="10" Max="30" Increment="10" Pos="-6;22" Width="32" Height="15"/>
             </Item>
             <Item Pos="48;9" Name="Deku Nuts" Source="items/deku_nut.png">
-                <Counter TextSettings="0" Min="20" Max="40" Increment="10"/>
+                <Counter TextSettings="0" Min="20" Max="40" Increment="10" Pos="-6;22" Width="32" Height="15"/>
             </Item>
             <Item Pos="90;9" Name="Bombs" Source="items/bomb.png">
-                <Counter TextSettings="0" Min="20" Max="40" Increment="10"/>
+                <Counter TextSettings="0" Min="20" Max="40" Increment="10" Pos="-6;22" Width="32" Height="15"/>
             </Item>
             <Item Pos="131;9" Name="Fairy Bow" Source="items/fairy_bow.png">
-                <Counter TextSettings="0" Min="30" Max="50" Increment="10"/>
+                <Counter TextSettings="0" Min="30" Max="50" Increment="10" Pos="-6;22" Width="32" Height="15"/>
             </Item>
             <Item Pos="172;9" Name="Fire Arrow" Source="items/fire_arrow.png"/>
             <Item Pos="213;9" Name="Din's Fire" Source="items/dins_fire.png"/>
             <Item Pos="9;48" Name="Fairy Slingshot" Source="items/fairy_slingshot.png">
-                <Counter TextSettings="0" Min="30" Max="50" Increment="10"/>
+                <Counter TextSettings="0" Min="30" Max="50" Increment="10" Pos="-6;22" Width="32" Height="15"/>
             </Item>
             <Item Pos="48;48" Name="Ocarina">
                 <Sources>
@@ -154,6 +154,9 @@
                     <Item Path="items/silver_gauntlets.png"/>
                     <Item Path="items/golden_gauntlets.png"/>
                 </Sources>
+            </Item>
+            <Item Pos="172;176" Name="Gold Skulltulas" Source="items/gold_skulltula.png" ScaleContent="True">
+                <Counter TextSettings="2" Min="1" Max="100" Increment="1" MiddleIncrement="10" Pos="35;9" Width="32" Height="15"/>
             </Item>
             <!-- Rewards -->
             <Item Reward="True" FlagIndex="0" Pos="131;300" Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png"/>

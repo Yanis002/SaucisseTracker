@@ -248,12 +248,12 @@ class Label(QLabel):
 
         self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
 
-    def update_label(self, increase: bool):
+    def update_label(self, increase: bool, middle_click: bool = False):
         if self.label_effect is not None:
             item = self.config.active_inv.items[self.index]
             path_index = 0
 
-            if len(item.paths) > 1:
+            if not middle_click and len(item.paths) > 1:
                 if increase:
                     self.img_index += 1
                     self.flag_text_index += 1
@@ -296,7 +296,7 @@ class Label(QLabel):
                     self.setPixmap(self.original_pixmap)
             elif self.label_counter is not None:
                 if increase:
-                    item.counter.incr()
+                    item.counter.incr(middle_click)
                 else:
                     item.counter.decr()
 
