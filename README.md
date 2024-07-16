@@ -17,10 +17,12 @@ Available:
 - Upgrade tiers available through the counter system
 - Progressive items available with the source paths of an item
 - Import and export the tracker's state
+- Dungeon reward system
+- Flag system to add extra text
+- Checkmarks with right click
 
 Planned:
 - Editor to make configurations easier
-- Reward system (like medallions and stones for OoT)
 
 ## Project Structure
 
