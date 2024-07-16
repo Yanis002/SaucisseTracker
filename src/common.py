@@ -179,6 +179,38 @@ class Label(QLabel):
         self.label_flag: Optional[OutlinedLabel] = None
         self.label_check: Optional["Label"] = None
 
+    @staticmethod
+    def new(
+        config: "Config",
+        parent: QWidget,
+        index: int,
+        name: str,
+        obj_name: str,
+        geometry: QRect,
+        img_path: str,
+        opacity: float,
+        scale_content: bool,
+        default_strength: float,
+    ):
+        new_label = Label(config, parent, index, name)
+        new_label.setObjectName(obj_name)
+        new_label.setGeometry(geometry)
+        new_label.setText("")
+        new_label.original_pixmap = QPixmap(img_path)
+        new_label.setPixmap(new_label.original_pixmap)
+        new_label.set_pixmap_opacity(opacity)
+        new_label.setScaledContents(scale_content)
+
+        # black & white effect, todo find something better? idk, enabled by default
+        new_label_effect = QGraphicsColorizeEffect(new_label)
+        new_label_effect.setStrength(default_strength)
+        new_label_effect.setColor(QColor("black"))
+        new_label_effect.setObjectName(f"{obj_name}_fx")
+        new_label.setGraphicsEffect(new_label_effect)
+        new_label.label_effect = new_label_effect
+
+        return new_label
+
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)
 
@@ -202,6 +234,19 @@ class Label(QLabel):
         painter.drawPixmap(QPoint(), self.pixmap())
         painter.end()
         self.setPixmap(pixmap)
+
+    def update_gomode(self):
+        gomode_settings = self.config.gomode_settings
+
+        if self.label_effect is not None:
+            if self.label_effect.strength() > 0.0:
+                self.label_effect.setStrength(0.0)
+                self.setPixmap(self.original_pixmap)
+            else:
+                self.label_effect.setStrength(1.0)
+                self.set_pixmap_opacity(0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
+
+        self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
 
     def update_label(self, increase: bool):
         if self.label_effect is not None:

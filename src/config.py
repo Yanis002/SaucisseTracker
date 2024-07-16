@@ -136,6 +136,19 @@ class Inventory:
         self.label_map: dict[int, dict[int, Label]] = {}
 
 
+@dataclass
+class GoModeSettings:
+    pos: Pos
+    hide_if_disabled: bool
+    path: str
+    light_path: Optional[str]
+    light_pos: Optional[Pos]
+
+    def __post_init__(self):
+        if self.path is None:
+            raise RuntimeError("ERROR: path unset!")
+
+
 class Config:
     def __init__(self, config_file: str):
         self.config_file = config_file
@@ -146,6 +159,10 @@ class Config:
         self.flags: list[FlagItem] = []
         self.inventories: dict[int, Inventory] = {}
         self.state_path: Optional[str] = None
+        self.gomode_settings: Optional[GoModeSettings] = None
+
+        self.label_gomode: Optional[Label] = None
+        self.label_gomode_light: Optional[Label] = None
 
         if self.config_file.endswith(".xml"):
             self.parse_xml_config()
@@ -231,6 +248,29 @@ class Config:
                                 self.get_bool_from_string(item.get("Hidden", "True")),
                             )
                         )
+                case "GoMode":
+                    position = elem.get("Pos")
+                    if position is None:
+                        raise RuntimeError("ERROR: go mode position missing")
+
+                    pos = position.split(";")
+                    if len(pos) > 2:
+                        raise RuntimeError("ERROR: go mode have more than 2 positions (X;Y)")
+
+                    light_position = elem.get("LightPos")
+                    light_pos = None
+                    if light_position is not None:
+                        light_pos = light_position.split(";")
+                        if len(light_pos) > 2:
+                            raise RuntimeError("ERROR: go mode light have more than 2 positions (X;Y)")
+
+                    self.gomode_settings = GoModeSettings(
+                        Pos(int(pos[0]), int(pos[1])),
+                        self.get_bool_from_string(elem.get("HideIfDisabled", "False")),
+                        elem.get("Source"),
+                        elem.get("LightPath"),
+                        Pos(int(light_pos[0]), int(light_pos[1])) if light_pos is not None else None,
+                    )
                 case "Inventory":
                     inventory = Inventory()
                     inventory.index = int(elem.get("Index", "0"))

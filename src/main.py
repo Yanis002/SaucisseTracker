@@ -147,6 +147,50 @@ class MainWindow(QMainWindow):
 
     def create_labels(self):
         offset = -1 if os.name == "nt" else 0
+
+        # create go mode label and light stuff
+        if self.config.gomode_settings is not None:
+            gomode_settings = self.config.gomode_settings
+            img_path = get_new_path(f"config/oot/{gomode_settings.path}")
+            width, height = Image.open(img_path).size
+
+            self.config.label_gomode = Label.new(
+                self.config,
+                self.centralwidget,
+                0,
+                "Go Mode",
+                "label_gomode",
+                QRect(gomode_settings.pos.x, gomode_settings.pos.y, width, height),
+                img_path,
+                0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY,
+                False,
+                1.0,
+            )
+
+            if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
+                img_path = get_new_path(f"config/oot/{gomode_settings.light_path}")
+                width, height = Image.open(img_path).size
+
+                self.config.label_gomode_light = Label.new(
+                    self.config,
+                    self.centralwidget,
+                    0,
+                    "Go Mode Light",
+                    "label_gomode_light",
+                    QRect(gomode_settings.light_pos.x, gomode_settings.light_pos.y, width, height),
+                    img_path,
+                    1.0,
+                    False,
+                    0.0,
+                )
+
+                self.config.label_gomode_light.setVisible(False)
+                self.config.label_gomode.raise_()
+
+            self.config.label_gomode.clicked_left.connect(self.label_gomode_clicked_left)
+            self.config.label_gomode.clicked_right.connect(self.label_gomode_clicked_right)
+
+        # create labels for every items of the active inventory
         for item in self.config.active_inv.items:
             label_map: dict[int, Label] = {}
 
@@ -161,14 +205,18 @@ class MainWindow(QMainWindow):
                 else:
                     width, height = Image.open(img_path).size
 
-                label = Label(self.config, self.centralwidget, item.index, item.name)
-                label.setObjectName(obj_name)
-                label.setGeometry(QRect(pos.x, pos.y, width, height))
-                label.setText("")
-                label.original_pixmap = QPixmap(img_path)
-                label.setPixmap(label.original_pixmap)
-                label.set_pixmap_opacity(1.0 if item.enabled else GLOBAL_HALF_OPACITY)
-                label.setScaledContents(item.scale_content)
+                label = Label.new(
+                    self.config,
+                    self.centralwidget,
+                    item.index,
+                    item.name,
+                    obj_name,
+                    QRect(pos.x, pos.y, width, height),
+                    img_path,
+                    1.0 if item.enabled else GLOBAL_HALF_OPACITY,
+                    item.scale_content,
+                    0.0 if item.enabled else 1.0,
+                )
 
                 label.clicked_left.connect(self.label_clicked_left)
                 label.clicked_middle.connect(self.label_clicked_middle)
@@ -205,15 +253,20 @@ class MainWindow(QMainWindow):
                     label.raise_()
 
                 if item.use_checkmark:
-                    label.label_check = Label(self.config, self.centralwidget, item.index, item.name)
-                    label.label_check.setObjectName(obj_name)
-                    label.label_check.setGeometry(QRect(pos.x + 18, pos.y - 4, 16, 16))
-                    label.label_check.setText("")
-                    label.label_check.original_pixmap = QPixmap(self.config.active_inv.song_check_path)
-                    label.label_check.setPixmap(label.label_check.original_pixmap)
-                    label.label_check.setScaledContents(item.scale_content)
-                    label.label_check.setVisible(False)
+                    label.label_check = Label.new(
+                        self.config,
+                        self.centralwidget,
+                        item.index,
+                        item.name,
+                        f"{obj_name}_checkmark",
+                        QRect(pos.x + 18, pos.y - 4, 16, 16),
+                        self.config.active_inv.song_check_path,
+                        1.0,
+                        False,
+                        0.0,
+                    )
 
+                    label.label_check.setVisible(False)
                     label.label_check.clicked_left.connect(self.label_clicked_left)
                     label.label_check.clicked_middle.connect(self.label_clicked_middle)
                     label.label_check.clicked_right.connect(self.label_clicked_right)
@@ -236,14 +289,6 @@ class MainWindow(QMainWindow):
                     label.label_flag.clicked_middle.connect(self.outlinedLabel_clicked_middle)
                     label.label_flag.clicked_right.connect(self.outlinedLabel_clicked_right)
 
-                # black & white effect, todo find something better? idk, enabled by default
-                label_effect = QGraphicsColorizeEffect(label)
-                label_effect.setStrength(0.0 if item.enabled else 1.0)
-                label_effect.setColor(QColor("black"))
-                label_effect.setObjectName(f"{obj_name}_fx")
-                label.setGraphicsEffect(label_effect)
-
-                label.label_effect = label_effect
                 label_map[i] = label
 
             self.config.active_inv.label_map[item.index] = label_map
@@ -321,6 +366,14 @@ class MainWindow(QMainWindow):
             label.label_check.setVisible(not label.label_check.isVisible())
         else:
             label.update_label(False)
+
+    def label_gomode_clicked_left(self):
+        label: Label = self.sender()
+        label.update_gomode()
+
+    def label_gomode_clicked_right(self):
+        label: Label = self.sender()
+        label.update_gomode()
 
 
 def main():
