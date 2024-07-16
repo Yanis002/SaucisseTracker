@@ -61,7 +61,7 @@
             <Item Pos="131;90" Name="Megaton Hammer" Source="items/hammer.png"/>
             <Item Pos="172;90" Name="Light Arrow" Source="items/light_arrow.png"/>
             <Item Pos="213;90" Name="Nayru's Love" Source="items/nayrus_love.png"/>
-            <Item Name="Bottle Slots">
+            <Item Name="Bottle Slots" UseWheel="True">
                 <Sources>
                     <Item Path="items/bottles/empty_bottle.png"/>
                     <Item Path="items/bottles/red_potion.png"/>
@@ -83,7 +83,7 @@
                     <Item X="130" Y="131"/>
                 </Positions>
             </Item>
-            <Item Pos="172;131" Name="Trade Adult">
+            <Item Pos="172;131" Name="Trade Adult" UseWheel="True">
                 <Sources>
                     <Item Path="items/trade_adult/weird_egg.png"/>
                     <Item Path="items/trade_adult/cucco.png"/>
@@ -98,7 +98,7 @@
                     <Item Path="items/trade_adult/claim_check.png"/>
                 </Sources>
             </Item>
-            <Item Pos="213;131" Name="Trade Child">
+            <Item Pos="213;131" Name="Trade Child" UseWheel="True">
                 <Sources>
                     <Item Path="items/trade_child/weird_egg.png"/>
                     <Item Path="items/trade_child/cucco.png"/>
@@ -155,8 +155,8 @@
                     <Item Path="items/golden_gauntlets.png"/>
                 </Sources>
             </Item>
-            <Item Pos="172;176" Name="Gold Skulltulas" Source="items/gold_skulltula.png" ScaleContent="True">
-                <Counter TextSettings="2" Min="1" Max="100" Increment="1" MiddleIncrement="10" Pos="35;9" Width="32" Height="15"/>
+            <Item Pos="172;176" Name="Gold Skulltulas" Source="items/gold_skulltula.png" ScaleContent="True" UseWheel="True">
+                <Counter TextSettings="2" Min="1" Max="100" Increment="1" MiddleIncrement="10" Pos="35;9" Width="32" Height="15" UseWheel="True"/>
             </Item>
             <!-- Rewards -->
             <Item Reward="True" FlagIndex="0" Pos="131;300" Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png"/>

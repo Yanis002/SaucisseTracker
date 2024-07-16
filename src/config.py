@@ -4,7 +4,7 @@ from typing import Optional
 
 from PyQt6.QtGui import QFontDatabase
 
-from common import Label, get_new_path
+from common import Label, get_new_path, GLOBAL_HALF_OPACITY
 
 
 @dataclass
@@ -67,6 +67,7 @@ class Counter:
     pos: Pos
     width: int
     height: int
+    use_wheel: bool
 
     def __post_init__(self):
         self.value = self.min
@@ -92,6 +93,17 @@ class Counter:
             self.value = self.max
             self.show = True
 
+    def update(self, label: Label):
+        if self.show:
+            label.label_effect.setStrength(0.0)  # disable filter
+            label.setPixmap(label.original_pixmap)
+            label.label_counter.setText(f"{self.value}")
+            label.label_counter.set_text_style(self.text_settings_index, self.value == self.max, 2)
+        else:
+            label.label_effect.setStrength(1.0)  # enable filter
+            label.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
+            label.label_counter.setText("")
+
 
 @dataclass
 class InventoryItem:
@@ -105,6 +117,7 @@ class InventoryItem:
     is_reward: bool
     flag_index: Optional[int]
     use_checkmark: bool
+    use_wheel: bool
 
 
 @dataclass
@@ -335,6 +348,7 @@ class Config:
                                 Pos(int(counter_pos[0]), int(counter_pos[1])),
                                 int(c.get("Width")),
                                 int(c.get("Height")),
+                                self.get_bool_from_string(c.get("UseWheel", "False")),
                             )
 
                         flag_index = item.get("FlagIndex")
@@ -350,6 +364,7 @@ class Config:
                                 self.get_bool_from_string(item.get("Reward", "False")),
                                 int(flag_index) if flag_index is not None else None,
                                 self.get_bool_from_string(item.get("UseCheckmark", "False")),
+                                self.get_bool_from_string(item.get("UseWheel", "False")),
                             )
                         )
 

@@ -6,7 +6,7 @@ from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect
 from PyQt6.QtWidgets import QLabel, QWidget, QGraphicsColorizeEffect
-from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor
+from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor, QWheelEvent
 
 if TYPE_CHECKING:
     from config import Config
@@ -67,6 +67,20 @@ class OutlinedLabel(QLabel):
                         self.clicked_middle.emit()
                     else:
                         self.clicked_right.emit()
+
+    def wheelEvent(self, e: Optional[QWheelEvent]):
+        super(QLabel, self).wheelEvent(e)
+
+        if e is not None:
+            item = self.config.active_inv.items[self.item_label.index]
+            if item.use_wheel:
+                # adapted from https://stackoverflow.com/a/20152809
+                value = 0
+                steps = e.angleDelta().y() // 120
+                for _ in range(1, abs(steps) + 1):
+                    value += steps and steps // abs(steps)  # 0, 1, or -1
+                    if value != 0:
+                        self.item_label.update_label(value > 0, False)
 
     def scaledOutlineMode(self):
         return self.mode
@@ -226,6 +240,20 @@ class Label(QLabel):
                     else:
                         self.clicked_right.emit()
 
+    def wheelEvent(self, e: Optional[QWheelEvent]):
+        super(QLabel, self).wheelEvent(e)
+
+        if e is not None:
+            item = self.config.active_inv.items[self.index]
+            if item.use_wheel:
+                # adapted from https://stackoverflow.com/a/20152809
+                value = 0
+                steps = e.angleDelta().y() // 120
+                for _ in range(1, abs(steps) + 1):
+                    value += steps and steps // abs(steps)  # 0, 1, or -1
+                    if value != 0:
+                        self.update_label(value > 0, False)
+
     def set_pixmap_opacity(self, opacity: float):
         pixmap = self.pixmap().copy()
         pixmap.fill(Qt.GlobalColor.transparent)
@@ -301,17 +329,7 @@ class Label(QLabel):
                     item.counter.decr()
 
                 if self.label_effect is not None:
-                    if item.counter.show:
-                        self.label_effect.setStrength(0.0)  # disable filter
-                        self.setPixmap(self.original_pixmap)
-                        self.label_counter.setText(f"{item.counter.value}")
-                        self.label_counter.set_text_style(
-                            item.counter.text_settings_index, item.counter.value == item.counter.max, 2
-                        )
-                    else:
-                        self.label_effect.setStrength(1.0)  # enable filter
-                        self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
-                        self.label_counter.setText("")
+                    item.counter.update(self)
             else:
                 if self.label_effect is not None:
                     if self.label_effect.strength() > 0.0:
