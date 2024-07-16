@@ -30,11 +30,23 @@ class State:
     def __init__(self, config: Config):
         self.config = config
         self.states: list[LabelState] = []
+        self.gomode_visibility = False
+        self.gomode_light_visibility = False
 
         if not self.config.state_path.endswith(".txt"):
             self.config.state_path = f"{self.config.state_path}.txt"
 
     def get_states_from_labels(self):
+        gomodefx = self.config.label_gomode.label_effect
+
+        if gomodefx is not None:
+            self.gomode_visibility = gomodefx.strength() == 0.0
+
+        if self.config.label_gomode_light is not None:
+            self.gomode_light_visibility = self.config.label_gomode_light.isVisible()
+        else:
+            self.gomode_light_visibility = False
+
         for index, sub_map in self.config.active_inv.label_map.items():
             for i, label in sub_map.items():
                 item = self.config.active_inv.items[index]
@@ -57,48 +69,62 @@ class State:
 
     def get_states_from_file(self, filedata: str):
         new_state = None
+        found_global_settings = False
 
         for i, line in enumerate(filedata):
             line = line.strip()
 
             if line == "" or i == 0:
-                if new_state is not None:
-                    self.states.append(new_state)
-                new_state = LabelState(0, 0, "", 0, 0, False, False, 0, None, 0, False, False)
-
-                if line == "":
-                    continue
-
-            if new_state is not None:
-                if line.startswith("Label #"):
-                    new_state.index = int(line.split("#")[1].removesuffix(":"))
+                if found_global_settings:
+                    found_global_settings = False
                 else:
-                    value = line.split(" = ")[1]
+                    if new_state is not None:
+                        self.states.append(new_state)
+                    new_state = LabelState(0, 0, "", 0, 0, False, False, 0, None, 0, False, False)
 
-                    if line.startswith("pos_index"):
-                        new_state.pos_index = int(value)
-                    elif line.startswith("name"):
-                        new_state.name = value.removeprefix("'").removesuffix("'")
-                    elif line.startswith("enabled"):
-                        new_state.enabled = True if value == "True" else False
-                    elif line.startswith("img_index"):
-                        new_state.img_index = int(value)
-                    elif line.startswith("counter_value"):
-                        new_state.counter_value = int(value)
-                    elif line.startswith("counter_show"):
-                        new_state.counter_show = True if value == "True" else False
-                    elif line.startswith("reward_index"):
-                        new_state.reward_index = int(value)
-                    elif line.startswith("flag_index"):
-                        new_state.flag_index = int(value) if value != "None" else None
-                    elif line.startswith("flag_text_index"):
-                        new_state.flag_text_index = int(value)
-                    elif line.startswith("show_flag"):
-                        new_state.show_flag = True if value == "True" else False
-                    elif line.startswith("show_checkmark"):
-                        new_state.show_checkmark = True if value == "True" else False
+                    if line == "":
+                        continue
+
+            if not found_global_settings and line.startswith("Global Settings"):
+                found_global_settings = True
+            else:
+                if line.startswith("gomode_visibility"):
+                    self.gomode_visibility = True if line.split(" = ")[1] == "True" else False
+                elif line.startswith("gomode_light_visibility"):
+                    self.gomode_light_visibility = True if line.split(" = ")[1] == "True" else False
+                elif new_state is not None:
+                    if line.startswith("Label #"):
+                        new_state.index = int(line.split("#")[1].removesuffix(":"))
+                    elif line != "":
+                        value = line.split(" = ")[1]
+
+                        if line.startswith("pos_index"):
+                            new_state.pos_index = int(value)
+                        elif line.startswith("name"):
+                            new_state.name = value.removeprefix("'").removesuffix("'")
+                        elif line.startswith("enabled"):
+                            new_state.enabled = True if value == "True" else False
+                        elif line.startswith("img_index"):
+                            new_state.img_index = int(value)
+                        elif line.startswith("counter_value"):
+                            new_state.counter_value = int(value)
+                        elif line.startswith("counter_show"):
+                            new_state.counter_show = True if value == "True" else False
+                        elif line.startswith("reward_index"):
+                            new_state.reward_index = int(value)
+                        elif line.startswith("flag_index"):
+                            new_state.flag_index = int(value) if value != "None" else None
+                        elif line.startswith("flag_text_index"):
+                            new_state.flag_text_index = int(value)
+                        elif line.startswith("show_flag"):
+                            new_state.show_flag = True if value == "True" else False
+                        elif line.startswith("show_checkmark"):
+                            new_state.show_checkmark = True if value == "True" else False
 
     def open(self):
+        gomode_settings = self.config.gomode_settings
+        gomodefx = self.config.label_gomode.label_effect
+
         if self.config.state_path is None:
             raise RuntimeError("ERROR: import path not set")
 
@@ -106,6 +132,18 @@ class State:
             filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
 
         self.get_states_from_file(filedata)
+
+        if gomodefx is not None:
+            gomodefx.setStrength(0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
+            if self.gomode_visibility:
+                self.config.label_gomode.setPixmap(self.config.label_gomode.original_pixmap)
+            else:
+                self.config.label_gomode.set_pixmap_opacity(
+                    0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY
+                )
+
+        if self.config.label_gomode_light is not None:
+            self.config.label_gomode_light.setVisible(self.gomode_light_visibility)
 
         for state in self.states:
             item = self.config.active_inv.items[state.index]
@@ -179,7 +217,12 @@ class State:
         with open(self.config.state_path, "w") as file:
             file.write(
                 WARNING_TEXT
-                + "\n\n".join(
+                + (
+                    "Global Settings:\n\t"
+                    + f"gomode_visibility = {self.gomode_visibility}\n\t"
+                    + f"gomode_light_visibility = {self.gomode_light_visibility}\n\n"
+                )
+                + "\n".join(
                     f"Label #{s.index:02}:\n\t"
                     + f"pos_index = {s.pos_index}\n\t"
                     + f"name = '{s.name}'\n\t"
@@ -191,8 +234,7 @@ class State:
                     + f"flag_index = {s.flag_index}\n\t"
                     + f"flag_text_index = {s.flag_text_index}\n\t"
                     + f"show_flag = {s.show_flag}\n\t"
-                    + f"show_checkmark = {s.show_checkmark}"
+                    + f"show_checkmark = {s.show_checkmark}\n"
                     for s in self.states
                 )
-                + "\n"
             )

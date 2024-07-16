@@ -44,6 +44,9 @@ Planned:
 
 The save state file is a plain text file containing informations about how to restore the progression on the tracker.
 
+* ``Global Settings``:
+    - ``gomode_visibility``: the visibility of the "go mode"
+    - ``gomode_light_visibility``: the visibility of the light effect, if used
 * ``Label #XX``: the items are drawn using QLabel's pixmap, the X represent the index of the label.
     - ``pos_index``: the position index, used to know which label to update when there's multiple labels with the same index
     - ``name``: the item's name, used to determine if there's a mismatch between the configuration and the save (also useful to know what's the current label corresponding to)
@@ -51,6 +54,11 @@ The save state file is a plain text file containing informations about how to re
     - ``img_index``: the index of the image, used for progressive items
     - ``counter_value``: the value of the counter, if used
     - ``counter_show``: the visibility of the counter, if used
+    - ``reward_index``: the index of reward name to display
+    - ``flag_index``: the index of the flag the item uses
+    - ``flag_text_index``: the index of the flag's text to display
+    - ``show_flag``: the visibility of the flag
+    - ``show_checkmark``: the visibility of the checkmark (if used)
 
 ## Config File Structure
 
@@ -76,6 +84,7 @@ The save state file is a plain text file containing informations about how to re
     - ``Pos``: can be used set the flag's position (relative to the reward icon)
     - ``TextSettings``: the index of the text setting to use for the flag
     - ``Hidden``: optional, used to set the default visibility
+* ``<GoMode``: optional, configurable image to set the "go mode"
 * ``<Inventory>``:
     - ``Index``: the index of the inventory
     - ``Name``: the name of the inventory configuration
@@ -88,11 +97,16 @@ The save state file is a plain text file containing informations about how to re
         * ``Enabled``: optional, can be used to enable an item by default
         * ``Reward``: optional, can be set to ``True`` to declare the item as a dungeon reward
         * ``UseCheckmark``: optional, can be set to ``True`` to draw a checkmark with the right click (used for OoT songs)
+        * ``UseWheel``: optional, allows using the mouse wheel to update the items faster
         * ``<Counter>``: optional, declares a new counter for this item
             - ``TextSettings``: the index of the text setting to use for this counter
             - ``Min``: the lowest amount the counter can take
             - ``Max``: the highest amount the counter can take
             - ``Increment``: how much it's adding/substracting when the item gets updated
+            - ``Pos``: position of the counter (relative to the item)
+            - ``Width``: the width of the counter label
+            - ``Height``: the height of the counter label
+            - ``MiddleIncrement``: optional, secondary increment with the middle click
         * ``<Sources>``: optional if using ``Source``, list of texture paths
             - ``<Item>``: an element of the list
                 * ``Path``: the path to the texture

@@ -183,15 +183,15 @@
             <!-- Alternative way to handle rewards
             <Item Name="Rewards">
                 <Sources>
-                    <Item Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png"/>
-                    <Item Name="Goron Ruby" Source="items/rewards/goron_ruby.png"/>
-                    <Item Name="Zora Sapphire" Source="items/rewards/zora_sapphire.png"/>
-                    <Item Name="Forest Medallion" Source="items/rewards/forest_medallion.png"/>
-                    <Item Name="Fire Medallion" Source="items/rewards/fire_medallion.png"/>
-                    <Item Name="Water Medallion" Source="items/rewards/water_medallion.png"/>
-                    <Item Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png"/>
-                    <Item Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png"/>
-                    <Item Name="Light Medallion" Source="items/rewards/light_medallion.png"/>
+                    <Item Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png" UseWheel="True"/>
+                    <Item Name="Goron Ruby" Source="items/rewards/goron_ruby.png" UseWheel="True"/>
+                    <Item Name="Zora Sapphire" Source="items/rewards/zora_sapphire.png" UseWheel="True"/>
+                    <Item Name="Forest Medallion" Source="items/rewards/forest_medallion.png" UseWheel="True"/>
+                    <Item Name="Fire Medallion" Source="items/rewards/fire_medallion.png" UseWheel="True"/>
+                    <Item Name="Water Medallion" Source="items/rewards/water_medallion.png" UseWheel="True"/>
+                    <Item Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png" UseWheel="True"/>
+                    <Item Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png" UseWheel="True"/>
+                    <Item Name="Light Medallion" Source="items/rewards/light_medallion.png" UseWheel="True"/>
                 </Sources>
                 <Positions>
                     <Item X="131" Y="300"/>
