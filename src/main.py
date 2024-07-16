@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
                         self.config,
                         f"{obj_name}_flag",
                         QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, 35, 15),
-                        flag.texts[label.flag_index],
+                        flag.texts[label.flag_text_index],
                         1.8,
                         flag.text_settings_index,
                     )

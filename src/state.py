@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from config import Config
+from typing import Optional
 
 from PyQt6.QtGui import QPixmap
 
+from config import Config
 from common import get_new_path, GLOBAL_HALF_OPACITY
 
 
@@ -19,6 +20,10 @@ class LabelState:
     counter_show: bool
     enabled: bool
     reward_index: int
+    flag_index: Optional[int]
+    flag_text_index: int
+    show_flag: bool
+    show_checkmark: bool
 
 
 class State:
@@ -43,6 +48,10 @@ class State:
                         (item.counter.show if item.counter is not None else False),
                         label.label_effect.strength() == 0.0 if label.label_effect is not None else False,
                         label.label_reward.reward_index if label.label_reward is not None else 0,
+                        item.flag_index,
+                        label.flag_text_index,
+                        label.label_flag.isVisible() if label.label_flag is not None else False,
+                        label.label_check.isVisible() if label.label_check is not None else False,
                     )
                 )
 
@@ -55,7 +64,7 @@ class State:
             if line == "" or i == 0:
                 if new_state is not None:
                     self.states.append(new_state)
-                new_state = LabelState(0, 0, "", 0, 0, False, False, 0)
+                new_state = LabelState(0, 0, "", 0, 0, False, False, 0, None, 0, False, False)
 
                 if line == "":
                     continue
@@ -80,6 +89,14 @@ class State:
                         new_state.counter_show = True if value == "True" else False
                     elif line.startswith("reward_index"):
                         new_state.reward_index = int(value)
+                    elif line.startswith("flag_index"):
+                        new_state.flag_index = int(value) if value != "None" else None
+                    elif line.startswith("flag_text_index"):
+                        new_state.flag_text_index = int(value)
+                    elif line.startswith("show_flag"):
+                        new_state.show_flag = True if value == "True" else False
+                    elif line.startswith("show_checkmark"):
+                        new_state.show_checkmark = True if value == "True" else False
 
     def open(self):
         if self.config.state_path is None:
@@ -139,6 +156,22 @@ class State:
                 if label.label_effect is not None:
                     label.label_effect.setStrength(0.0 if state.enabled else 1.0)
 
+                item.flag_index = state.flag_index
+                label.flag_text_index = state.flag_text_index
+
+                if item.flag_index is not None and label.label_flag is not None:
+                    flag = self.config.flags[item.flag_index]
+                    total = len(flag.texts) - 1
+                    text_settings = self.config.text_settings[flag.text_settings_index]
+                    is_max = False if item.is_reward else label.flag_text_index == total
+
+                    label.label_flag.setText(flag.texts[label.flag_text_index])
+                    label.label_flag.set_text_style(self.config, text_settings, is_max, 1.8)
+                    label.label_flag.setVisible(state.show_flag)
+
+                if label.label_check is not None:
+                    label.label_check.setVisible(state.show_checkmark)
+
     def save(self):
         if self.config.state_path is None:
             raise RuntimeError("ERROR: export path not set")
@@ -156,7 +189,11 @@ class State:
                     + f"img_index = {s.img_index}\n\t"
                     + f"counter_value = {s.counter_value}\n\t"
                     + f"counter_show = {s.counter_show}\n\t"
-                    + f"reward_index = {s.reward_index}"
+                    + f"reward_index = {s.reward_index}\n\t"
+                    + f"flag_index = {s.flag_index}\n\t"
+                    + f"flag_text_index = {s.flag_text_index}\n\t"
+                    + f"show_flag = {s.show_flag}\n\t"
+                    + f"show_checkmark = {s.show_checkmark}"
                     for s in self.states
                 )
                 + "\n"

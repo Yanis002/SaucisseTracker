@@ -169,7 +169,7 @@ class Label(QLabel):
         self.index = index
         self.name = name
         self.img_index = -1
-        self.flag_index = 0
+        self.flag_text_index = 0
         self.original_pixmap: Optional[QPixmap] = None
         self.label_counter: Optional[OutlinedLabel] = None
         self.label_effect: Optional[QGraphicsColorizeEffect] = None
@@ -208,23 +208,23 @@ class Label(QLabel):
             if len(item.paths) > 1:
                 if increase:
                     self.img_index += 1
-                    self.flag_index += 1
+                    self.flag_text_index += 1
                 else:
                     self.img_index -= 1
-                    self.flag_index -= 1
+                    self.flag_text_index -= 1
 
                 if self.label_flag is not None and item.flag_index is not None:
-                    total = len(config.flags[item.flag_index].texts) - 1
                     flag = config.flags[item.flag_index]
+                    total = len(flag.texts) - 1
                     text_settings = config.text_settings[flag.text_settings_index]
 
-                    if self.flag_index > total:
-                        self.flag_index = 0
-                    if self.flag_index < 0:
-                        self.flag_index = total
+                    if self.flag_text_index > total:
+                        self.flag_text_index = 0
+                    if self.flag_text_index < 0:
+                        self.flag_text_index = total
 
-                    self.label_flag.setText(flag.texts[self.flag_index])
-                    self.label_flag.set_text_style(config, text_settings, self.flag_index == total, 1.8)
+                    self.label_flag.setText(flag.texts[self.flag_text_index])
+                    self.label_flag.set_text_style(config, text_settings, self.flag_text_index == total, 1.8)
 
                 if self.img_index > len(item.paths) - 1:
                     self.img_index = -1
