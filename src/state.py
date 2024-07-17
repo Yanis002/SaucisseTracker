@@ -33,7 +33,7 @@ class State:
         self.gomode_visibility = False
         self.gomode_light_visibility = False
 
-        if not self.config.state_path.endswith(".txt"):
+        if not self.config.state_path.suffix == ".txt":
             self.config.state_path = f"{self.config.state_path}.txt"
 
     def get_states_from_labels(self):
@@ -128,7 +128,7 @@ class State:
         if self.config.state_path is None:
             show_error("ERROR: import path not set")
 
-        with open(self.config.state_path, "r") as file:
+        with self.config.state_path.open("r") as file:
             filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
 
         self.get_states_from_file(filedata)
@@ -214,7 +214,7 @@ class State:
 
         self.get_states_from_labels()
 
-        with open(self.config.state_path, "w") as file:
+        with self.config.state_path.open("w") as file:
             file.write(
                 WARNING_TEXT
                 + (

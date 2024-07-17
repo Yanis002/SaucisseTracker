@@ -247,7 +247,9 @@ class Config:
             show_error(self.widget, "ERROR: config settings not found")
 
         self.default_inv = int(config.get("DefaultInventory", "0"))
-        self.state_path = self.parse_path(config.get("StatePath"), "savestate path", False)
+
+        p = config.get("StatePath")
+        self.state_path = Path(p).resolve() if p is not None else None
 
         for elem in config:
             match elem.tag:

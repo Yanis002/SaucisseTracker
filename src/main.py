@@ -307,17 +307,21 @@ class TrackerWindow(QMainWindow):
 
     def file_open_triggered(self):
         if self.config.state_path is None:
-            self.config.state_path = QFileDialog.getOpenFileName(None, "Open State File", str(Path.home()), "*.txt")[0]
+            self.config.state_path = Path(
+                QFileDialog.getOpenFileName(None, "Open State File", str(Path.home()), "*.txt")[0]
+            ).resolve()
 
-        if len(self.config.state_path) > 0:
+        if self.config.state_path.exists():
             state = State(self.config)
             state.open()
 
     def file_save_triggered(self):
         if self.config.state_path is None:
-            self.config.state_path = QFileDialog.getSaveFileName(None, "Save State File", str(Path.home()), "*.txt")[0]
+            self.config.state_path = Path(
+                QFileDialog.getSaveFileName(None, "Save State File", str(Path.home()), "*.txt")[0]
+            ).resolve()
 
-        if len(self.config.state_path) > 0:
+        if self.config.state_path.exists():
             state = State(self.config)
             state.save()
 
