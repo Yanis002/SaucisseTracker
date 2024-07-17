@@ -3,9 +3,10 @@ from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
 
-from PyQt6.QtGui import QFontDatabase
+from PyQt6.QtGui import QFontDatabase, QPixmap
+from PyQt6.QtWidgets import QWidget
 
-from common import Label, GLOBAL_HALF_OPACITY
+from common import Label, show_error, GLOBAL_HALF_OPACITY
 
 
 @dataclass
@@ -31,17 +32,19 @@ class Pos:
 
 @dataclass
 class Font:
+    widget: QWidget
     index: int
     name: str
     path: Path
 
     def __post_init__(self):
         if self.name is None:
-            raise ValueError("ERROR: the font's name is none")
+            show_error(self.widget, "ERROR: the font's name is none")
 
 
 @dataclass
 class TextSettings:
+    widget: QWidget
     index: int
     name: str
     font: int
@@ -52,7 +55,7 @@ class TextSettings:
 
     def __post_init__(self):
         if self.name is None:
-            raise ValueError("ERROR: the name is none")
+            show_error(self.widget, "ERROR: the name is none")
 
 
 @dataclass
@@ -146,6 +149,7 @@ class Inventory:
         self.song_check_path: Optional[Path] = None
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
+        self.icon = QPixmap(str(Path("res/icon.png").resolve()))
 
         # { item_index: { pos_index: data } }
         self.label_map: dict[int, dict[int, Label]] = {}
@@ -161,7 +165,8 @@ class GoModeSettings:
 
 
 class Config:
-    def __init__(self, config_path: Path):
+    def __init__(self, widget: QWidget, config_path: Path):
+        self.widget = widget
         self.config_path = config_path
         self.config_dir = self.config_path.parent
 
@@ -180,7 +185,7 @@ class Config:
             case ".xml":
                 self.parse_xml_config()
             case _:
-                raise ValueError("ERROR: the config file's format isn't supported yet.")
+                show_error(self.widget, "ERROR: the config file's format isn't supported yet.")
 
         self.validate()
 
@@ -189,7 +194,7 @@ class Config:
             if font.path.exists():
                 QFontDatabase.addApplicationFont(str(font.path.resolve()))
             else:
-                raise ValueError(f"ERROR: this font doesn't exist '{font.path}'")
+                show_error(self.widget, f"ERROR: this font doesn't exist '{font.path}'")
 
         # set the active inventory from default value
         self.active_inv = self.inventories[self.default_inv]
@@ -209,17 +214,17 @@ class Config:
         elif value == "False":
             return False
         else:
-            raise ValueError(f"ERROR: unknown value '{value}'")
+            show_error(self.widget, f"ERROR: unknown value '{value}'")
 
     def parse_pos(self, raw_pos: Optional[str], name: str, raise_error: bool):
         if raw_pos is not None:
             split = raw_pos.split(";")
             if len(split) > 2:
-                raise ValueError(f"ERROR: Found more than 2 positions for '{name}'")
+                show_error(self.widget, f"ERROR: Found more than 2 positions for '{name}'")
 
             return Pos(int(split[0]), int(split[1]))
         elif raise_error:
-            raise ValueError(f"ERROR: missing position for '{name}'")
+            show_error(self.widget, f"ERROR: missing position for '{name}'")
 
         return None
 
@@ -227,7 +232,7 @@ class Config:
         if raw_path is not None:
             return self.config_dir / raw_path
         elif raise_error:
-            raise ValueError(f"ERROR: Missing path(s) for item '{name}'")
+            show_error(self.widget, f"ERROR: Missing path(s) for item '{name}'")
 
         return None
 
@@ -235,11 +240,11 @@ class Config:
         try:
             root = ET.parse(self.config_path).getroot()
         except:
-            raise FileNotFoundError(f"ERROR: File '{self.config_path}' is missing or malformed.")
+            show_error(self.widget, f"ERROR: File '{self.config_path}' is missing or malformed.")
 
         config = root.find("Config")
         if config is None:
-            raise RuntimeError("ERROR: config settings not found")
+            show_error(self.widget, "ERROR: config settings not found")
 
         self.default_inv = int(config.get("DefaultInventory", "0"))
         self.state_path = self.parse_path(config.get("StatePath"), "savestate path", False)
@@ -250,6 +255,7 @@ class Config:
                     for item in elem:
                         self.fonts.append(
                             Font(
+                                self.widget,
                                 int(item.get("Index", "0")),
                                 item.get("Name"),
                                 self.parse_path(item.get("Source"), "font", True),
@@ -259,6 +265,7 @@ class Config:
                     for item in elem:
                         self.text_settings.append(
                             TextSettings(
+                                self.widget,
                                 int(item.get("Index", "0")),
                                 item.get("Name"),
                                 int(item.get("FontIndex", "0")),
@@ -273,7 +280,7 @@ class Config:
                         text = item.get("Text")
 
                         if text is None:
-                            raise ValueError(f"ERROR: Missing texts for the flag")
+                            show_error(self.widget, f"ERROR: Missing texts for the flag")
 
                         self.flags.append(
                             FlagItem(
@@ -284,7 +291,6 @@ class Config:
                             )
                         )
                 case "GoMode":
-                    p = elem.get("Source")
                     self.gomode_settings = GoModeSettings(
                         self.parse_pos(elem.get("Pos"), "go mode", True),
                         self.parse_bool(elem.get("HideIfDisabled", "False")),
@@ -298,6 +304,10 @@ class Config:
                     inventory.name = elem.get("Name", "Unknown")
                     inventory.background = self.parse_path(elem.get("Background"), "background", True)
                     inventory.song_check_path = self.parse_path(elem.get("CheckmarkPath"), "checkmark", False)
+
+                    icon_path = self.parse_path(elem.get("Icon"), "icon", False)
+                    if icon_path is not None:
+                        inventory.icon = QPixmap(str(icon_path))
 
                     for i, item in enumerate(elem.iterfind("Item")):
                         name = item.get("Name", "Unknown")
@@ -313,7 +323,7 @@ class Config:
                                 paths.append(self.parse_path(sub_item.get("Path"), f"item '{name}'", True))
 
                         if len(paths) == 0:
-                            raise ValueError(f"ERROR: Missing paths for item '{name}'")
+                            show_error(self.widget, f"ERROR: Missing paths for item '{name}'")
 
                         pos = self.parse_pos(item.get("Pos"), "inventory item", False)
                         if pos is not None:
@@ -324,7 +334,7 @@ class Config:
                                 positions.append(Pos(int(sub_item.get("X", "0")), int(sub_item.get("Y", "0"))))
 
                         if len(positions) == 0:
-                            raise ValueError(f"ERROR: Missing positions for item '{name}'")
+                            show_error(self.widget, f"ERROR: Missing positions for item '{name}'")
 
                         counter = None
                         c = item.find("Counter")
@@ -370,18 +380,18 @@ class Config:
 
                     self.inventories[inventory.index] = inventory
                 case _:
-                    raise RuntimeError(f"ERROR: unknown configuration tag: '{elem.tag}'")
+                    show_error(self.widget, f"ERROR: unknown configuration tag: '{elem.tag}'")
 
     def validate(self):
         if len(self.fonts) == 0:
-            raise RuntimeError("ERROR: you need at least one font")
+            show_error(self.widget, "ERROR: you need at least one font")
 
         if len(self.text_settings) == 0:
-            raise RuntimeError("ERROR: you need at least one text setting for counter display")
+            show_error(self.widget, "ERROR: you need at least one text setting for counter display")
 
         for inv in self.inventories.values():
             if len(inv.items) == 0:
-                raise RuntimeError(f"ERROR: there's no inventory items for inventory at index {inv.index}")
+                show_error(self.widget, f"ERROR: there's no inventory items for inventory at index {inv.index}")
 
             if inv.background is None:
-                raise RuntimeError(f"ERROR: the background's path is none for inventory at index {inv.index}")
+                show_error(self.widget, f"ERROR: the background's path is none for inventory at index {inv.index}")

@@ -4,7 +4,7 @@ from typing import Optional
 from PyQt6.QtGui import QPixmap
 
 from config import Config
-from common import GLOBAL_HALF_OPACITY
+from common import show_error, GLOBAL_HALF_OPACITY
 
 
 WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING !!!\n" + "!" * 63 + "\n\n"
@@ -126,7 +126,7 @@ class State:
         gomodefx = self.config.label_gomode.label_effect
 
         if self.config.state_path is None:
-            raise RuntimeError("ERROR: import path not set")
+            show_error("ERROR: import path not set")
 
         with open(self.config.state_path, "r") as file:
             filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
@@ -210,7 +210,7 @@ class State:
 
     def save(self):
         if self.config.state_path is None:
-            raise RuntimeError("ERROR: export path not set")
+            show_error("ERROR: export path not set")
 
         self.get_states_from_labels()
 

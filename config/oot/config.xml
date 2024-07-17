@@ -21,7 +21,7 @@
             <Item Index="2" Pos="-1;21" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
         <GoMode Pos="129;178" HideIfDisabled="True" Source="gomode.png" LightPath="light.png" LightPos="69;112"/>
-        <Inventory Index="0" Name="Ocarina of Time (N64)" Background="background.png" CheckmarkPath="check.png">
+        <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time (N64)" Background="background.png" CheckmarkPath="check.png">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
                 <Counter TextSettings="0" Min="10" Max="30" Increment="10" Pos="-6;22" Width="32" Height="15"/>

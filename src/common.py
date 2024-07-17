@@ -1,11 +1,10 @@
-import sys
 import math
 
-from os import getcwd, path
+from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
-from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect
-from PyQt6.QtWidgets import QLabel, QWidget, QGraphicsColorizeEffect
+from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect, QAbstractListModel
+from PyQt6.QtWidgets import QLabel, QWidget, QGraphicsColorizeEffect, QMessageBox
 from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor, QWheelEvent
 
 if TYPE_CHECKING:
@@ -13,6 +12,25 @@ if TYPE_CHECKING:
 
 
 GLOBAL_HALF_OPACITY = 0.6
+
+
+class ListViewModel(QAbstractListModel):
+    def __init__(self, items: list[tuple[bool, str, Path]]):
+        super(ListViewModel, self).__init__()
+        self.items = items
+
+    def data(self, index, role):
+        status, text, img = self.items[index.row()]
+
+        if role == Qt.ItemDataRole.DisplayRole:
+            return text
+
+        if role == Qt.ItemDataRole.DecorationRole:
+            if status:
+                return img
+
+    def rowCount(self, index):
+        return len(self.items)
 
 
 # from https://stackoverflow.com/a/64291055
@@ -340,11 +358,9 @@ class Label(QLabel):
                         self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
 
 
-# adapted from https://stackoverflow.com/a/42615559
-def get_app_path():
-    if getattr(sys, "frozen", False):
-        return getcwd()
-    elif __file__:
-        return path.dirname(path.abspath(__file__)).removesuffix("src")
-    else:
-        raise RuntimeError("ERROR: couldn't determine the execution type")
+def show_error(parent: QWidget, msg: str):
+    errorDialog = QMessageBox(parent)
+    errorDialog.setWindowTitle("Error")
+    errorDialog.setIcon(QMessageBox.Icon.Critical)
+    errorDialog.setText(msg)
+    errorDialog.show()
