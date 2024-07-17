@@ -59,14 +59,13 @@ class OutlinedLabel(QLabel):
         obj_name: str,
         geometry: QRect,
         text: str,
-        thickness: float,
         text_settings_index: int,
     ):
         new_label = OutlinedLabel(config, parent)
         new_label.setObjectName(obj_name)
         new_label.setGeometry(geometry)
         new_label.setText(text)
-        new_label.set_text_style(text_settings_index, False, thickness)
+        new_label.set_text_style(text_settings_index, False)
         new_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         return new_label
@@ -171,13 +170,13 @@ class OutlinedLabel(QLabel):
             qp.fillPath(path, self.palette().window())
         qp.fillPath(path, self.brush)
 
-    def set_text_style(self, text_settings_index: int, is_max: bool, thickness: int):
+    def set_text_style(self, text_settings_index: int, is_max: bool):
         text_settings = self.config.get_text_settings(text_settings_index)
         font = self.config.get_font(text_settings)
         color = self.config.get_color(text_settings, is_max)
 
         self.setScaledOutlineMode(False)
-        self.setOutlineThickness(thickness)
+        self.setOutlineThickness(text_settings.outline_thickness)
         self.setBrush(QColor(color.r, color.g, color.b))
         self.setStyleSheet(
             f"""
@@ -204,10 +203,10 @@ class Label(QLabel):
         self.name = name
         self.img_index = -1
         self.flag_text_index = 0
+        self.reward_index = 0
         self.original_pixmap: Optional[QPixmap] = None
         self.label_counter: Optional[OutlinedLabel] = None
         self.label_effect: Optional[QGraphicsColorizeEffect] = None
-        self.label_reward: Optional[OutlinedLabel] = None
         self.label_flag: Optional[OutlinedLabel] = None
         self.label_check: Optional["Label"] = None
 
@@ -317,7 +316,7 @@ class Label(QLabel):
                         self.flag_text_index = total
 
                     self.label_flag.setText(flag.texts[self.flag_text_index])
-                    self.label_flag.set_text_style(flag.text_settings_index, self.flag_text_index == total, 1.8)
+                    self.label_flag.set_text_style(flag.text_settings_index, self.flag_text_index == total)
 
                 if self.img_index > len(item.paths) - 1:
                     self.img_index = -1

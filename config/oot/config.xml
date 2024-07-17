@@ -8,20 +8,20 @@
             <Item Index="3" Name="Windows Command Prompt" Source="fonts/windows_command_prompt.ttf"/>
         </Fonts>
         <TextSettings>
-            <Item Index="0" Name="Counters" FontIndex="2" Size="12.3" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
-            <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF"/>
-            <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="15" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
-            <Item Index="3" Name="Dungeon Flag" FontIndex="0" Size="9" Bold="True" Color="0x00FFFF"/>
-            <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00"/>
+            <Item Index="0" Name="Counters" FontIndex="2" Size="12.3" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00" OutlineThickness="2"/>
+            <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF" OutlineThickness="1.8"/>
+            <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="15" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00" OutlineThickness="2"/>
+            <Item Index="3" Name="Dungeon Flag" FontIndex="0" Size="9" Bold="True" Color="0x00FFFF" OutlineThickness="1.8"/>
+            <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00" OutlineThickness="1.8"/>
         </TextSettings>
         <Flags>
             <!-- the flags' positions are relative to the item there are associate to -->
-            <Item Index="0" Pos="9;-3" Text="MQ" TextSettings="3"/>
-            <Item Index="1" Pos="9;21" Text=";H;L" TextSettings="4" Hidden="False"/>
-            <Item Index="2" Pos="-1;21" Text=";200;500;999" TextSettings="0" Hidden="False"/>
+            <Item Index="0" Pos="9;-3" Width="35" Height="15" Text="MQ" TextSettings="3"/>
+            <Item Index="1" Pos="9;21" Width="35" Height="15" Text=";H;L" TextSettings="4" Hidden="False"/>
+            <Item Index="2" Pos="-1;21" Width="35" Height="15" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
         <GoMode Pos="129;178" HideIfDisabled="True" Source="gomode.png" LightPath="light.png" LightPos="69;112"/>
-        <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time (N64)" Background="background.png" CheckmarkPath="check.png">
+        <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time (N64)" Background="background.png" CheckmarkPath="check.png" BackgroundColor="0x000000">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
                 <Counter TextSettings="0" Min="10" Max="30" Increment="10" Pos="-6;22" Width="32" Height="15"/>
@@ -169,43 +169,42 @@
             <Item Reward="True" FlagIndex="0" Pos="172;345" Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png"/>
             <Item Reward="True" FlagIndex="0" Pos="213;345" Name="Light Medallion" Source="items/rewards/light_medallion.png"/>
             <Rewards>
-                <Item Name="????" TextSettings="1"/>
-                <Item Name="FREE" TextSettings="1"/>
-                <Item Name="DEKU" TextSettings="1"/>
-                <Item Name="DC" TextSettings="1"/>
-                <Item Name="JABU" TextSettings="1"/>
-                <Item Name="FOREST" TextSettings="1"/>
-                <Item Name="FIRE" TextSettings="1"/>
-                <Item Name="WATER" TextSettings="1"/>
-                <Item Name="SHADOW" TextSettings="1"/>
-                <Item Name="SPIRIT" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="????" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="FREE" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="DEKU" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="DC" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="JABU" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="FOREST" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="FIRE" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="WATER" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="SHADOW" TextSettings="1"/>
+                <Item Pos="-6;23" Width="45" Height="32" Name="SPIRIT" TextSettings="1"/>
             </Rewards>
-            <!-- Alternative way to handle rewards
-            <Item Name="Rewards">
-                <Sources>
-                    <Item Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png" UseWheel="True"/>
-                    <Item Name="Goron Ruby" Source="items/rewards/goron_ruby.png" UseWheel="True"/>
-                    <Item Name="Zora Sapphire" Source="items/rewards/zora_sapphire.png" UseWheel="True"/>
-                    <Item Name="Forest Medallion" Source="items/rewards/forest_medallion.png" UseWheel="True"/>
-                    <Item Name="Fire Medallion" Source="items/rewards/fire_medallion.png" UseWheel="True"/>
-                    <Item Name="Water Medallion" Source="items/rewards/water_medallion.png" UseWheel="True"/>
-                    <Item Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png" UseWheel="True"/>
-                    <Item Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png" UseWheel="True"/>
-                    <Item Name="Light Medallion" Source="items/rewards/light_medallion.png" UseWheel="True"/>
-                </Sources>
-                <Positions>
-                    <Item X="131" Y="300"/>
-                    <Item X="172" Y="300"/>
-                    <Item X="213" Y="300"/>
-                    <Item X="8" Y="345"/>
-                    <Item X="48" Y="345"/>
-                    <Item X="90" Y="345"/>
-                    <Item X="131" Y="345"/>
-                    <Item X="172" Y="345"/>
-                    <Item X="213" Y="345"/>
-                </Positions>
-            </Item>
-            Alternative way to handle rewards -->
+            <!-- Alternative way to handle rewards -->
+                <!-- <Item Name="Rewards" Reward="True" UseWheel="True">
+                    <Sources>
+                        <Item Name="Kokiri Emerald" Path="items/rewards/kokiri_emerald.png" />
+                        <Item Name="Goron Ruby" Path="items/rewards/goron_ruby.png"/>
+                        <Item Name="Zora Sapphire" Path="items/rewards/zora_sapphire.png"/>
+                        <Item Name="Forest Medallion" Path="items/rewards/forest_medallion.png"/>
+                        <Item Name="Fire Medallion" Path="items/rewards/fire_medallion.png"/>
+                        <Item Name="Water Medallion" Path="items/rewards/water_medallion.png"/>
+                        <Item Name="Shadow Medallion" Path="items/rewards/shadow_medallion.png"/>
+                        <Item Name="Spirit Medallion" Path="items/rewards/spirit_medallion.png"/>
+                        <Item Name="Light Medallion" Path="items/rewards/light_medallion.png"/>
+                    </Sources>
+                    <Positions>
+                        <Item X="131" Y="300"/>
+                        <Item X="172" Y="300"/>
+                        <Item X="213" Y="300"/>
+                        <Item X="8" Y="345"/>
+                        <Item X="48" Y="345"/>
+                        <Item X="90" Y="345"/>
+                        <Item X="131" Y="345"/>
+                        <Item X="172" Y="345"/>
+                        <Item X="213" Y="345"/>
+                    </Positions>
+                </Item> -->
             <!-- Songs -->
             <Item UseCheckmark="True" Pos="258;8" Name="Zelda's Lullaby" Source="items/songs/lullaby.png"/>
             <Item UseCheckmark="True" Pos="258;39" Name="Epona's Song" Source="items/songs/epona.png"/>

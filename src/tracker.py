@@ -49,8 +49,12 @@ class TrackerWindow(QMainWindow):
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
 
+        for item in self.config.active_inv.items:
+            item.reward_map = {}
+
         if self.parent_ is not None:
             self.parent_.show()
+            self.close()
 
     def create_window(self, width: int, height: int):
         # accounts for platform differences for the windows' size
@@ -70,6 +74,7 @@ class TrackerWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
     def create_background(self, width: int, height: int):
+        color = self.config.active_inv.background_color
         self.bg = QFrame(self.centralwidget)
         self.bg.setObjectName("bg")
         self.bg.setGeometry(QRect(0, 0, width, height))
@@ -77,7 +82,7 @@ class TrackerWindow(QMainWindow):
         self.bg.setMaximumSize(QSize(width, height))
         self.bg.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.bg.setAutoFillBackground(False)
-        self.bg.setStyleSheet("background-color: rgb(0, 0, 0);")
+        self.bg.setStyleSheet(f"background-color: rgb({color.r}, {color.g}, {color.b});")
         self.bg.setFrameShape(QFrame.Shape.StyledPanel)
         self.bg.setFrameShadow(QFrame.Shadow.Raised)
         self.bg.setLineWidth(1)
@@ -92,7 +97,6 @@ class TrackerWindow(QMainWindow):
     def create_menubar(self):
         self.menu = QMenuBar(parent=self)
         self.menu.setObjectName("menu")
-        self.menu.setGeometry(QRect(0, 0, 335, 21))
 
         self.menu_file = QMenu(parent=self.menu)
         self.menu_file.setObjectName("menu_file")
@@ -211,7 +215,6 @@ class TrackerWindow(QMainWindow):
                             item.counter.height,
                         ),
                         "",
-                        1,
                         item.counter.text_settings_index,
                     )
 
@@ -222,16 +225,26 @@ class TrackerWindow(QMainWindow):
                     label.label_counter.clicked_right.connect(self.outlinedLabel_clicked_right)
 
                 if item.is_reward:
-                    reward = self.config.active_inv.rewards.items[0]
-                    label.label_reward = OutlinedLabel.new(
-                        self.centralwidget,
-                        self.config,
-                        f"{obj_name}_reward",
-                        QRect(pos.x - 6, pos.y + 23, 45, 32),
-                        reward.name,
-                        1.8,
-                        reward.text_settings_index,
+                    reward_info = self.config.active_inv.rewards.items[label.reward_index]
+                    geometry = QRect(
+                        pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
                     )
+
+                    if item.reward_map.get(i) is not None:
+                        item.reward_map[i].setGeometry(geometry)
+                        item.reward_map[i].setText(reward_info.name)
+                    else:
+                        item.reward_map[i] = OutlinedLabel.new(
+                            self.centralwidget,
+                            self.config,
+                            f"{obj_name}_reward",
+                            geometry,
+                            reward_info.name,
+                            reward_info.text_settings_index,
+                        )
+
+                    if item.reward_map[i].item_label is None:
+                        item.reward_map[i].item_label = label
                     label.raise_()
 
                 if item.use_checkmark:
@@ -259,9 +272,8 @@ class TrackerWindow(QMainWindow):
                         self.centralwidget,
                         self.config,
                         f"{obj_name}_flag",
-                        QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, 35, 15),
+                        QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
                         flag.texts[label.flag_text_index],
-                        1.8,
                         flag.text_settings_index,
                     )
                     label.label_flag.setHidden(flag.hidden)
@@ -340,15 +352,20 @@ class TrackerWindow(QMainWindow):
 
     def label_clicked_right(self):
         label: Label = self.sender()
+        item = self.config.active_inv.items[label.index]
 
-        if label.label_reward is not None:
-            label.label_reward.reward_index += 1
+        if item.is_reward:
+            for i, _ in enumerate(item.positions):
+                if label.objectName().endswith(f"_pos_{i}"):
+                    reward = item.reward_map[i]
 
-            if label.label_reward.reward_index > len(self.config.active_inv.rewards.items) - 1:
-                label.label_reward.reward_index = 0
+                    if reward is not None and reward.item_label is not None:
+                        label.reward_index += 1
 
-            reward = self.config.active_inv.rewards.items[label.label_reward.reward_index]
-            label.label_reward.setText(reward.name)
+                        if label.reward_index > len(self.config.active_inv.rewards.items) - 1:
+                            label.reward_index = 0
+
+                        item.update_reward(i, self.config.active_inv.rewards.items[label.reward_index])
         elif label.label_check is not None:
             label.label_check.setVisible(not label.label_check.isVisible())
         else:

@@ -5,15 +5,16 @@ from pathlib import Path
 
 from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import QRect
 
-from common import Label, show_error, GLOBAL_HALF_OPACITY
+from common import OutlinedLabel, Label, show_error, GLOBAL_HALF_OPACITY
 
 
-@dataclass
 class Color:
-    r: int
-    g: int
-    b: int
+    def __init__(self, r: int = 0, g: int = 0, b: int = 0):
+        self.r = r
+        self.g = g
+        self.b = b
 
     @staticmethod
     def unpack(value: int):
@@ -52,6 +53,7 @@ class TextSettings:
     bold: bool
     color: Color
     color_max: Color
+    outline_thickness: float
 
     def __post_init__(self):
         if self.name is None:
@@ -99,11 +101,20 @@ class Counter:
             label.label_effect.setStrength(0.0)  # disable filter
             label.setPixmap(label.original_pixmap)
             label.label_counter.setText(f"{self.value}")
-            label.label_counter.set_text_style(self.text_settings_index, self.value == self.max, 2)
+            label.label_counter.set_text_style(self.text_settings_index, self.value == self.max)
         else:
             label.label_effect.setStrength(1.0)  # enable filter
             label.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
             label.label_counter.setText("")
+
+
+@dataclass
+class RewardItem:
+    pos: Pos
+    width: int
+    height: int
+    name: str
+    text_settings_index: int
 
 
 @dataclass
@@ -119,12 +130,19 @@ class InventoryItem:
     flag_index: Optional[int]
     use_checkmark: bool
     use_wheel: bool
+    reward_map: dict[int, OutlinedLabel]
 
-
-@dataclass
-class RewardItem:
-    name: str
-    text_settings_index: int
+    def update_reward(self, index: int, reward_info: RewardItem):
+        item_geo = self.reward_map[index].item_label.geometry()
+        self.reward_map[index].setText(reward_info.name)
+        self.reward_map[index].setGeometry(
+            QRect(
+                item_geo.x() + reward_info.pos.x,
+                item_geo.y() + reward_info.pos.y,
+                reward_info.width,
+                reward_info.height,
+            )
+        )
 
 
 @dataclass
@@ -133,6 +151,8 @@ class FlagItem:
     pos: Pos
     text_settings_index: int
     hidden: bool
+    width: int
+    height: int
 
 
 class Rewards:
@@ -150,6 +170,7 @@ class Inventory:
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
         self.icon = QPixmap(str(Path("res/icon.png").resolve()))
+        self.background_color = Color()
 
         # { item_index: { pos_index: data } }
         self.label_map: dict[int, dict[int, Label]] = {}
@@ -216,6 +237,8 @@ class Config:
         else:
             show_error(self.widget, f"ERROR: unknown value '{value}'")
 
+        return False
+
     def parse_pos(self, raw_pos: Optional[str], name: str, raise_error: bool):
         if raw_pos is not None:
             split = raw_pos.split(";")
@@ -275,6 +298,7 @@ class Config:
                                 self.parse_bool(item.get("Bold", "False")),
                                 Color.unpack(int(item.get("Color", "0x000000"), 0)),
                                 Color.unpack(int(item.get("ColorMax", "0x000000"), 0)),
+                                float(item.get("OutlineThickness", "0")),
                             )
                         )
                 case "Flags":
@@ -290,6 +314,8 @@ class Config:
                                 self.parse_pos(item.get("Pos"), "flag item", True),
                                 int(item.get("TextSettings", "0")),
                                 self.parse_bool(item.get("Hidden", "True")),
+                                int(item.get("Width", "0")),
+                                int(item.get("Height", "0")),
                             )
                         )
                 case "GoMode":
@@ -306,6 +332,7 @@ class Config:
                     inventory.name = elem.get("Name", "Unknown")
                     inventory.background = self.parse_path(elem.get("Background"), "background", True)
                     inventory.song_check_path = self.parse_path(elem.get("CheckmarkPath"), "checkmark", False)
+                    inventory.background_color = Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0))
 
                     icon_path = self.parse_path(elem.get("Icon"), "icon", False)
                     if icon_path is not None:
@@ -367,6 +394,7 @@ class Config:
                                 int(flag_index) if flag_index is not None else None,
                                 self.parse_bool(item.get("UseCheckmark", "False")),
                                 self.parse_bool(item.get("UseWheel", "False")),
+                                dict(),
                             )
                         )
 
@@ -375,6 +403,9 @@ class Config:
                         for i, item in enumerate(rewards.iterfind("Item")):
                             inventory.rewards.items.append(
                                 RewardItem(
+                                    self.parse_pos(item.get("Pos"), "reward", True),
+                                    int(item.get("Width", "0")),
+                                    int(item.get("Height", "0")),
                                     item.get("Name", "Unk"),
                                     int(item.get("TextSettings", "0")),
                                 )

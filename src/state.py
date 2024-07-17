@@ -59,7 +59,7 @@ class State:
                         (item.counter.value if item.counter is not None else 0),
                         (item.counter.show if item.counter is not None else False),
                         label.label_effect.strength() == 0.0 if label.label_effect is not None else False,
-                        label.label_reward.reward_index if label.label_reward is not None else 0,
+                        label.reward_index,
                         item.flag_index,
                         label.flag_text_index,
                         label.label_flag.isVisible() if label.label_flag is not None else False,
@@ -171,7 +171,7 @@ class State:
                     if item.counter.show:
                         label.label_counter.setText(f"{item.counter.value}")
                         label.label_counter.set_text_style(
-                            item.counter.text_settings_index, item.counter.value == item.counter.max, 2
+                            item.counter.text_settings_index, item.counter.value == item.counter.max
                         )
 
                 if state.img_index < 0:
@@ -185,10 +185,14 @@ class State:
                 if not state.enabled:
                     label.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
 
-                if label.label_reward is not None:
-                    label.label_reward.reward_index = state.reward_index
-                    reward = self.config.active_inv.rewards.items[label.label_reward.reward_index]
-                    label.label_reward.setText(reward.name)
+                if item.is_reward:
+                    label.reward_index = state.reward_index
+                    for i, _ in enumerate(item.positions):
+                        if label.objectName().endswith(f"_pos_{i}"):
+                            reward = item.reward_map[i]
+
+                            if reward is not None and reward.item_label is not None:
+                                item.update_reward(i, self.config.active_inv.rewards.items[label.reward_index])
 
                 if label.label_effect is not None:
                     label.label_effect.setStrength(0.0 if state.enabled else 1.0)
@@ -202,7 +206,7 @@ class State:
                     is_max = False if item.is_reward else label.flag_text_index == total
 
                     label.label_flag.setText(flag.texts[label.flag_text_index])
-                    label.label_flag.set_text_style(flag.text_settings_index, is_max, 1.8)
+                    label.label_flag.set_text_style(flag.text_settings_index, is_max)
                     label.label_flag.setVisible(state.show_flag)
 
                 if label.label_check is not None:

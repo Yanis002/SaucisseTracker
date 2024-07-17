@@ -6,8 +6,9 @@ import traceback
 
 from pathlib import Path
 from typing import Optional
+from copy import copy
 
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QIcon, QPixmap, QShowEvent
 from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtWidgets import (
     QWidget,
@@ -103,6 +104,12 @@ class MainWindow(QMainWindow):
         self.btn_edit.setEnabled(False)
         self.btn_delete.setEnabled(False)
 
+    def showEvent(self, e: Optional[QShowEvent]):
+        super(QMainWindow, self).showEvent(e)
+
+        if self.tracker_window is not None:
+            self.tracker_window = None
+
     # connections callbacks
 
     def btn_set_config_dir_clicked(self):
@@ -136,7 +143,7 @@ class MainWindow(QMainWindow):
         try:
             if len(self.configs) > 0:
                 config = list(self.configs.values())[self.list_configs.currentIndex().row()]
-                self.tracker_window = TrackerWindow(self, config)
+                self.tracker_window = TrackerWindow(self, copy(config))
                 self.tracker_window.show()
                 self.hide()
         except Exception:
@@ -152,9 +159,6 @@ def main():
 
         # encoding probably useless but just in case
         windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
-
-    # tracker_window = TrackerWindow(configs[0])
-    # tracker_window.show()
 
     main_window = MainWindow()
     main_window.show()
