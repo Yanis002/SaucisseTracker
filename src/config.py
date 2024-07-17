@@ -128,8 +128,8 @@ class InventoryItem:
     scale_content: bool
     is_reward: bool
     flag_index: Optional[int]
-    use_checkmark: bool
     use_wheel: bool
+    extra_index: Optional[int]
     reward_map: dict[int, OutlinedLabel]
 
     def update_reward(self, index: int, reward_info: RewardItem):
@@ -161,12 +161,22 @@ class Rewards:
         self.items: list[RewardItem] = []
 
 
+@dataclass
+class ExtraItem:
+    pos: Pos
+    path: Path
+
+
+@dataclass
+class Extras:
+    items: list[ExtraItem]
+
+
 class Inventory:
     def __init__(self):
         self.index = int()
         self.name = str()
         self.background = Path()
-        self.song_check_path: Optional[Path] = None
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
         self.icon = QPixmap(str(Path("res/icon.png").resolve()))
@@ -198,6 +208,7 @@ class Config:
         self.inventories: dict[int, Inventory] = {}
         self.state_path: Optional[Path] = None
         self.gomode_settings: Optional[GoModeSettings] = None
+        self.extras: Optional[Extras] = None
 
         self.label_gomode: Optional[Label] = None
         self.label_gomode_light: Optional[Label] = None
@@ -326,12 +337,21 @@ class Config:
                         self.parse_path(elem.get("LightPath"), "go mode light", False),
                         self.parse_pos(elem.get("LightPos"), "go mode light", False),
                     )
+                case "Extras":
+                    extra_items: list[ExtraItem] = []
+                    for item in elem:
+                        extra_items.append(
+                            ExtraItem(
+                                self.parse_pos(item.get("Pos"), "extras", True),
+                                self.parse_path(item.get("Path"), "extras", True),
+                            )
+                        )
+                    self.extras = Extras(extra_items)
                 case "Inventory":
                     inventory = Inventory()
                     inventory.index = int(elem.get("Index", "0"))
                     inventory.name = elem.get("Name", "Unknown")
                     inventory.background = self.parse_path(elem.get("Background"), "background", True)
-                    inventory.song_check_path = self.parse_path(elem.get("CheckmarkPath"), "checkmark", False)
                     inventory.background_color = Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0))
 
                     icon_path = self.parse_path(elem.get("Icon"), "icon", False)
@@ -381,6 +401,7 @@ class Config:
                             )
 
                         flag_index = item.get("FlagIndex")
+                        extra_index = item.get("ExtraIndex")
                         inventory.items.append(
                             InventoryItem(
                                 i,
@@ -392,8 +413,8 @@ class Config:
                                 self.parse_bool(item.get("ScaleContent", "False")),
                                 self.parse_bool(item.get("Reward", "False")),
                                 int(flag_index) if flag_index is not None else None,
-                                self.parse_bool(item.get("UseCheckmark", "False")),
                                 self.parse_bool(item.get("UseWheel", "False")),
+                                int(extra_index) if extra_index is not None else None,
                                 dict(),
                             )
                         )

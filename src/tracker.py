@@ -247,24 +247,26 @@ class TrackerWindow(QMainWindow):
                         item.reward_map[i].item_label = label
                     label.raise_()
 
-                if item.use_checkmark:
-                    label.label_check = Label.new(
+                if item.extra_index is not None:
+                    extra = self.config.extras.items[item.extra_index]
+                    width, height = Image.open(extra.path).size
+                    label.label_extra_img = Label.new(
                         self.config,
                         self.centralwidget,
                         item.index,
                         item.name,
-                        f"{obj_name}_checkmark",
-                        QRect(pos.x + 18, pos.y - 4, 16, 16),
-                        str(self.config.active_inv.song_check_path),
+                        f"{obj_name}_extra_img",
+                        QRect(pos.x + extra.pos.x, pos.y + extra.pos.y, width, height),
+                        str(extra.path),
                         1.0,
                         False,
                         0.0,
                     )
 
-                    label.label_check.setVisible(False)
-                    label.label_check.clicked_left.connect(self.label_clicked_left)
-                    label.label_check.clicked_middle.connect(self.label_clicked_middle)
-                    label.label_check.clicked_right.connect(self.label_clicked_right)
+                    label.label_extra_img.setVisible(False)
+                    label.label_extra_img.clicked_left.connect(self.label_clicked_left)
+                    label.label_extra_img.clicked_middle.connect(self.label_clicked_middle)
+                    label.label_extra_img.clicked_right.connect(self.label_clicked_right)
 
                 if len(self.config.flags) > 0 and item.flag_index is not None:
                     flag = self.config.flags[item.flag_index]
@@ -366,8 +368,8 @@ class TrackerWindow(QMainWindow):
                             label.reward_index = 0
 
                         item.update_reward(i, self.config.active_inv.rewards.items[label.reward_index])
-        elif label.label_check is not None:
-            label.label_check.setVisible(not label.label_check.isVisible())
+        elif label.label_extra_img is not None:
+            label.label_extra_img.setVisible(not label.label_extra_img.isVisible())
         else:
             label.update_label(False)
 

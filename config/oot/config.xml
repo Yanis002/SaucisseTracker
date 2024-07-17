@@ -21,7 +21,10 @@
             <Item Index="2" Pos="-1;21" Width="35" Height="15" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
         <GoMode Pos="129;178" HideIfDisabled="True" Source="gomode.png" LightPath="light.png" LightPos="69;112"/>
-        <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time (N64)" Background="background.png" CheckmarkPath="check.png" BackgroundColor="0x000000">
+        <Extras>
+            <Item Index="0" Pos="18;-4" Path="check.png"/>
+        </Extras>
+        <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time (N64)" Background="background.png" BackgroundColor="0x000000">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
                 <Counter TextSettings="0" Min="10" Max="30" Increment="10" Pos="-6;22" Width="32" Height="15"/>
@@ -206,18 +209,18 @@
                     </Positions>
                 </Item> -->
             <!-- Songs -->
-            <Item UseCheckmark="True" Pos="258;8" Name="Zelda's Lullaby" Source="items/songs/lullaby.png"/>
-            <Item UseCheckmark="True" Pos="258;39" Name="Epona's Song" Source="items/songs/epona.png"/>
-            <Item UseCheckmark="True" Pos="258;71" Name="Saria's Song" Source="items/songs/saria.png"/>
-            <Item UseCheckmark="True" Pos="258;103" Name="Sun's Song" Source="items/songs/sun.png"/>
-            <Item UseCheckmark="True" Pos="258;135" Name="Song of Time" Source="items/songs/time.png"/>
-            <Item UseCheckmark="True" Pos="258;165" Name="Song of Storms" Source="items/songs/storms.png"/>
-            <Item UseCheckmark="True" Pos="258;196" Name="Minuet of Forest" Source="items/songs/minuet.png"/>
-            <Item UseCheckmark="True" Pos="258;228" Name="Bolero of Fire" Source="items/songs/bolero.png"/>
-            <Item UseCheckmark="True" Pos="259;258" Name="Serenade of Water" Source="items/songs/serenade.png"/>
-            <Item UseCheckmark="True" Pos="259;288" Name="Requiem of Spirit" Source="items/songs/requiem.png"/>
-            <Item UseCheckmark="True" Pos="258;318" Name="Nocturne of Shadow" Source="items/songs/nocturne.png"/>
-            <Item UseCheckmark="True" Pos="258;352" Name="Prelude of Light" Source="items/songs/prelude.png"/>
+            <Item ExtraIndex="0" Pos="258;8" Name="Zelda's Lullaby" Source="items/songs/lullaby.png"/>
+            <Item ExtraIndex="0" Pos="258;39" Name="Epona's Song" Source="items/songs/epona.png"/>
+            <Item ExtraIndex="0" Pos="258;71" Name="Saria's Song" Source="items/songs/saria.png"/>
+            <Item ExtraIndex="0" Pos="258;103" Name="Sun's Song" Source="items/songs/sun.png"/>
+            <Item ExtraIndex="0" Pos="258;135" Name="Song of Time" Source="items/songs/time.png"/>
+            <Item ExtraIndex="0" Pos="258;165" Name="Song of Storms" Source="items/songs/storms.png"/>
+            <Item ExtraIndex="0" Pos="258;196" Name="Minuet of Forest" Source="items/songs/minuet.png"/>
+            <Item ExtraIndex="0" Pos="258;228" Name="Bolero of Fire" Source="items/songs/bolero.png"/>
+            <Item ExtraIndex="0" Pos="259;258" Name="Serenade of Water" Source="items/songs/serenade.png"/>
+            <Item ExtraIndex="0" Pos="259;288" Name="Requiem of Spirit" Source="items/songs/requiem.png"/>
+            <Item ExtraIndex="0" Pos="258;318" Name="Nocturne of Shadow" Source="items/songs/nocturne.png"/>
+            <Item ExtraIndex="0" Pos="258;352" Name="Prelude of Light" Source="items/songs/prelude.png"/>
         </Inventory>
     </Config>
 </Table>

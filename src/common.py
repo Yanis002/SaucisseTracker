@@ -208,7 +208,7 @@ class Label(QLabel):
         self.label_counter: Optional[OutlinedLabel] = None
         self.label_effect: Optional[QGraphicsColorizeEffect] = None
         self.label_flag: Optional[OutlinedLabel] = None
-        self.label_check: Optional["Label"] = None
+        self.label_extra_img: Optional["Label"] = None
 
     @staticmethod
     def new(

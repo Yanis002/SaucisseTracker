@@ -60,7 +60,7 @@ The save state file is a plain text file containing informations about how to re
     - ``flag_index``: the index of the flag the item uses
     - ``flag_text_index``: the index of the flag's text to display
     - ``show_flag``: the visibility of the flag
-    - ``show_checkmark``: the visibility of the checkmark (if used)
+    - ``show_extra_img``: the visibility of the extra image (if used)
 
 ## Config File Structure
 
@@ -89,20 +89,23 @@ The save state file is a plain text file containing informations about how to re
     - ``Hidden``: optional, used to set the default visibility
     - ``Width``: the width of the label
     - ``Height``: the height of the label
-* ``<GoMode``: optional, configurable image to set the "go mode"
+* ``<GoMode>``: optional, configurable image to set the "go mode"
+* ``<Extras>``: optional, configurable extra image to display on an item, for instance a checkmark on songs for OoT, the image will set the width and height of the label
+    - ``Index``: the index of the extra image
+    - ``Pos``: the position of the image (relative to the item it's binded to)
+    - ``Path``: the path of the image
 * ``<Inventory>``:
     - ``Index``: the index of the inventory
     - ``Name``: the name of the inventory configuration
     - ``Background``: the background image to use for this inventory
     - ``BackgroundColor``: the color of the background if the image has transparency
-    - ``CheckmarkPath``: the checkmark image to use for this inventory
     - ``<Item>``: an element of the list
         * ``Pos``: optional if using ``<Positions>``, defines the X and Y position in the window (format: ``Pos="X;Y"``)
         * ``Name``: the name of the inventory item
         * ``Source``: optional if using ``<Sources>``, defines the path to the texture to use for this item
         * ``Enabled``: optional, can be used to enable an item by default
         * ``Reward``: optional, can be set to ``True`` to declare the item as a dungeon reward
-        * ``UseCheckmark``: optional, can be set to ``True`` to draw a checkmark with the right click (used for OoT songs)
+        * ``ExtraIndex``: optional, the index of the extra image to use, toggleable with the right click
         * ``UseWheel``: optional, allows using the mouse wheel to update the items faster
         * ``<Counter>``: optional, declares a new counter for this item
             - ``TextSettings``: the index of the text setting to use for this counter

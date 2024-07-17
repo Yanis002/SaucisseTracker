@@ -23,7 +23,7 @@ class LabelState:
     flag_index: Optional[int]
     flag_text_index: int
     show_flag: bool
-    show_checkmark: bool
+    show_extra_img: bool
 
 
 class State:
@@ -63,7 +63,7 @@ class State:
                         item.flag_index,
                         label.flag_text_index,
                         label.label_flag.isVisible() if label.label_flag is not None else False,
-                        label.label_check.isVisible() if label.label_check is not None else False,
+                        label.label_extra_img.isVisible() if label.label_extra_img is not None else False,
                     )
                 )
 
@@ -118,8 +118,8 @@ class State:
                             new_state.flag_text_index = int(value)
                         elif line.startswith("show_flag"):
                             new_state.show_flag = True if value == "True" else False
-                        elif line.startswith("show_checkmark"):
-                            new_state.show_checkmark = True if value == "True" else False
+                        elif line.startswith("show_extra_img"):
+                            new_state.show_extra_img = True if value == "True" else False
 
     def open(self):
         gomode_settings = self.config.gomode_settings
@@ -209,8 +209,8 @@ class State:
                     label.label_flag.set_text_style(flag.text_settings_index, is_max)
                     label.label_flag.setVisible(state.show_flag)
 
-                if label.label_check is not None:
-                    label.label_check.setVisible(state.show_checkmark)
+                if label.label_extra_img is not None:
+                    label.label_extra_img.setVisible(state.show_extra_img)
 
     def save(self):
         if self.config.state_path is None:
@@ -238,7 +238,7 @@ class State:
                     + f"flag_index = {s.flag_index}\n\t"
                     + f"flag_text_index = {s.flag_text_index}\n\t"
                     + f"show_flag = {s.show_flag}\n\t"
-                    + f"show_checkmark = {s.show_checkmark}\n"
+                    + f"show_extra_img = {s.show_extra_img}\n"
                     for s in self.states
                 )
             )
