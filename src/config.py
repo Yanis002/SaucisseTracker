@@ -209,6 +209,8 @@ class Config:
         self.state_path: Optional[Path] = None
         self.gomode_settings: Optional[GoModeSettings] = None
         self.extras: Optional[Extras] = None
+        self.state_saved = False
+        self.autosave_enabled = False
 
         self.label_gomode: Optional[Label] = None
         self.label_gomode_light: Optional[Label] = None
@@ -264,7 +266,7 @@ class Config:
 
     def parse_path(self, raw_path: Optional[str], name: str, raise_error: bool):
         if raw_path is not None:
-            return self.config_dir / raw_path
+            return Path(self.config_dir / raw_path).resolve()
         elif raise_error:
             show_error(self.widget, f"ERROR: Missing path(s) for item '{name}'")
 

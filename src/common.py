@@ -231,6 +231,7 @@ class Label(QLabel):
         new_label.setPixmap(new_label.original_pixmap)
         new_label.set_pixmap_opacity(opacity)
         new_label.setScaledContents(scale_content)
+        new_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # black & white effect, todo find something better? idk, enabled by default
         new_label_effect = QGraphicsColorizeEffect(new_label)
@@ -280,18 +281,21 @@ class Label(QLabel):
         painter.end()
         self.setPixmap(pixmap)
 
-    def update_gomode(self):
+    def update_gomode(self, gomode_visibility: Optional[bool] = None):
+        self.config.state_saved = False
         gomode_settings = self.config.gomode_settings
+        cond = gomode_visibility if gomode_visibility is not None else self.label_effect.strength() > 0.0
 
         if self.label_effect is not None:
-            if self.label_effect.strength() > 0.0:
+            if cond:
                 self.label_effect.setStrength(0.0)
                 self.setPixmap(self.original_pixmap)
             else:
                 self.label_effect.setStrength(1.0)
                 self.set_pixmap_opacity(0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
 
-        self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
+        if gomode_visibility is None:
+            self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
 
     def update_label(self, increase: bool, middle_click: bool = False):
         if self.label_effect is not None:

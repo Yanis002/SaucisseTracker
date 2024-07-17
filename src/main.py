@@ -95,6 +95,7 @@ class MainWindow(QMainWindow):
         self.btn_set_config_dir.clicked.connect(self.btn_set_config_dir_clicked)
         self.line_edit_config_folder.textChanged.connect(self.line_edit_config_folder_update)
         self.btn_go.clicked.connect(self.btn_go_clicked)
+        self.list_configs.doubleClicked.connect(self.btn_go_clicked)
 
         # set the default config folder path
         self.line_edit_config_folder.setText(str(Path("config/").resolve()))

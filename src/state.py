@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
+from pathlib import Path
 
 from PyQt6.QtGui import QPixmap
 
@@ -27,14 +28,19 @@ class LabelState:
 
 
 class State:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, path: Optional[Path] = None):
         self.config = config
         self.states: list[LabelState] = []
         self.gomode_visibility = False
         self.gomode_light_visibility = False
 
-        if not self.config.state_path.suffix == ".txt":
-            self.config.state_path = f"{self.config.state_path}.txt"
+        if path is not None:
+            self.path = path
+        else:
+            self.path = self.config.state_path
+
+        if not self.path.suffix == ".txt":
+            self.path = self.path / ".txt"
 
     def get_states_from_labels(self):
         gomodefx = self.config.label_gomode.label_effect
@@ -122,25 +128,15 @@ class State:
                             new_state.show_extra_img = True if value == "True" else False
 
     def open(self):
-        gomode_settings = self.config.gomode_settings
-        gomodefx = self.config.label_gomode.label_effect
-
-        if self.config.state_path is None:
+        if self.path is None:
             show_error("ERROR: import path not set")
 
-        with self.config.state_path.open("r") as file:
+        with self.path.open("r") as file:
             filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
 
         self.get_states_from_file(filedata)
 
-        if gomodefx is not None:
-            gomodefx.setStrength(0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
-            if self.gomode_visibility:
-                self.config.label_gomode.setPixmap(self.config.label_gomode.original_pixmap)
-            else:
-                self.config.label_gomode.set_pixmap_opacity(
-                    0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY
-                )
+        self.config.label_gomode.update_gomode(self.gomode_visibility)
 
         if self.config.label_gomode_light is not None:
             self.config.label_gomode_light.setVisible(self.gomode_light_visibility)
@@ -212,13 +208,15 @@ class State:
                 if label.label_extra_img is not None:
                     label.label_extra_img.setVisible(state.show_extra_img)
 
+        self.config.state_saved = True
+
     def save(self):
-        if self.config.state_path is None:
+        if self.path is None:
             show_error("ERROR: export path not set")
 
         self.get_states_from_labels()
 
-        with self.config.state_path.open("w") as file:
+        with self.path.open("w") as file:
             file.write(
                 WARNING_TEXT
                 + (
@@ -242,3 +240,5 @@ class State:
                     for s in self.states
                 )
             )
+
+        self.config.state_saved = True

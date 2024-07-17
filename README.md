@@ -21,6 +21,7 @@ Available:
 - Flag system to add extra text
 - Checkmarks with right click
 - Main menu where you can choose which configuration you want to use
+- Auto-saves! Every 5 minutes, if the autosave checkbox from the ``File`` menu is enabled, the progress will be automatically saved. If no ``StatePath`` was set in the configuration it will be saved in a folder called ``autosaves`` where the executable is located. The file will be named ``autosave_DATE_TIME.txt``. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this)
 
 Planned:
 - Editor to make configurations easier

@@ -1,12 +1,14 @@
 import sys
 import os
+import time
 
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from PIL import Image
 from PyQt6.QtGui import QIcon, QPixmap, QAction, QCloseEvent
-from PyQt6.QtCore import QSize, Qt, QRect
+from PyQt6.QtCore import QSize, Qt, QRect, QThread
 from PyQt6.QtWidgets import (
     QWidget,
     QMessageBox,
@@ -16,11 +18,43 @@ from PyQt6.QtWidgets import (
     QMenu,
     QMenuBar,
     QFileDialog,
+    QDialog,
+    QPushButton,
 )
 
 from common import OutlinedLabel, Label, show_message, GLOBAL_HALF_OPACITY
 from config import Config, Pos
 from state import State
+
+
+class AutosaveThread(QThread):
+    def __init__(self, parent: Optional[QWidget], config: Config):
+        super().__init__()
+
+        self.setParent(parent)
+        self.config = config
+        self.run_ = True
+
+    def run(self):
+        while self.run_:
+            # every 5 minutes
+            # TODO: configurable time
+            time.sleep(5 * 60)
+
+            if self.config.autosave_enabled:
+                folder = Path("autosaves/").resolve()
+                if not folder.exists():
+                    folder.mkdir(parents=True, exist_ok=True)
+
+                if self.config.state_path is None:
+                    now = datetime.now()
+                    filename = f"autosave_{now.strftime('%d-%m-%Y')}_{now.strftime('%H-%M-%S')}.txt"
+                    path = folder / filename
+                else:
+                    path = self.config.state_path
+
+                state = State(self.config, path)
+                state.save()
 
 
 class TrackerWindow(QMainWindow):
@@ -30,6 +64,9 @@ class TrackerWindow(QMainWindow):
         self.parent_ = parent
         self.config = config
         self.bg_path = self.config.active_inv.background
+
+        self.task = AutosaveThread(self, config)
+        self.task.start()
 
         # get the background's size
         width, height = Image.open(self.bg_path).size
@@ -48,6 +85,24 @@ class TrackerWindow(QMainWindow):
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
+
+        if not self.config.state_saved:
+            answer = QMessageBox.question(
+                self,
+                "Warning",
+                "Quit without saving the tracker's progress?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+
+            if answer == QMessageBox.StandardButton.No:
+                e.ignore()
+                return
+
+        # stop the loop and wait until the execution is finished
+        # TODO: something better than this
+        self.task.run_ = False
+        while self.task.isRunning():
+            pass
 
         for item in self.config.active_inv.items:
             item.reward_map = {}
@@ -117,13 +172,26 @@ class TrackerWindow(QMainWindow):
         self.action_save.setText("Save State")
         self.action_save.triggered.connect(self.file_save_triggered)
 
+        self.action_close = QAction(self.menu_file)
+        self.action_close.setObjectName("action_close")
+        self.action_close.setText("Close")
+        self.action_close.triggered.connect(self.file_close_triggered)
+
         self.action_exit = QAction(self.menu_file)
         self.action_exit.setObjectName("action_exit")
         self.action_exit.setText("Exit")
         self.action_exit.triggered.connect(self.file_exit_triggered)
 
+        self.action_autosave = QAction(self.menu_file)
+        self.action_autosave.setCheckable(True)
+        self.action_autosave.setObjectName("action_autosave")
+        self.action_autosave.setText("Autosave (5 min)")
+        self.action_autosave.triggered.connect(self.file_autosave_triggered)
+
         self.menu_file.addAction(self.action_open)
         self.menu_file.addAction(self.action_save)
+        self.menu_file.addAction(self.action_autosave)
+        self.menu_file.addAction(self.action_close)
         self.menu_file.addAction(self.action_exit)
         self.menu.addAction(self.menu_file.menuAction())
         self.menu.addAction(self.action_about)
@@ -311,6 +379,12 @@ class TrackerWindow(QMainWindow):
             state = State(self.config)
             state.save()
 
+    def file_autosave_triggered(self):
+        self.config.autosave_enabled = self.action_autosave.isChecked()
+
+    def file_close_triggered(self):
+        self.close()
+
     def file_exit_triggered(self):
         sys.exit()
 
@@ -343,9 +417,11 @@ class TrackerWindow(QMainWindow):
     def label_clicked_left(self):
         label: Label = self.sender()
         label.update_label(True)
+        self.config.state_saved = False
 
     def label_clicked_middle(self):
         label: Label = self.sender()
+        self.config.state_saved = False
 
         if label.label_flag is not None:
             label.label_flag.setVisible(not label.label_flag.isVisible())
@@ -354,6 +430,7 @@ class TrackerWindow(QMainWindow):
 
     def label_clicked_right(self):
         label: Label = self.sender()
+        self.config.state_saved = False
         item = self.config.active_inv.items[label.index]
 
         if item.is_reward:
