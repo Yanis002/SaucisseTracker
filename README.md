@@ -25,6 +25,9 @@ Available:
 
 Planned:
 - Editor to make configurations easier
+- Make the Go-Mode light spin
+- "Refresh" button to apply an updated configuration
+- Support zip files for configs
 
 ## Project Structure
 
