@@ -81,16 +81,20 @@ The save state file is a plain text file containing informations about how to re
         * ``Bold``: toggles bold on the text
         * ``Color``: the default color, usually white (0xFFFFFF)
         * ``ColorMax``: the color to use when reaching the maximum value (for counters for instance), usually green (0x00FF00)
+        * ``OutlineThickness``: the size of the outline
 * ``<Flags>``: optional, list of custom extra text to display
     - ``Text``: can be used to show an extra dungeon flag with the middle click, you can use several texts separated by a ``;`` (that's something to improve in the future™)
     - ``Pos``: can be used set the flag's position (relative to the reward icon)
     - ``TextSettings``: the index of the text setting to use for the flag
     - ``Hidden``: optional, used to set the default visibility
+    - ``Width``: the width of the label
+    - ``Height``: the height of the label
 * ``<GoMode``: optional, configurable image to set the "go mode"
 * ``<Inventory>``:
     - ``Index``: the index of the inventory
     - ``Name``: the name of the inventory configuration
     - ``Background``: the background image to use for this inventory
+    - ``BackgroundColor``: the color of the background if the image has transparency
     - ``CheckmarkPath``: the checkmark image to use for this inventory
     - ``<Item>``: an element of the list
         * ``Pos``: optional if using ``<Positions>``, defines the X and Y position in the window (format: ``Pos="X;Y"``)
@@ -120,6 +124,9 @@ The save state file is a plain text file containing informations about how to re
         * ``<Item>``: adds a dungeon entry
             - ``Name``: the display name of the dungeon
             - ``TextSettings``: the index of the text setting to use for the name
+            - ``Pos``: position of the reward name (relative to the item)
+            - ``Width``: the width of the label
+            - ``Height``: the height of the label
 
 ## Creating a configuration
 
