@@ -358,9 +358,13 @@ class Label(QLabel):
                         self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
 
 
-def show_error(parent: QWidget, msg: str):
-    errorDialog = QMessageBox(parent)
-    errorDialog.setWindowTitle("Error")
-    errorDialog.setIcon(QMessageBox.Icon.Critical)
-    errorDialog.setText(msg)
-    errorDialog.show()
+def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str):
+    message_box = QMessageBox(parent)
+    message_box.setWindowTitle(title)
+    message_box.setIcon(icon)
+    message_box.setText(text)
+    message_box.show()
+
+
+def show_error(parent: QWidget, text: str):
+    show_message(parent, "Error", QMessageBox.Icon.Critical, text)

@@ -20,6 +20,7 @@ Available:
 - Dungeon reward system
 - Flag system to add extra text
 - Checkmarks with right click
+- Main menu where you can choose which configuration you want to use
 
 Planned:
 - Editor to make configurations easier
@@ -29,8 +30,9 @@ Planned:
 * Files:
     - ``src/common.py``: hosts classes and functions that can be used in any other file
     - ``src/config.py``: handles reading the configuration file and storing the informations in classes
-    - ``src/main.py``: the main window's logic is handled there (creating and updating the window/widgets/menus)
+    - ``src/main.py``: the main menu and the starting point of the program
     - ``src/state.py``: handles importing and exporting savestates
+    - ``src/tracker.py``: the tracker window's logic is handled there (creating and updating the window/widgets/menus)
 
 * Folders:
     - ``res/``: the program's resources (packed when building)
@@ -136,8 +138,8 @@ Any help is welcome!
 If you wish to add support for another file format (for config files):
 - go in the ``__init__`` function of the class named ``Config`` in ``config.py``
 - create a new function called ``parse_FORMAT_config``, it requires at least one parameter called ``self`` (``def parse_FORMAT_config(self)``)
-- find for ``if self.config_file.endswith(".xml")``, then add ``elif self.config_file.endswith(".FORMAT")``, where FORMAT is the file extension of the format you want to add (like ``.json`` or ``.yml`` for example)
-- call the function you created in this else-if case (``self.parse_FORMAT_config()``)
+- find ``match self.config_path.suffix``, then add a case with the file extension of the format you want to add (like ``.json`` or ``.yml`` for example)
+- call the function you created in this new case (``self.parse_FORMAT_config()``)
 
 ## Credits
 
