@@ -20,7 +20,7 @@
             <Item Index="1" Pos="9;21" Width="35" Height="15" Text=";H;L" TextSettings="4" Hidden="False"/>
             <Item Index="2" Pos="-1;21" Width="35" Height="15" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
-        <GoMode Pos="129;178" HideIfDisabled="True" Source="gomode.png" LightPath="light.png" LightPos="69;112"/>
+        <GoMode Pos="129;178" HideIfDisabled="True" Source="gomode.png" LightPath="light.png" LightPos="69;112" LightRotSpeed="-70" LightRotRefresh="0.001"/>
         <Extras>
             <Item Index="0" Pos="18;-4" Path="check.png"/>
         </Extras>

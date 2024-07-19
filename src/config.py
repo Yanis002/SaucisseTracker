@@ -7,7 +7,7 @@ from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import QRect
 
-from common import OutlinedLabel, Label, show_error, GLOBAL_HALF_OPACITY
+from common import OutlinedLabel, Label, RotationWidget, show_error, GLOBAL_HALF_OPACITY
 
 
 class Color:
@@ -193,6 +193,8 @@ class GoModeSettings:
     path: Path
     light_path: Optional[Path]
     light_pos: Optional[Pos]
+    rotation_speed: int
+    thread_refresh_rate: float
 
 
 class Config:
@@ -213,7 +215,7 @@ class Config:
         self.autosave_enabled = False
 
         self.label_gomode: Optional[Label] = None
-        self.label_gomode_light: Optional[Label] = None
+        self.label_gomode_light: Optional[RotationWidget] = None
 
         match self.config_path.suffix:
             case ".xml":
@@ -338,6 +340,8 @@ class Config:
                         self.parse_path(elem.get("Source"), "go mode", True),
                         self.parse_path(elem.get("LightPath"), "go mode light", False),
                         self.parse_pos(elem.get("LightPos"), "go mode light", False),
+                        int(elem.get("LightRotSpeed", "-30")),
+                        float(elem.get("LightRotRefresh", "0.001")),
                     )
                 case "Extras":
                     extra_items: list[ExtraItem] = []

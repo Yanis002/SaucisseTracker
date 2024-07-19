@@ -3,9 +3,20 @@ import math
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
-from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect, QAbstractListModel
+from PyQt6.QtCore import pyqtSignal, Qt, QSize, QPoint, QRect, QAbstractListModel, QThread
 from PyQt6.QtWidgets import QLabel, QWidget, QGraphicsColorizeEffect, QMessageBox
-from PyQt6.QtGui import QMouseEvent, QPixmap, QPainter, QPainterPath, QBrush, QPen, QFontMetrics, QColor, QWheelEvent
+from PyQt6.QtGui import (
+    QMouseEvent,
+    QPixmap,
+    QPainter,
+    QPainterPath,
+    QBrush,
+    QPen,
+    QFontMetrics,
+    QColor,
+    QWheelEvent,
+    QTransform,
+)
 
 if TYPE_CHECKING:
     from config import Config
@@ -359,6 +370,73 @@ class Label(QLabel):
                     else:
                         self.label_effect.setStrength(1.0)
                         self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
+
+
+# from https://stackoverflow.com/a/74249310
+class RotationWidget(QWidget):
+    position = 0
+    rotation = 0
+
+    def __init__(self, image):
+        super().__init__()
+        self.image = QPixmap(image)
+        self.setFixedSize(self.image.size())
+        self.transform = QTransform()
+        half = self.image.size() / 2
+        self.tX = half.width()
+        self.tY = half.height()
+
+    @staticmethod
+    def new(
+        parent: QWidget,
+        obj_name: str,
+        geometry: QRect,
+        img_path: str,
+    ):
+        new_label = RotationWidget(img_path)
+        new_label.setObjectName(obj_name)
+        new_label.setGeometry(geometry)
+        new_label.setParent(parent)
+
+        return new_label
+
+    def setPosition(self, pos):
+        if self.position != pos:
+            self.rotation = pos - self.position
+        else:
+            self.rotation = 0
+        self.position = pos
+        self.update()
+
+    def paintEvent(self, event):
+        qp = QPainter(self)
+        qp.setRenderHint(QPainter.RenderHint.Antialiasing)
+        qp.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        self.transform.translate(self.tX, self.tY)
+        self.transform.rotate(self.rotation)
+        self.transform.translate(-self.tX, -self.tY)
+        qp.setTransform(self.transform)
+        qp.drawPixmap(0, 0, self.image)
+        qp.end()
+
+
+class Rotation(QThread):
+    positionChanged = pyqtSignal(object)
+    delta_angle = 1
+
+    def __init__(self, config: "Config", position: int = 0):
+        super().__init__()
+        self.config = config
+        self.position = position
+        self.speed = self.config.gomode_settings.rotation_speed
+        self.thread_refresh = self.config.gomode_settings.thread_refresh_rate
+
+    def run(self):
+        while True:
+            diff = self.thread_refresh * self.speed
+            self.position = round((self.position + diff) % 360, 2)
+            self.positionChanged.emit(self.position)
+            self.msleep(int(self.thread_refresh * 1000))
 
 
 def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str):

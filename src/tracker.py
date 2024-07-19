@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
 )
 
-from common import OutlinedLabel, Label, show_message, GLOBAL_HALF_OPACITY
+from common import OutlinedLabel, Label, Rotation, RotationWidget, show_message, GLOBAL_HALF_OPACITY
 from config import Config, Pos
 from state import State
 
@@ -63,8 +63,12 @@ class TrackerWindow(QMainWindow):
         self.config = config
         self.bg_path = self.config.active_inv.background
 
-        self.task = AutosaveThread(self, config)
-        self.task.start()
+        self.task_autosave = AutosaveThread(self, config)
+        self.task_autosave.start()
+
+        self.task_rotation = Rotation(self.config)
+        self.task_rotation.positionChanged.connect(self.task_rotation_position_changed)
+        self.task_rotation.start()
 
         # get the background's size
         width, height = Image.open(self.bg_path).size
@@ -96,11 +100,9 @@ class TrackerWindow(QMainWindow):
                 e.ignore()
                 return
 
-        # stop the loop and wait until the execution is finished
-        # TODO: something better than this
-        self.task.run_ = False
-        while self.task.isRunning():
-            pass
+        # dereferencing the threads
+        self.task_autosave = None
+        self.task_rotation = None
 
         for item in self.config.active_inv.items:
             item.reward_map = {}
@@ -219,21 +221,14 @@ class TrackerWindow(QMainWindow):
             if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
                 width, height = Image.open(gomode_settings.light_path).size
 
-                self.config.label_gomode_light = Label.new(
-                    self.config,
+                self.config.label_gomode_light = RotationWidget.new(
                     self.centralwidget,
-                    0,
-                    "Go Mode Light",
                     "label_gomode_light",
                     QRect(gomode_settings.light_pos.x, gomode_settings.light_pos.y, width, height),
                     str(gomode_settings.light_path),
-                    1.0,
-                    False,
-                    0.0,
                 )
 
                 self.config.label_gomode_light.setVisible(False)
-                self.config.label_gomode.raise_()
 
             self.config.label_gomode.clicked_left.connect(self.label_gomode_clicked_left)
             self.config.label_gomode.clicked_right.connect(self.label_gomode_clicked_right)
@@ -355,6 +350,15 @@ class TrackerWindow(QMainWindow):
 
             self.config.active_inv.label_map[item.index] = label_map
 
+        # draw the go mode stuff in front of the items
+        # - side effect: can't click on the items behind them when they're visible
+        # - will I fix this? maybe one day, idk :peepoShrug:
+        if self.config.label_gomode_light is not None:
+            self.config.label_gomode_light.raise_()
+
+        if self.config.label_gomode is not None:
+            self.config.label_gomode.raise_()
+
     # connections callbacks
 
     def file_open_triggered(self):
@@ -379,7 +383,7 @@ class TrackerWindow(QMainWindow):
 
     def file_autosave_triggered(self):
         self.config.autosave_enabled = self.action_autosave.isChecked()
-        self.task.run_ = self.config.autosave_enabled
+        self.task_autosave.run_ = self.config.autosave_enabled
 
     def file_close_triggered(self):
         self.close()
@@ -456,3 +460,6 @@ class TrackerWindow(QMainWindow):
     def label_gomode_clicked_right(self):
         label: Label = self.sender()
         label.update_gomode()
+
+    def task_rotation_position_changed(self, pos):
+        self.config.label_gomode_light.setPosition(pos)

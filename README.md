@@ -26,8 +26,8 @@ Available:
 
 Planned:
 - Editor to make configurations easier
-- Make the Go-Mode light spin
 - "Refresh" button to apply an updated configuration
+- Make a global rotation config option (low priority)
 
 ## Project Structure
 
@@ -44,6 +44,7 @@ Planned:
     - ``config/``: the tracker's configurations data, currently only hosting one example config file (not packed when building)
     - ``res/``: the program's resources (packed when building)
     - ``temp/``: working folder only used for zip archives, created automatically when the program starts and deleted automatically when it's closing
+    - ``tools/``: collection of tools to use when making your own configuration
 
 ## State File Structure
 
