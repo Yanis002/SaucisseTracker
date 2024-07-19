@@ -18,8 +18,6 @@ from PyQt6.QtWidgets import (
     QMenu,
     QMenuBar,
     QFileDialog,
-    QDialog,
-    QPushButton,
 )
 
 from common import OutlinedLabel, Label, show_message, GLOBAL_HALF_OPACITY
@@ -33,7 +31,7 @@ class AutosaveThread(QThread):
 
         self.setParent(parent)
         self.config = config
-        self.run_ = True
+        self.run_ = False
 
     def run(self):
         while self.run_:
@@ -381,6 +379,7 @@ class TrackerWindow(QMainWindow):
 
     def file_autosave_triggered(self):
         self.config.autosave_enabled = self.action_autosave.isChecked()
+        self.task.run_ = self.config.autosave_enabled
 
     def file_close_triggered(self):
         self.close()

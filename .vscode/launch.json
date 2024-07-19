@@ -10,10 +10,18 @@
             "justMyCode": true
         },
         {
-            "name": "Build",
+            "name": "Debug Test",
             "type": "python",
             "request": "launch",
-            "program": "build.py",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true
         }

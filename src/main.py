@@ -4,11 +4,13 @@ import sys
 import os
 import traceback
 
+from zipfile import ZipFile
 from pathlib import Path
 from typing import Optional
 from copy import copy
+from shutil import rmtree
 
-from PyQt6.QtGui import QIcon, QPixmap, QShowEvent
+from PyQt6.QtGui import QIcon, QPixmap, QShowEvent, QCloseEvent
 from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtWidgets import (
     QWidget,
@@ -24,6 +26,10 @@ from PyQt6.QtWidgets import (
 from common import ListViewModel, show_error
 from config import Config
 from tracker import TrackerWindow
+
+TEMP_DIR = Path("temp").resolve()
+TEMP_ICONS_DIR = TEMP_DIR / "icons"
+TEMP_CONFIG_DIR = TEMP_DIR / "config"
 
 
 class MainWindow(QMainWindow):
@@ -108,8 +114,20 @@ class MainWindow(QMainWindow):
     def showEvent(self, e: Optional[QShowEvent]):
         super(QMainWindow, self).showEvent(e)
 
+        # if the folder isn't empty
+        if any(TEMP_CONFIG_DIR.iterdir()):
+            rmtree(TEMP_CONFIG_DIR)
+            TEMP_CONFIG_DIR.mkdir()
+            self.configs.pop(TEMP_CONFIG_DIR / "config.xml")
+
         if self.tracker_window is not None:
             self.tracker_window = None
+
+    def closeEvent(self, e: Optional[QCloseEvent]):
+        super(QMainWindow, self).closeEvent(e)
+
+        # delete the temporary folder
+        rmtree(TEMP_DIR)
 
     # connections callbacks
 
@@ -121,20 +139,36 @@ class MainWindow(QMainWindow):
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
+    def get_configs(self, dir: Path):
+        # any file that is called "config." with a format extension (xml, yml, json, etc...)
+        for path in sorted(dir.rglob("config.*")):
+            absolute = path.resolve()
+            self.configs[absolute] = Config(self, absolute)
+
     def line_edit_config_folder_update(self):
         try:
             self.config_dir = Path(self.line_edit_config_folder.text()).resolve()
             self.configs.clear()
             self.model_cache.clear()
-
-            # any file that is called "config." with a format extension (xml, yml, json, etc...)
-            for path in sorted(self.config_dir.rglob(f"config.*")):
-                absolute = path.resolve()
-                self.configs[absolute] = Config(self, absolute)
-
             model_items = []
+
+            # look for zip files
+            for path in sorted(self.config_dir.rglob("*.zip")):
+                absolute = path.resolve()
+
+                with ZipFile(absolute, "r") as zip_file:
+                    for stuff in zip_file.infolist():
+                        if "icon.png" in stuff.filename:
+                            stuff.filename = absolute.name.replace(".zip", ".png")
+                            zip_file.extract(stuff, TEMP_ICONS_DIR)
+
+                            icon = QPixmap(str(TEMP_ICONS_DIR / stuff.filename))
+                            model_items.append((True, absolute.name, icon.scaledToHeight(32)))
+
+            self.get_configs(self.config_dir)
             for config in self.configs.values():
                 model_items.append((True, config.active_inv.name, config.active_inv.icon.scaledToHeight(32)))
+
             self.model_cache = [(elem[0], elem[1], elem[2]) for elem in model_items]
             self.list_configs.setModel(ListViewModel(self.model_cache))
         except Exception:
@@ -142,8 +176,20 @@ class MainWindow(QMainWindow):
 
     def btn_go_clicked(self):
         try:
+            index = self.list_configs.currentIndex()
+            item_name: str = list(self.list_configs.model().itemData(index).values())[0]
+
+            # extract the zip if we chose one
+            if item_name.endswith(".zip"):
+                zip_path = self.config_dir / item_name
+                zip_file = ZipFile(zip_path)
+                zip_file.extractall(TEMP_CONFIG_DIR)
+                xml_path = Path(TEMP_CONFIG_DIR / "config.xml").resolve()
+
+                self.configs[xml_path] = Config(self, xml_path)
+
             if len(self.configs) > 0:
-                config = list(self.configs.values())[self.list_configs.currentIndex().row()]
+                config = list(self.configs.values())[index.row()]
                 self.tracker_window = TrackerWindow(self, copy(config))
                 self.tracker_window.show()
                 self.hide()
@@ -160,6 +206,15 @@ def main():
 
         # encoding probably useless but just in case
         windll.shell32.SetCurrentProcessExplicitAppUserModelID("saucisse.tracker".encode("UTF-8"))
+
+    # delete temp folder to make sure there's no unwanted files that may create conflicts
+    if TEMP_DIR.exists():
+        rmtree(TEMP_DIR)
+
+    # create the temporary folders to use when working with archives
+    TEMP_DIR.mkdir()
+    TEMP_ICONS_DIR.mkdir()
+    TEMP_CONFIG_DIR.mkdir()
 
     main_window = MainWindow()
     main_window.show()

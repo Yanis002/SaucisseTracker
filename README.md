@@ -21,13 +21,13 @@ Available:
 - Flag system to add extra text
 - Checkmarks with right click
 - Main menu where you can choose which configuration you want to use
-- Auto-saves! Every 5 minutes, if the autosave checkbox from the ``File`` menu is enabled, the progress will be automatically saved. If no ``StatePath`` was set in the configuration it will be saved in a folder called ``autosaves`` where the executable is located. The file will be named ``autosave_DATE_TIME.txt``. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this)
+- Auto-saves! Every 5 minutes, if the autosave checkbox from the ``File`` menu is enabled, the progress will be automatically saved. If no ``StatePath`` was set in the configuration it will be saved in a folder called ``autosaves`` where the executable is located. The file will be named ``autosave_DATE_TIME.txt``. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this feature)
+- Support zip files for configs, the zip's filename will be what the main menu will show, and it will show an icon if there's a file called ``icon.png`` at the root of the zip with the config's content. When a zip is chosen on the main menu it will be temporarily extracted inside ``temp/config``, inside ``temp/icons`` there's the icon for any zip file found, the ``temp`` folder will be located where the program is located, also note the zip file only works with xml config files for now (TODO: improve this feature)
 
 Planned:
 - Editor to make configurations easier
 - Make the Go-Mode light spin
 - "Refresh" button to apply an updated configuration
-- Support zip files for configs
 
 ## Project Structure
 
@@ -39,10 +39,11 @@ Planned:
     - ``src/tracker.py``: the tracker window's logic is handled there (creating and updating the window/widgets/menus)
 
 * Folders:
-    - ``res/``: the program's resources (packed when building)
-    - ``config/``: the tracker's configurations data, currently only hosting one example config file (not packed when building)
     - ``.github/``: hosts the GitHub workflows (to provide automated builds and releases)
     - ``.vscode/``: settings and launch profiles for Visual Studio Code
+    - ``config/``: the tracker's configurations data, currently only hosting one example config file (not packed when building)
+    - ``res/``: the program's resources (packed when building)
+    - ``temp/``: working folder only used for zip archives, created automatically when the program starts and deleted automatically when it's closing
 
 ## State File Structure
 

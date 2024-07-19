@@ -1,9 +1,11 @@
 # cache files
 __pycache__/
+temp/
 
 # specific files
 config/oot/items/**
 state.txt
+*.zip
 
 # build files
 build/**
