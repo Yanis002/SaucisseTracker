@@ -179,7 +179,7 @@ class Inventory:
         self.background = Path()
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
-        self.icon = QPixmap(str(Path("res/icon.png").resolve()))
+        self.icon = QPixmap(str(Path("res/config_icon.png").resolve()))
         self.background_color = Color()
 
         # { item_index: { pos_index: data } }
