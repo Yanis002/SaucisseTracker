@@ -20,6 +20,7 @@ from PyQt6.QtGui import (
 
 if TYPE_CHECKING:
     from config import Config
+    from state import LabelState
 
 
 GLOBAL_HALF_OPACITY = 0.6
@@ -212,7 +213,7 @@ class Label(QLabel):
         self.setParent(parent)
         self.index = index
         self.name = name
-        self.img_index = -1
+
         self.flag_text_index = 0
         self.reward_index = 0
         self.original_pixmap: Optional[QPixmap] = None
@@ -308,17 +309,17 @@ class Label(QLabel):
         if gomode_visibility is None:
             self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
 
-    def update_label(self, increase: bool, middle_click: bool = False):
+    def update_label(self, state: "LabelState", increase: bool, middle_click: bool = False):
         if self.label_effect is not None:
             item = self.config.active_inv.items[self.index]
             path_index = 0
 
             if not middle_click and len(item.paths) > 1:
                 if increase:
-                    self.img_index += 1
+                    state.img_index += 1
                     self.flag_text_index += 1
                 else:
-                    self.img_index -= 1
+                    state.img_index -= 1
                     self.flag_text_index -= 1
 
                 if self.label_flag is not None and item.flag_index is not None:
@@ -333,12 +334,12 @@ class Label(QLabel):
                     self.label_flag.setText(flag.texts[self.flag_text_index])
                     self.label_flag.set_text_style(flag.text_settings_index, self.flag_text_index == total)
 
-                if self.img_index > len(item.paths) - 1:
-                    self.img_index = -1
-                if self.img_index < -1:
-                    self.img_index = len(item.paths) - 1
+                if state.img_index > len(item.paths) - 1:
+                    state.img_index = -1
+                if state.img_index < -1:
+                    state.img_index = len(item.paths) - 1
 
-                if self.img_index < 0:
+                if state.img_index < 0:
                     self.label_effect.setStrength(1.0)  # enable filter
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                     path_index = 0
@@ -350,7 +351,7 @@ class Label(QLabel):
                 self.original_pixmap = QPixmap(str(item.paths[path_index]))
                 self.setPixmap(self.original_pixmap)
 
-                if self.img_index < 0:
+                if state.img_index < 0:
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                 else:
                     self.setPixmap(self.original_pixmap)

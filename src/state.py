@@ -11,26 +11,27 @@ from common import show_error, GLOBAL_HALF_OPACITY
 WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING !!!\n" + "!" * 63 + "\n\n"
 
 
-@dataclass
 class LabelState:
-    index: int
-    pos_index: int
-    name: str
-    img_index: int
-    counter_value: int
-    counter_show: bool
-    enabled: bool
-    reward_index: int
-    flag_index: Optional[int]
-    flag_text_index: int
-    show_flag: bool
-    show_extra_img: bool
+    def __init__(self, index: int, pos_index: int, name: str):
+        self.index = index
+        self.pos_index = pos_index
+        self.name = name
+
+        self.img_index = int()
+        self.counter_value = int()
+        self.counter_show = bool()
+        self.enabled = bool()
+        self.reward_index = int()
+        self.flag_index: Optional[int] = None
+        self.flag_text_index = int()
+        self.show_flag = bool()
+        self.show_extra_img = bool()
 
 
 class State:
     def __init__(self, config: Config, path: Optional[Path] = None):
         self.config = config
-        self.states: list[LabelState] = []
+        self.items: list[LabelState] = []
         self.gomode_visibility = False
         self.gomode_light_visibility = False
 
@@ -56,7 +57,7 @@ class State:
         for index, sub_map in self.config.active_inv.label_map.items():
             for i, label in sub_map.items():
                 item = self.config.active_inv.items[index]
-                self.states.append(
+                self.items.append(
                     LabelState(
                         index,
                         i,
@@ -85,7 +86,7 @@ class State:
                     found_global_settings = False
                 else:
                     if new_state is not None:
-                        self.states.append(new_state)
+                        self.items.append(new_state)
                     new_state = LabelState(0, 0, "", 0, 0, False, False, 0, None, 0, False, False)
 
                     if line == "":
@@ -141,7 +142,7 @@ class State:
         if self.config.label_gomode_light is not None:
             self.config.label_gomode_light.setVisible(self.gomode_light_visibility)
 
-        for state in self.states:
+        for state in self.items:
             item = self.config.active_inv.items[state.index]
             label = None
 
@@ -237,7 +238,7 @@ class State:
                     + f"flag_text_index = {s.flag_text_index}\n\t"
                     + f"show_flag = {s.show_flag}\n\t"
                     + f"show_extra_img = {s.show_extra_img}\n"
-                    for s in self.states
+                    for s in self.items
                 )
             )
 

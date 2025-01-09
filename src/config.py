@@ -173,14 +173,15 @@ class Extras:
 
 
 class Inventory:
-    def __init__(self):
-        self.index = int()
-        self.name = str()
-        self.background = Path()
+    def __init__(self, index: int, name: str, bg_path: Path, bg_color: Color, icon: QPixmap):
+        self.index = index
+        self.name = name
+        self.background = bg_path
+        self.background_color = bg_color
+        self.icon = icon
+
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
-        self.icon = QPixmap(str(Path("res/config_icon.png").resolve()))
-        self.background_color = Color()
 
         # { item_index: { pos_index: data } }
         self.label_map: dict[int, dict[int, Label]] = {}
@@ -243,6 +244,12 @@ class Config:
 
     def get_color(self, text_settings: TextSettings, is_max: bool = False):
         return text_settings.color_max if is_max else text_settings.color
+    
+    def parse_int(self, value: Optional[str]):
+        if value is not None:
+            return int(value, 0)
+        
+        return None
 
     def parse_bool(self, value: str):
         if value == "True":
@@ -354,15 +361,13 @@ class Config:
                         )
                     self.extras = Extras(extra_items)
                 case "Inventory":
-                    inventory = Inventory()
-                    inventory.index = int(elem.get("Index", "0"))
-                    inventory.name = elem.get("Name", "Unknown")
-                    inventory.background = self.parse_path(elem.get("Background"), "background", True)
-                    inventory.background_color = Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0))
-
-                    icon_path = self.parse_path(elem.get("Icon"), "icon", False)
-                    if icon_path is not None:
-                        inventory.icon = QPixmap(str(icon_path))
+                    inventory = Inventory(
+                        int(elem.get("Index", "0")),
+                        elem.get("Name", "Unknown"),
+                        self.parse_path(elem.get("Background"), "background", True),
+                        Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0)),
+                        self.parse_path(elem.get("Icon", "res/config_icon.png"), "icon", False)
+                    )
 
                     for i, item in enumerate(elem.iterfind("Item")):
                         name = item.get("Name", "Unknown")
@@ -406,8 +411,6 @@ class Config:
                                 self.parse_bool(c.get("UseWheel", "False")),
                             )
 
-                        flag_index = item.get("FlagIndex")
-                        extra_index = item.get("ExtraIndex")
                         inventory.items.append(
                             InventoryItem(
                                 i,
@@ -418,9 +421,9 @@ class Config:
                                 self.parse_bool(item.get("Enabled", "False")),
                                 self.parse_bool(item.get("ScaleContent", "False")),
                                 self.parse_bool(item.get("Reward", "False")),
-                                int(flag_index) if flag_index is not None else None,
+                                self.parse_int(item.get("FlagIndex")),
                                 self.parse_bool(item.get("UseWheel", "False")),
-                                int(extra_index) if extra_index is not None else None,
+                                self.parse_int(item.get("ExtraIndex")),
                                 dict(),
                             )
                         )

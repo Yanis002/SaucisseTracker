@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 
 from common import OutlinedLabel, Label, Rotation, RotationWidget, show_message, GLOBAL_HALF_OPACITY
 from config import Config, Pos
-from state import State
+from state import State, LabelState
 
 
 class AutosaveThread(QThread):
@@ -62,6 +62,7 @@ class TrackerWindow(QMainWindow):
         self.parent_ = parent
         self.config = config
         self.bg_path = self.config.active_inv.background
+        self.state = State(self.config)
 
         self.task_autosave = AutosaveThread(self, config)
         self.task_autosave.start()
@@ -234,11 +235,11 @@ class TrackerWindow(QMainWindow):
             self.config.label_gomode.clicked_right.connect(self.label_gomode_clicked_right)
 
         # create labels for every items of the active inventory
-        for item in self.config.active_inv.items:
+        for i, item in enumerate(self.config.active_inv.items):
             label_map: dict[int, Label] = {}
 
-            for i, item_pos in enumerate(item.positions):
-                obj_name = f"item{item.index}_pos_{i}"
+            for j, item_pos in enumerate(item.positions):
+                obj_name = f"item{item.index}_pos_{j}"
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
                 if item.scale_content:
@@ -291,11 +292,11 @@ class TrackerWindow(QMainWindow):
                         pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
                     )
 
-                    if item.reward_map.get(i) is not None:
-                        item.reward_map[i].setGeometry(geometry)
-                        item.reward_map[i].setText(reward_info.name)
+                    if item.reward_map.get(j) is not None:
+                        item.reward_map[j].setGeometry(geometry)
+                        item.reward_map[j].setText(reward_info.name)
                     else:
-                        item.reward_map[i] = OutlinedLabel.new(
+                        item.reward_map[j] = OutlinedLabel.new(
                             self.centralwidget,
                             self.config,
                             f"{obj_name}_reward",
@@ -304,8 +305,8 @@ class TrackerWindow(QMainWindow):
                             reward_info.text_settings_index,
                         )
 
-                    if item.reward_map[i].item_label is None:
-                        item.reward_map[i].item_label = label
+                    if item.reward_map[j].item_label is None:
+                        item.reward_map[j].item_label = label
                     label.raise_()
 
                 if item.extra_index is not None:
@@ -346,7 +347,10 @@ class TrackerWindow(QMainWindow):
                     label.label_flag.clicked_middle.connect(self.outlinedLabel_clicked_middle)
                     label.label_flag.clicked_right.connect(self.outlinedLabel_clicked_right)
 
-                label_map[i] = label
+                # create the state item
+                self.state.items.append(LabelState(i, j, item.name))
+
+                label_map[j] = label
 
             self.config.active_inv.label_map[item.index] = label_map
 
@@ -368,8 +372,7 @@ class TrackerWindow(QMainWindow):
             ).resolve()
 
         if self.config.state_path.exists():
-            state = State(self.config)
-            state.open()
+            self.state.open()
 
     def file_save_triggered(self):
         if self.config.state_path is None:
@@ -378,8 +381,7 @@ class TrackerWindow(QMainWindow):
             ).resolve()
 
         if self.config.state_path.exists():
-            state = State(self.config)
-            state.save()
+            self.state.save()
 
     def file_autosave_triggered(self):
         self.config.autosave_enabled = self.action_autosave.isChecked()
