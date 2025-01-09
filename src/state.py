@@ -89,7 +89,7 @@ class State:
                             label.flag_text_index,
                             label.label_flag.isVisible() if label.label_flag is not None else False,
                             label.label_extra_img.isVisible() if label.label_extra_img is not None else False,
-                        )
+                        ),
                     )
                 )
 

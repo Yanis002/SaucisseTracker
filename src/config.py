@@ -244,11 +244,11 @@ class Config:
 
     def get_color(self, text_settings: TextSettings, is_max: bool = False):
         return text_settings.color_max if is_max else text_settings.color
-    
+
     def parse_int(self, value: Optional[str]):
         if value is not None:
             return int(value, 0)
-        
+
         return None
 
     def parse_bool(self, value: str):
@@ -366,7 +366,7 @@ class Config:
                         elem.get("Name", "Unknown"),
                         self.parse_path(elem.get("Background"), "background", True),
                         Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0)),
-                        QPixmap(str(self.parse_path(elem.get("Icon", "res/config_icon.png"), "icon", False)))
+                        QPixmap(str(self.parse_path(elem.get("Icon", "res/config_icon.png"), "icon", False))),
                     )
 
                     for i, item in enumerate(elem.iterfind("Item")):
