@@ -208,6 +208,7 @@ class TrackerWindow(QMainWindow):
 
             self.config.label_gomode = Label.new(
                 self.config,
+                self.state,
                 self.centralwidget,
                 0,
                 "Go Mode",
@@ -250,6 +251,7 @@ class TrackerWindow(QMainWindow):
 
                 label = Label.new(
                     self.config,
+                    self.state,
                     self.centralwidget,
                     item.index,
                     item.name,
@@ -314,6 +316,7 @@ class TrackerWindow(QMainWindow):
                     width, height = Image.open(extra.path).size
                     label.label_extra_img = Label.new(
                         self.config,
+                        self.state,
                         self.centralwidget,
                         item.index,
                         item.name,
@@ -348,7 +351,7 @@ class TrackerWindow(QMainWindow):
                     label.label_flag.clicked_right.connect(self.outlinedLabel_clicked_right)
 
                 # create the state item
-                self.state.items.append(LabelState(i, j, item.name))
+                self.state.items.append(LabelState(item.index, j, item.name))
 
                 label_map[j] = label
 

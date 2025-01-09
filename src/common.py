@@ -20,7 +20,7 @@ from PyQt6.QtGui import (
 
 if TYPE_CHECKING:
     from config import Config
-    from state import LabelState
+    from state import State
 
 
 GLOBAL_HALF_OPACITY = 0.6
@@ -206,10 +206,11 @@ class Label(QLabel):
     clicked_middle = pyqtSignal()
     clicked_right = pyqtSignal()
 
-    def __init__(self, config: "Config", parent: Optional[QWidget], index: int, name: str):
+    def __init__(self, config: "Config", state: "State", parent: Optional[QWidget], index: int, name: str):
         super(QLabel, self).__init__()
 
         self.config = config
+        self.state = state
         self.setParent(parent)
         self.index = index
         self.name = name
@@ -225,6 +226,7 @@ class Label(QLabel):
     @staticmethod
     def new(
         config: "Config",
+        state: "State",
         parent: QWidget,
         index: int,
         name: str,
@@ -235,7 +237,7 @@ class Label(QLabel):
         scale_content: bool,
         default_strength: float,
     ):
-        new_label = Label(config, parent, index, name)
+        new_label = Label(config, state, parent, index, name)
         new_label.setObjectName(obj_name)
         new_label.setGeometry(geometry)
         new_label.setText("")
@@ -309,17 +311,23 @@ class Label(QLabel):
         if gomode_visibility is None:
             self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
 
-    def update_label(self, state: "LabelState", increase: bool, middle_click: bool = False):
+    def update_label(self, increase: bool, middle_click: bool = False):
         if self.label_effect is not None:
             item = self.config.active_inv.items[self.index]
             path_index = 0
 
+            lbl_state = self.state.get_label_state_from_index(self.index)
+
+            if lbl_state is None:
+                show_error(self, "ERROR: the label state can't be found!")
+                return
+
             if not middle_click and len(item.paths) > 1:
                 if increase:
-                    state.img_index += 1
+                    lbl_state.img_index += 1
                     self.flag_text_index += 1
                 else:
-                    state.img_index -= 1
+                    lbl_state.img_index -= 1
                     self.flag_text_index -= 1
 
                 if self.label_flag is not None and item.flag_index is not None:
@@ -334,24 +342,24 @@ class Label(QLabel):
                     self.label_flag.setText(flag.texts[self.flag_text_index])
                     self.label_flag.set_text_style(flag.text_settings_index, self.flag_text_index == total)
 
-                if state.img_index > len(item.paths) - 1:
-                    state.img_index = -1
-                if state.img_index < -1:
-                    state.img_index = len(item.paths) - 1
+                if lbl_state.img_index > len(item.paths) - 1:
+                    lbl_state.img_index = -1
+                if lbl_state.img_index < -1:
+                    lbl_state.img_index = len(item.paths) - 1
 
-                if state.img_index < 0:
+                if lbl_state.img_index < 0:
                     self.label_effect.setStrength(1.0)  # enable filter
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                     path_index = 0
                 else:
                     self.label_effect.setStrength(0.0)  # disable filter
                     self.setPixmap(self.original_pixmap)
-                    path_index = self.img_index
+                    path_index = lbl_state.img_index
 
                 self.original_pixmap = QPixmap(str(item.paths[path_index]))
                 self.setPixmap(self.original_pixmap)
 
-                if state.img_index < 0:
+                if lbl_state.img_index < 0:
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                 else:
                     self.setPixmap(self.original_pixmap)

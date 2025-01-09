@@ -17,7 +17,7 @@ class LabelState:
         self.pos_index = pos_index
         self.name = name
 
-        self.img_index = int()
+        self.img_index = -1
         self.counter_value = int()
         self.counter_show = bool()
         self.enabled = bool()
@@ -42,6 +42,13 @@ class State:
 
         if not self.path.suffix == ".txt":
             self.path = self.path / ".txt"
+
+    def get_label_state_from_index(self, index: int):
+        for lbl_state in self.items:
+            if lbl_state.index == index:
+                return lbl_state
+
+        return None
 
     def get_states_from_labels(self):
         gomodefx = self.config.label_gomode.label_effect
