@@ -29,11 +29,11 @@ jobs:
             CMD_EXEC: pyinstaller
             FILE_TYPE: ".app"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.ref }}
     - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
     - name: Install dependencies
@@ -43,7 +43,7 @@ jobs:
     - name: Build Project for ${{ matrix.os }}
       run: ${{ matrix.CMD_EXEC }} ${{ matrix.BUILD_ARGS }} -n ${{ matrix.BUILD_NAME }}
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.BUILD_NAME }}
         path: dist/${{ matrix.BUILD_NAME }}${{ matrix.FILE_TYPE }}
