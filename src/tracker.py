@@ -5,10 +5,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from copy import copy
 
 from PIL import Image
-from PyQt6.QtGui import QIcon, QPixmap, QAction, QCloseEvent
-from PyQt6.QtCore import QSize, Qt, QRect, QThread
+from PyQt6.QtGui import QIcon, QPixmap, QAction, QCloseEvent, QFileSystemModel
+from PyQt6.QtCore import QSize, Qt, QRect, QThread, QFileSystemWatcher, QDir
 from PyQt6.QtWidgets import (
     QWidget,
     QMessageBox,
@@ -56,23 +57,34 @@ class AutosaveThread(QThread):
 
 
 class TrackerWindow(QMainWindow):
-    def __init__(self, parent: Optional[QWidget], config: Config):
+    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
         super().__init__()
 
         self.parent_ = parent
-        self.config = config
+        self.configs = configs
+        self.config_index = config_index
+
+        self.config = list(self.configs.values())[self.config_index]
         self.bg_path = self.config.active_inv.background
         self.state = State(self.config)
+        self.autoreload_enabled = True
 
-        self.task_autosave = AutosaveThread(self, config)
+        self.task_autosave = AutosaveThread(self, self.config)
         self.task_autosave.start()
 
         self.task_rotation = Rotation(self.config)
         self.task_rotation.positionChanged.connect(self.task_rotation_position_changed)
         self.task_rotation.start()
 
+        self.monitor = QFileSystemWatcher([str(path) for path in self.config.config_path.parent.rglob("*")], self)
+        self.monitor.fileChanged.connect(self.monitor_execute)
+        self.monitor.setObjectName("configMonitor")
+
         # get the background's size
-        width, height = Image.open(self.bg_path).size
+        width, height = self.get_background_size()
+
+        # accounts for platform differences for the windows' size
+        self.offset = 34 if os.name == "nt" else 20
 
         # create the window itself
         self.create_window(width, height)
@@ -85,6 +97,88 @@ class TrackerWindow(QMainWindow):
 
         # create the necessary labels based on the config
         self.create_labels()
+
+    def get_background_size(self):
+        return Image.open(self.bg_path).size
+
+    def set_window_size(self, width: int, height: int):
+        self.resize(width, height + self.offset)
+        self.setMinimumSize(QSize(width, height + self.offset))
+        self.setMaximumSize(QSize(width, height + self.offset))
+
+    def set_bg_settings(self, width: int, height: int):
+        color = self.config.active_inv.background_color
+        self.bg.setGeometry(QRect(0, 0, width, height))
+        self.bg.setMinimumSize(QSize(width, height))
+        self.bg.setMaximumSize(QSize(width, height))
+        self.bg.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.bg.setAutoFillBackground(False)
+        self.bg.setStyleSheet(f"background-color: rgb({color.r}, {color.g}, {color.b});")
+        self.bg.setFrameShape(QFrame.Shape.StyledPanel)
+        self.bg.setFrameShadow(QFrame.Shadow.Raised)
+        self.bg.setLineWidth(1)
+
+    def set_bg_image(self, width: int, height: int):
+        # for some reasons using stylesheet for bg doesn't work on windows but this does :)
+        self.bg_label.setGeometry(QRect(0, 0, width, height))
+        self.bg_label.setText("")
+        self.bg_label.setPixmap(QPixmap(str(self.bg_path)))
+
+    def update_window(self):
+        offset = -1 if os.name == "nt" else 0
+
+        # backup important data
+        label_map = copy(self.config.active_inv.label_map)
+
+        # update the config
+        self.configs[self.config.config_path] = Config(self.config.widget, self.config.config_path)
+        self.config = list(self.configs.values())[self.config_index]
+        self.bg_path = self.config.active_inv.background
+
+        # restore important data
+        self.config.active_inv.label_map = copy(label_map)
+
+        if not self.bg_path.exists():
+            show_error(self, f"ERROR: the following background path does not exist: {repr(self.bg_path)}")
+            return
+
+        # update the window's size
+        width, height = self.get_background_size()
+        self.set_window_size(width, height)
+
+        # update the background
+        self.set_bg_settings(width, height)
+        self.set_bg_image(width, height)
+
+        # update labels for every items of the active inventory
+        for i, item in enumerate(self.config.active_inv.items):
+            label_map = self.config.active_inv.label_map[item.index]
+
+            for j, item_pos in enumerate(item.positions):
+                label = label_map[j]
+                pos = Pos(item_pos.x + offset, item_pos.y + offset)
+
+                if item.scale_content:
+                    width = 32
+                    height = 32
+                else:
+                    width, height = Image.open(item.paths[0]).size
+
+                label.set_label_settings(
+                    QRect(pos.x, pos.y, width, height),
+                    str(item.paths[0]),
+                    1.0 if item.enabled else GLOBAL_HALF_OPACITY,
+                    item.scale_content,
+                )
+
+    def monitor_execute(self, raw_path: str):
+        path = Path(raw_path).resolve()
+
+        if self.autoreload_enabled:
+            print("change detected", path)
+            self.update_window()
+        else:
+            print("change detected but autoreload is disabled", path)
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
@@ -113,15 +207,10 @@ class TrackerWindow(QMainWindow):
             self.close()
 
     def create_window(self, width: int, height: int):
-        # accounts for platform differences for the windows' size
-        offset = 34 if os.name == "nt" else 20
-
         # initialize the window's basic informations
         self.setWindowTitle("SaucisseTracker")
         self.setWindowIcon(QIcon(str(Path("res/icon.png").resolve())))
-        self.resize(width, height + offset)
-        self.setMinimumSize(QSize(width, height + offset))
-        self.setMaximumSize(QSize(width, height + offset))
+        self.set_window_size(width, height)
         self.setAutoFillBackground(False)
 
         # create the central widget
@@ -130,25 +219,13 @@ class TrackerWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
     def create_background(self, width: int, height: int):
-        color = self.config.active_inv.background_color
         self.bg = QFrame(self.centralwidget)
         self.bg.setObjectName("bg")
-        self.bg.setGeometry(QRect(0, 0, width, height))
-        self.bg.setMinimumSize(QSize(width, height))
-        self.bg.setMaximumSize(QSize(width, height))
-        self.bg.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
-        self.bg.setAutoFillBackground(False)
-        self.bg.setStyleSheet(f"background-color: rgb({color.r}, {color.g}, {color.b});")
-        self.bg.setFrameShape(QFrame.Shape.StyledPanel)
-        self.bg.setFrameShadow(QFrame.Shadow.Raised)
-        self.bg.setLineWidth(1)
+        self.set_bg_settings(width, height)
 
-        # for some reasons using stylesheet for bg doesn't work on windows but this does :)
-        bg_label = QLabel(self.bg)
-        bg_label.setObjectName(f"bg_label")
-        bg_label.setGeometry(QRect(0, 0, width, height))
-        bg_label.setText("")
-        bg_label.setPixmap(QPixmap(str(self.bg_path)))
+        self.bg_label = QLabel(self.bg)
+        self.bg_label.setObjectName(f"bg_label")
+        self.set_bg_image(width, height)
 
     def create_menubar(self):
         self.menu = QMenuBar(parent=self)
@@ -157,6 +234,10 @@ class TrackerWindow(QMainWindow):
         self.menu_file = QMenu(parent=self.menu)
         self.menu_file.setObjectName("menu_file")
         self.menu_file.setTitle("File")
+
+        self.menu_settings = QMenu(parent=self.menu)
+        self.menu_settings.setObjectName("menu_settings")
+        self.menu_settings.setTitle("Settings")
 
         self.action_about = QAction(parent=self.menu)
         self.action_about.setObjectName("action_about")
@@ -183,18 +264,29 @@ class TrackerWindow(QMainWindow):
         self.action_exit.setText("Exit")
         self.action_exit.triggered.connect(self.file_exit_triggered)
 
+        self.menu_file.addAction(self.action_open)
+        self.menu_file.addAction(self.action_save)
+        self.menu_file.addAction(self.action_close)
+        self.menu_file.addAction(self.action_exit)
+
         self.action_autosave = QAction(self.menu_file)
         self.action_autosave.setCheckable(True)
         self.action_autosave.setObjectName("action_autosave")
         self.action_autosave.setText("Autosave (5 min)")
         self.action_autosave.triggered.connect(self.file_autosave_triggered)
 
-        self.menu_file.addAction(self.action_open)
-        self.menu_file.addAction(self.action_save)
-        self.menu_file.addAction(self.action_autosave)
-        self.menu_file.addAction(self.action_close)
-        self.menu_file.addAction(self.action_exit)
+        self.action_autoreload = QAction(self.menu_file)
+        self.action_autoreload.setCheckable(True)
+        self.action_autoreload.setChecked(self.autoreload_enabled)
+        self.action_autoreload.setObjectName("action_autoreload")
+        self.action_autoreload.setText("Auto-reload")
+        self.action_autoreload.triggered.connect(self.file_autoreload_triggered)
+
+        self.menu_settings.addAction(self.action_autosave)
+        self.menu_settings.addAction(self.action_autoreload)
+
         self.menu.addAction(self.menu_file.menuAction())
+        self.menu.addAction(self.menu_settings.menuAction())
         self.menu.addAction(self.action_about)
         self.setMenuBar(self.menu)
 
@@ -392,6 +484,9 @@ class TrackerWindow(QMainWindow):
         self.config.autosave_enabled = self.action_autosave.isChecked()
         self.task_autosave.run_ = self.config.autosave_enabled
 
+    def file_autoreload_triggered(self):
+        self.autoreload_enabled = self.action_autosave.isChecked()
+
     def file_close_triggered(self):
         self.close()
 
@@ -469,4 +564,5 @@ class TrackerWindow(QMainWindow):
         label.update_gomode()
 
     def task_rotation_position_changed(self, pos):
-        self.config.label_gomode_light.setPosition(pos)
+        if self.config.label_gomode_light is not None:
+            self.config.label_gomode_light.setPosition(pos)

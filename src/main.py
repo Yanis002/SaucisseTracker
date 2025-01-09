@@ -189,8 +189,7 @@ class MainWindow(QMainWindow):
                 self.configs[xml_path] = Config(self, xml_path)
 
             if len(self.configs) > 0:
-                config = list(self.configs.values())[index.row()]
-                self.tracker_window = TrackerWindow(self, copy(config))
+                self.tracker_window = TrackerWindow(self, copy(self.configs), index.row())
                 self.tracker_window.show()
                 self.hide()
         except Exception:

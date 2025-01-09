@@ -257,6 +257,13 @@ class Label(QLabel):
 
         return new_label
 
+    def set_label_settings(self, geometry: QRect, img_path: str, opacity: float, scale_content: bool):
+        self.setGeometry(geometry)
+        self.original_pixmap = QPixmap(img_path)
+        self.setPixmap(self.original_pixmap)
+        self.set_pixmap_opacity(opacity)
+        self.setScaledContents(scale_content)
+
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)
 
