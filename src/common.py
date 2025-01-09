@@ -324,10 +324,10 @@ class Label(QLabel):
 
             if not middle_click and len(item.paths) > 1:
                 if increase:
-                    lbl_state.img_index += 1
+                    lbl_state.infos.img_index += 1
                     self.flag_text_index += 1
                 else:
-                    lbl_state.img_index -= 1
+                    lbl_state.infos.img_index -= 1
                     self.flag_text_index -= 1
 
                 if self.label_flag is not None and item.flag_index is not None:
@@ -342,24 +342,24 @@ class Label(QLabel):
                     self.label_flag.setText(flag.texts[self.flag_text_index])
                     self.label_flag.set_text_style(flag.text_settings_index, self.flag_text_index == total)
 
-                if lbl_state.img_index > len(item.paths) - 1:
-                    lbl_state.img_index = -1
-                if lbl_state.img_index < -1:
-                    lbl_state.img_index = len(item.paths) - 1
+                if lbl_state.infos.img_index > len(item.paths) - 1:
+                    lbl_state.infos.img_index = -1
+                if lbl_state.infos.img_index < -1:
+                    lbl_state.infos.img_index = len(item.paths) - 1
 
-                if lbl_state.img_index < 0:
+                if lbl_state.infos.img_index < 0:
                     self.label_effect.setStrength(1.0)  # enable filter
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                     path_index = 0
                 else:
                     self.label_effect.setStrength(0.0)  # disable filter
                     self.setPixmap(self.original_pixmap)
-                    path_index = lbl_state.img_index
+                    path_index = lbl_state.infos.img_index
 
                 self.original_pixmap = QPixmap(str(item.paths[path_index]))
                 self.setPixmap(self.original_pixmap)
 
-                if lbl_state.img_index < 0:
+                if lbl_state.infos.img_index < 0:
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                 else:
                     self.setPixmap(self.original_pixmap)

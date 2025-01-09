@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
 )
 
-from common import OutlinedLabel, Label, Rotation, RotationWidget, show_message, GLOBAL_HALF_OPACITY
+from common import OutlinedLabel, Label, Rotation, RotationWidget, show_message, show_error, GLOBAL_HALF_OPACITY
 from config import Config, Pos
 from state import State, LabelState
 
@@ -383,8 +383,10 @@ class TrackerWindow(QMainWindow):
                 QFileDialog.getSaveFileName(None, "Save State File", str(Path.home()), "*.txt")[0]
             ).resolve()
 
-        if self.config.state_path.exists():
+        if self.config.state_path.parent.exists():
             self.state.save()
+        else:
+            show_error(self, f"ERROR: This path can't be found: {repr(self.config.state_path)}")
 
     def file_autosave_triggered(self):
         self.config.autosave_enabled = self.action_autosave.isChecked()
