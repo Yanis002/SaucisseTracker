@@ -275,7 +275,7 @@ class Label(QLabel):
 
         for i, _ in enumerate(item.positions):
             if self.objectName().endswith(f"_pos_{i}"):
-                reward = item.reward_map[i]
+                reward = item.reward_map.get(i)
 
                 if reward is not None and reward.item_label is not None:
                     self.reward_index += 1
@@ -468,6 +468,7 @@ class Rotation(QThread):
 
     def __init__(self, config: "Config", position: int = 0):
         super().__init__()
+        self.setTerminationEnabled(True)
         self.config = config
         self.position = position
         self.speed = self.config.gomode_settings.rotation_speed

@@ -8,8 +8,8 @@ from typing import Optional
 from copy import copy
 
 from PIL import Image
-from PyQt6.QtGui import QIcon, QPixmap, QAction, QCloseEvent, QFileSystemModel
-from PyQt6.QtCore import QSize, Qt, QRect, QThread, QFileSystemWatcher, QDir
+from PyQt6.QtGui import QIcon, QPixmap, QAction, QCloseEvent, QKeyEvent
+from PyQt6.QtCore import QSize, Qt, QRect, QThread, QFileSystemWatcher, pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget,
     QMessageBox,
@@ -31,6 +31,7 @@ class AutosaveThread(QThread):
         super().__init__()
 
         self.setParent(parent)
+        self.setTerminationEnabled(True)
         self.config = config
         self.run_ = False
 
@@ -57,6 +58,8 @@ class AutosaveThread(QThread):
 
 
 class TrackerWindow(QMainWindow):
+    keyPressed = pyqtSignal()
+
     def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
         super().__init__()
 
@@ -84,7 +87,7 @@ class TrackerWindow(QMainWindow):
         width, height = self.get_background_size()
 
         # accounts for platform differences for the windows' size
-        self.offset = 34 if os.name == "nt" else 20
+        self.offset = 34 if os.name == "nt" else 22
 
         # create the window itself
         self.create_window(width, height)
@@ -101,10 +104,11 @@ class TrackerWindow(QMainWindow):
     def get_background_size(self):
         return Image.open(self.bg_path).size
 
-    def set_window_size(self, width: int, height: int):
-        self.resize(width, height + self.offset)
-        self.setMinimumSize(QSize(width, height + self.offset))
-        self.setMaximumSize(QSize(width, height + self.offset))
+    def set_window_size(self, width: int, height: int, ignore_offset: bool = False):
+        offset = 0 if ignore_offset else self.offset
+        self.resize(width, height + offset)
+        self.setMinimumSize(QSize(width, height + offset))
+        self.setMaximumSize(QSize(width, height + offset))
 
     def set_bg_settings(self, width: int, height: int):
         color = self.config.active_inv.background_color
@@ -180,6 +184,20 @@ class TrackerWindow(QMainWindow):
         else:
             print("change detected but autoreload is disabled", path)
 
+    def keyPressEvent(self, event: QKeyEvent):
+        super().keyPressEvent(event)
+
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            # Ctrl + ...
+            match event.key():
+                case Qt.Key.Key_H:
+                    self.update_menu_visibility(not self.menu.isHidden())
+                case Qt.Key.Key_S:
+                    # kinda hacky but whatever
+                    self.file_save_triggered()
+
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
 
@@ -195,7 +213,9 @@ class TrackerWindow(QMainWindow):
                 e.ignore()
                 return
 
-        # dereferencing the threads
+        # terminate and remove the threads
+        self.task_autosave.terminate()
+        self.task_rotation.terminate()
         self.task_autosave = None
         self.task_rotation = None
 
@@ -254,12 +274,12 @@ class TrackerWindow(QMainWindow):
 
         self.action_save = QAction(self.menu_file)
         self.action_save.setObjectName("action_save")
-        self.action_save.setText("Save State")
+        self.action_save.setText("Save State (Ctrl + S)")
         self.action_save.triggered.connect(self.file_save_triggered)
 
         self.action_close = QAction(self.menu_file)
         self.action_close.setObjectName("action_close")
-        self.action_close.setText("Close")
+        self.action_close.setText("Close (Esc.)")
         self.action_close.triggered.connect(self.file_close_triggered)
 
         self.action_exit = QAction(self.menu_file)
@@ -285,6 +305,12 @@ class TrackerWindow(QMainWindow):
         self.action_autoreload.setText("Auto-reload")
         self.action_autoreload.triggered.connect(self.file_autoreload_triggered)
 
+        self.action_hide = QAction(self.menu_file)
+        self.action_hide.setObjectName("action_hide")
+        self.action_hide.setText("Hide Menu (Ctrl+H)")
+        self.action_hide.triggered.connect(self.settings_hide_triggered)
+
+        self.menu_settings.addAction(self.action_hide)
         self.menu_settings.addAction(self.action_autosave)
         self.menu_settings.addAction(self.action_autoreload)
 
@@ -292,6 +318,11 @@ class TrackerWindow(QMainWindow):
         self.menu.addAction(self.menu_settings.menuAction())
         self.menu.addAction(self.action_about)
         self.setMenuBar(self.menu)
+
+    def update_menu_visibility(self, hide: bool):
+        self.menu.setHidden(hide)
+        width, height = self.get_background_size()
+        self.set_window_size(width, height, hide)
 
     def create_labels(self):
         offset = -1 if os.name == "nt" else 0
@@ -489,6 +520,9 @@ class TrackerWindow(QMainWindow):
 
     def file_autoreload_triggered(self):
         self.autoreload_enabled = self.action_autosave.isChecked()
+
+    def settings_hide_triggered(self):
+        self.update_menu_visibility(True)
 
     def file_close_triggered(self):
         self.close()

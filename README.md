@@ -29,6 +29,12 @@ Planned:
 - "Refresh" button to apply an updated configuration
 - Make a global rotation config option (low priority)
 
+## Keyboard Shortcuts
+
+- Esc/Echap: return to main menu (same as `File -> Close`)
+- Ctrl + H: toggles the visibility of the menu at the top
+- Ctrl + S: saves the state of the tracker (same as `File -> Save State`)
+
 ## Project Structure
 
 * Files:
