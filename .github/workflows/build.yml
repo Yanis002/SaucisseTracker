@@ -51,7 +51,7 @@ jobs:
         run: ${{ matrix.CMD_EXEC }} ${{ matrix.BUILD_ARGS }} -n ${{ matrix.BUILD_NAME }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.BUILD_NAME }}
           path: dist/${{ matrix.BUILD_NAME }}${{ matrix.FILE_TYPE }}
