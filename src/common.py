@@ -102,14 +102,20 @@ class OutlinedLabel(QLabel):
 
         if e is not None:
             item = self.config.active_inv.items[self.item_label.index]
-            if item.use_wheel:
+            rewards = self.config.active_inv.rewards
+
+            if item.use_wheel or rewards.use_wheel:
                 # adapted from https://stackoverflow.com/a/20152809
                 value = 0
                 steps = e.angleDelta().y() // 120
                 for _ in range(1, abs(steps) + 1):
                     value += steps and steps // abs(steps)  # 0, 1, or -1
                     if value != 0:
-                        self.item_label.update_label(value > 0, False)
+                        if item.use_wheel:
+                            self.item_label.update_label(value > 0, False)
+                        elif rewards.use_wheel:
+                            # does nothing for now
+                            pass
 
     def scaledOutlineMode(self):
         return self.mode
@@ -263,6 +269,22 @@ class Label(QLabel):
         self.setPixmap(self.original_pixmap)
         self.set_pixmap_opacity(opacity)
         self.setScaledContents(scale_content)
+    
+    def next_reward(self):
+        item = self.config.active_inv.items[self.index]
+
+        for i, _ in enumerate(item.positions):
+            if self.objectName().endswith(f"_pos_{i}"):
+                reward = item.reward_map[i]
+
+                if reward is not None and reward.item_label is not None:
+                    self.reward_index += 1
+
+                    if self.reward_index > len(self.config.active_inv.rewards.items) - 1:
+                        self.reward_index = 0
+
+                    item.update_reward(i, self.config.active_inv.rewards.items[self.reward_index])
+
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)
@@ -284,14 +306,19 @@ class Label(QLabel):
 
         if e is not None:
             item = self.config.active_inv.items[self.index]
-            if item.use_wheel:
+            rewards = self.config.active_inv.rewards
+
+            if item.use_wheel or rewards.use_wheel:
                 # adapted from https://stackoverflow.com/a/20152809
                 value = 0
                 steps = e.angleDelta().y() // 120
                 for _ in range(1, abs(steps) + 1):
                     value += steps and steps // abs(steps)  # 0, 1, or -1
                     if value != 0:
-                        self.update_label(value > 0, False)
+                        if item.use_wheel:
+                            self.update_label(value > 0, False)
+                        elif rewards.use_wheel:
+                            self.next_reward()
 
     def set_pixmap_opacity(self, opacity: float):
         pixmap = self.pixmap().copy()

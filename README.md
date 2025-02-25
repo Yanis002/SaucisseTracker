@@ -130,6 +130,7 @@ The save state file is a plain text file containing informations about how to re
                 * ``X``: the position on the X axis
                 * ``Y``: the position on the Y axis
     - ``<Reward>``: dungeon reward settings
+        * ``UseWheel``: optional, allows using the mouse wheel to update the reward's name faster
         * ``<Item>``: adds a dungeon entry
             - ``Name``: the display name of the dungeon
             - ``TextSettings``: the index of the text setting to use for the name

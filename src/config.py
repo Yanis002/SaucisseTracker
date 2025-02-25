@@ -159,6 +159,7 @@ class Rewards:
     def __init__(self):
         self.index = 0
         self.items: list[RewardItem] = []
+        self.use_wheel = False
 
 
 @dataclass
@@ -440,6 +441,7 @@ class Config:
                                     int(item.get("TextSettings", "0")),
                                 )
                             )
+                        inventory.rewards.use_wheel = self.parse_bool(rewards.get("UseWheel", "False"))
 
                     self.inventories[inventory.index] = inventory
                 case _:

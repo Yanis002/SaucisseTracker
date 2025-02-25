@@ -171,7 +171,7 @@
             <Item Reward="True" FlagIndex="0" Pos="131;345" Name="Shadow Medallion" Source="items/rewards/shadow_medallion.png"/>
             <Item Reward="True" FlagIndex="0" Pos="172;345" Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png"/>
             <Item Reward="True" FlagIndex="0" Pos="213;345" Name="Light Medallion" Source="items/rewards/light_medallion.png"/>
-            <Rewards>
+            <Rewards UseWheel="True">
                 <Item Pos="-6;23" Width="45" Height="32" Name="????" TextSettings="1"/>
                 <Item Pos="-6;23" Width="45" Height="32" Name="FREE" TextSettings="1"/>
                 <Item Pos="-6;23" Width="45" Height="32" Name="DEKU" TextSettings="1"/>

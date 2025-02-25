@@ -200,6 +200,9 @@ class TrackerWindow(QMainWindow):
         self.task_rotation = None
 
         for item in self.config.active_inv.items:
+            for key, val in item.reward_map.items():
+                del key
+                del val
             item.reward_map = {}
 
         if self.parent_ is not None:
@@ -539,17 +542,7 @@ class TrackerWindow(QMainWindow):
         item = self.config.active_inv.items[label.index]
 
         if item.is_reward:
-            for i, _ in enumerate(item.positions):
-                if label.objectName().endswith(f"_pos_{i}"):
-                    reward = item.reward_map[i]
-
-                    if reward is not None and reward.item_label is not None:
-                        label.reward_index += 1
-
-                        if label.reward_index > len(self.config.active_inv.rewards.items) - 1:
-                            label.reward_index = 0
-
-                        item.update_reward(i, self.config.active_inv.rewards.items[label.reward_index])
+            label.next_reward()
         elif label.label_extra_img is not None:
             label.label_extra_img.setVisible(not label.label_extra_img.isVisible())
         else:

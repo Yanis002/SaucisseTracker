@@ -3,7 +3,7 @@ __pycache__/
 temp/
 
 # specific files
-config/oot/items/**
+config/**/items/**
 state.txt
 *.zip
 
