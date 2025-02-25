@@ -269,7 +269,7 @@ class Label(QLabel):
         self.setPixmap(self.original_pixmap)
         self.set_pixmap_opacity(opacity)
         self.setScaledContents(scale_content)
-    
+
     def next_reward(self):
         item = self.config.active_inv.items[self.index]
 
@@ -284,7 +284,6 @@ class Label(QLabel):
                         self.reward_index = 0
 
                     item.update_reward(i, self.config.active_inv.rewards.items[self.reward_index])
-
 
     def mousePressEvent(self, e: Optional[QMouseEvent]):
         super(QLabel, self).mousePressEvent(e)
