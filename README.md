@@ -23,6 +23,7 @@ Available:
 - Main menu where you can choose which configuration you want to use
 - Auto-saves! Every 5 minutes, if the autosave checkbox from the `File` menu is enabled, the progress will be automatically saved. If no `StatePath` was set in the configuration it will be saved in a folder called `autosaves` where the executable is located. The file will be named `autosave_DATE_TIME.txt`. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this feature)
 - Support zip files for configs, the zip's filename will be what the main menu will show, and it will show an icon if there's a file called `icon.png` at the root of the zip with the config's content. When a zip is chosen on the main menu it will be temporarily extracted inside `temp/config`, inside `temp/icons` there's the icon for any zip file found, the `temp` folder will be located where the program is located, also note the zip file only works with xml config files for now (TODO: improve this feature)
+- Built-in [LiveSplit](https://github.com/LiveSplit/livesplit-core) to keep track of the seed's length! (TODO: save the time in the savestate and add an embedded mode)
 
 Planned:
 - Editor to make configurations easier
@@ -31,9 +32,22 @@ Planned:
 
 ## Keyboard Shortcuts
 
+### Tracker Window
+
 - Esc/Echap: return to main menu (same as `File -> Close`)
 - Ctrl + H: toggles the visibility of the menu at the top
 - Ctrl + S: saves the state of the tracker (same as `File -> Save State`)
+- Ctrl + T: show the timer's window
+
+### Timer Window
+
+- Ctrl + S: start the timer
+- Ctrl + P: pause the timer
+- Ctrl + E: stop the timer
+- Ctrl + T: set the timer's offset
+- Ctrl + F: switch between minimal time format and full `HH:MM:SS.ms` format
+- Ctrl + G: toggle gradient
+- Ctrl + H: toggles the visibility of the menu at the top
 
 ## Project Structure
 
