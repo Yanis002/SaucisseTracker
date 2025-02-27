@@ -46,7 +46,8 @@ class MainWindow(QMainWindow):
         self.resize(275, 371)
         self.setMinimumSize(QSize(275, 371))
         self.setMaximumSize(QSize(275, 371))
-        self.setWindowIcon(QIcon(str(Path("res/icon.png").resolve())))
+        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
+        self.setWindowIcon(QIcon(str(icon_path)))
 
         self.centralwidget = QWidget(self)
         self.centralwidget.setObjectName("centralwidget")

@@ -370,12 +370,15 @@ class Config:
                         )
                     self.extras = Extras(extra_items)
                 case "Inventory":
+                    icon_path = (
+                        Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/config_icon.png"
+                    )
                     inventory = Inventory(
                         int(elem.get("Index", "0")),
                         elem.get("Name", "Unknown"),
                         self.parse_path(elem.get("Background"), "background", True),
                         Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0)),
-                        QPixmap(str(self.parse_path(elem.get("Icon", "res/config_icon.png"), "icon", False))),
+                        QPixmap(str(self.parse_path(elem.get("Icon", str(icon_path)), "icon", False))),
                     )
 
                     for i, item in enumerate(elem.iterfind("Item")):

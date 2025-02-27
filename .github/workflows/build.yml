@@ -20,19 +20,19 @@ jobs:
         include:
           - os: windows-latest
             BUILD_NAME: SaucisseTracker_Windows
-            BUILD_ARGS: -F -w --add-data "lib;lib" --add-data "res;res" -i "res/icon.png" src/main.py
+            BUILD_ARGS: -F -w --add-data "lib;." --add-data "res;res" -i "res/icon.png" src/main.py
             CMD_EXEC: PyInstaller
             FILE_TYPE: ".exe"
 
           - os: ubuntu-latest
             BUILD_NAME: SaucisseTracker_Linux
-            BUILD_ARGS: -F -w --add-data "lib:lib" --add-data "res:res" src/main.py
+            BUILD_ARGS: -F -w --add-data "lib:." --add-data "res:res" src/main.py
             CMD_EXEC: pyinstaller
             FILE_TYPE: ""
 
           - os: macos-latest
             BUILD_NAME: SaucisseTracker_Mac
-            BUILD_ARGS: -F -w --add-data "lib:lib" --add-data "res:res" -i "res/icon.png" src/main.py
+            BUILD_ARGS: -F -w --add-data "lib:." --add-data "res:res" -i "res/icon.png" src/main.py
             CMD_EXEC: pyinstaller
             FILE_TYPE: ""
     steps:
