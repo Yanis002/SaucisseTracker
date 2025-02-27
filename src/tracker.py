@@ -241,7 +241,8 @@ class TrackerWindow(QMainWindow):
     def create_window(self, width: int, height: int):
         # initialize the window's basic informations
         self.setWindowTitle("SaucisseTracker")
-        self.setWindowIcon(QIcon(str(Path("res/icon.png").resolve())))
+        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
+        self.setWindowIcon(QIcon(str(icon_path)))
         self.set_window_size(width, height)
         self.setAutoFillBackground(False)
 

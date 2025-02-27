@@ -112,7 +112,8 @@ class LiveSplit(QMainWindow):
         self.setWindowTitle("SaucisseTimer")
         self.setFixedSize(QSize(300, 55 + self.offset))
         self.setAutoFillBackground(False)
-        self.setWindowIcon(QIcon(str(Path("res/icon.png").resolve())))
+        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
+        self.setWindowIcon(QIcon(str(icon_path)))
 
         self.centralwidget = QWidget(self)
         self.centralwidget.setObjectName("timer_centralwidget")
