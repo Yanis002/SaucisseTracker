@@ -21,9 +21,10 @@ from PyQt6.QtWidgets import (
     QFileDialog,
 )
 
-from common import OutlinedLabel, Label, Rotation, RotationWidget, show_message, show_error, GLOBAL_HALF_OPACITY
-from config import Config, Pos
+from common import OutlinedLabel, Label, Rotation, RotationWidget, Pos, show_message, show_error, GLOBAL_HALF_OPACITY
+from config import Config
 from state import State, LabelState
+from timer import LiveSplit
 
 
 class AutosaveThread(QThread):
@@ -71,6 +72,7 @@ class TrackerWindow(QMainWindow):
         self.bg_path = self.config.active_inv.background
         self.state = State(self.config)
         self.autoreload_enabled = True
+        self.timer = LiveSplit(self.config)
 
         self.task_autosave = AutosaveThread(self, self.config)
         self.task_autosave.start()
@@ -100,6 +102,9 @@ class TrackerWindow(QMainWindow):
 
         # create the necessary labels based on the config
         self.create_labels()
+
+        if self.config.show_timer:
+            self.timer.show()
 
     def get_background_size(self):
         return Image.open(self.bg_path).size
@@ -197,6 +202,8 @@ class TrackerWindow(QMainWindow):
                 case Qt.Key.Key_S:
                     # kinda hacky but whatever
                     self.file_save_triggered()
+                case Qt.Key.Key_T:
+                    self.timer.show()
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
@@ -212,6 +219,8 @@ class TrackerWindow(QMainWindow):
             if answer == QMessageBox.StandardButton.No:
                 e.ignore()
                 return
+
+        self.timer.close()
 
         # terminate and remove the threads
         self.task_autosave.terminate()
@@ -277,6 +286,11 @@ class TrackerWindow(QMainWindow):
         self.action_save.setText("Save State (Ctrl + S)")
         self.action_save.triggered.connect(self.file_save_triggered)
 
+        self.action_livesplit = QAction(parent=self.menu)
+        self.action_livesplit.setObjectName("action_livesplit")
+        self.action_livesplit.setText("Show Timer (Ctrl+T)")
+        self.action_livesplit.triggered.connect(self.timer.show)
+
         self.action_close = QAction(self.menu_file)
         self.action_close.setObjectName("action_close")
         self.action_close.setText("Close (Esc.)")
@@ -289,6 +303,7 @@ class TrackerWindow(QMainWindow):
 
         self.menu_file.addAction(self.action_open)
         self.menu_file.addAction(self.action_save)
+        self.menu_file.addAction(self.action_livesplit)
         self.menu_file.addAction(self.action_close)
         self.menu_file.addAction(self.action_exit)
 

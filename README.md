@@ -21,8 +21,8 @@ Available:
 - Flag system to add extra text
 - Checkmarks with right click
 - Main menu where you can choose which configuration you want to use
-- Auto-saves! Every 5 minutes, if the autosave checkbox from the ``File`` menu is enabled, the progress will be automatically saved. If no ``StatePath`` was set in the configuration it will be saved in a folder called ``autosaves`` where the executable is located. The file will be named ``autosave_DATE_TIME.txt``. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this feature)
-- Support zip files for configs, the zip's filename will be what the main menu will show, and it will show an icon if there's a file called ``icon.png`` at the root of the zip with the config's content. When a zip is chosen on the main menu it will be temporarily extracted inside ``temp/config``, inside ``temp/icons`` there's the icon for any zip file found, the ``temp`` folder will be located where the program is located, also note the zip file only works with xml config files for now (TODO: improve this feature)
+- Auto-saves! Every 5 minutes, if the autosave checkbox from the `File` menu is enabled, the progress will be automatically saved. If no `StatePath` was set in the configuration it will be saved in a folder called `autosaves` where the executable is located. The file will be named `autosave_DATE_TIME.txt`. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this feature)
+- Support zip files for configs, the zip's filename will be what the main menu will show, and it will show an icon if there's a file called `icon.png` at the root of the zip with the config's content. When a zip is chosen on the main menu it will be temporarily extracted inside `temp/config`, inside `temp/icons` there's the icon for any zip file found, the `temp` folder will be located where the program is located, also note the zip file only works with xml config files for now (TODO: improve this feature)
 
 Planned:
 - Editor to make configurations easier
@@ -38,19 +38,20 @@ Planned:
 ## Project Structure
 
 * Files:
-    - ``src/common.py``: hosts classes and functions that can be used in any other file
-    - ``src/config.py``: handles reading the configuration file and storing the informations in classes
-    - ``src/main.py``: the main menu and the starting point of the program
-    - ``src/state.py``: handles importing and exporting savestates
-    - ``src/tracker.py``: the tracker window's logic is handled there (creating and updating the window/widgets/menus)
+    - `src/common.py`: hosts classes and functions that can be used in any other file
+    - `src/config.py`: handles reading the configuration file and storing the informations in classes
+    - `src/main.py`: the main menu and the starting point of the program
+    - `src/state.py`: handles importing and exporting savestates
+    - `src/tracker.py`: the tracker window's logic is handled there (creating and updating the window/widgets/menus)
+    - `src/timer.py`: integrated timer based on LiveSplit
 
 * Folders:
-    - ``.github/``: hosts the GitHub workflows (to provide automated builds and releases)
-    - ``.vscode/``: settings and launch profiles for Visual Studio Code
-    - ``config/``: the tracker's configurations data, currently only hosting one example config file (not packed when building)
-    - ``res/``: the program's resources (packed when building)
-    - ``temp/``: working folder only used for zip archives, created automatically when the program starts and deleted automatically when it's closing
-    - ``tools/``: collection of tools to use when making your own configuration
+    - `.github/`: hosts the GitHub workflows (to provide automated builds and releases)
+    - `.vscode/`: settings and launch profiles for Visual Studio Code
+    - `config/`: the tracker's configurations data, currently only hosting one example config file (not packed when building)
+    - `res/`: the program's resources (packed when building)
+    - `temp/`: working folder only used for zip archives, created automatically when the program starts and deleted automatically when it's closing
+    - `tools/`: collection of tools made to test features before implementing them in the tracker
 
 ## State File Structure
 
@@ -58,99 +59,103 @@ Planned:
 
 The save state file is a plain text file containing informations about how to restore the progression on the tracker.
 
-* ``Global Settings``:
-    - ``gomode_visibility``: the visibility of the "go mode"
-    - ``gomode_light_visibility``: the visibility of the light effect, if used
-* ``Label #XX``: the items are drawn using QLabel's pixmap, the X represent the index of the label.
-    - ``pos_index``: the position index, used to know which label to update when there's multiple labels with the same index
-    - ``name``: the item's name, used to determine if there's a mismatch between the configuration and the save (also useful to know what's the current label corresponding to)
-    - ``enabled``: used to know if the black and white filter should be applied or not
-    - ``img_index``: the index of the image, used for progressive items
-    - ``counter_value``: the value of the counter, if used
-    - ``counter_show``: the visibility of the counter, if used
-    - ``reward_index``: the index of reward name to display
-    - ``flag_index``: the index of the flag the item uses
-    - ``flag_text_index``: the index of the flag's text to display
-    - ``show_flag``: the visibility of the flag
-    - ``show_extra_img``: the visibility of the extra image (if used)
+* `Global Settings`:
+    - `gomode_visibility`: the visibility of the "go mode"
+    - `gomode_light_visibility`: the visibility of the light effect, if used
+* `Label #XX`: the items are drawn using QLabel's pixmap, the X represent the index of the label.
+    - `pos_index`: the position index, used to know which label to update when there's multiple labels with the same index
+    - `name`: the item's name, used to determine if there's a mismatch between the configuration and the save (also useful to know what's the current label corresponding to)
+    - `enabled`: used to know if the black and white filter should be applied or not
+    - `img_index`: the index of the image, used for progressive items
+    - `counter_value`: the value of the counter, if used
+    - `counter_show`: the visibility of the counter, if used
+    - `reward_index`: the index of reward name to display
+    - `flag_index`: the index of the flag the item uses
+    - `flag_text_index`: the index of the flag's text to display
+    - `show_flag`: the visibility of the flag
+    - `show_extra_img`: the visibility of the extra image (if used)
 
 ## Config File Structure
 
-* ``<Config>``: declares a new config
-    - ``DefaultInventory``: the index to the default inventory settings to use
-    - ``StatePath``: optional, can be used to set a path to save and load the tracker's state, skips the file dialogs if used
-* ``<Fonts>``: list of external fonts to use
-    - ``<Item>``: an element of the list
-        * ``Index``: the index of the font
-        * ``Name``: the name of the font (same name as the one that shows in the font preview)
-        * ``Source``: the path to the font file (.ttf/.otf)
-* ``<TextSettings>``: list of text settings, controls bold, size, default/max colors and the font to use
-    - ``<Item>``: an element of the list
-        * ``Index``: the index of the setting
-        * ``Name``: the name of the setting
-        * ``FontIndex``: the font index to specify which font to use
-        * ``Size``: the size of the text
-        * ``Bold``: toggles bold on the text
-        * ``Color``: the default color, usually white (0xFFFFFF)
-        * ``ColorMax``: the color to use when reaching the maximum value (for counters for instance), usually green (0x00FF00)
-        * ``OutlineThickness``: the size of the outline
-* ``<Flags>``: optional, list of custom extra text to display
-    - ``Text``: can be used to show an extra dungeon flag with the middle click, you can use several texts separated by a ``;`` (that's something to improve in the future™)
-    - ``Pos``: can be used set the flag's position (relative to the reward icon)
-    - ``TextSettings``: the index of the text setting to use for the flag
-    - ``Hidden``: optional, used to set the default visibility
-    - ``Width``: the width of the label
-    - ``Height``: the height of the label
-* ``<GoMode>``: optional, configurable image to set the "go mode"
-* ``<Extras>``: optional, configurable extra image to display on an item, for instance a checkmark on songs for OoT, the image will set the width and height of the label
-    - ``Index``: the index of the extra image
-    - ``Pos``: the position of the image (relative to the item it's binded to)
-    - ``Path``: the path of the image
-* ``<Inventory>``:
-    - ``Index``: the index of the inventory
-    - ``Name``: the name of the inventory configuration
-    - ``Background``: the background image to use for this inventory
-    - ``BackgroundColor``: the color of the background if the image has transparency
-    - ``<Item>``: an element of the list
-        * ``Pos``: optional if using ``<Positions>``, defines the X and Y position in the window (format: ``Pos="X;Y"``)
-        * ``Name``: the name of the inventory item
-        * ``Source``: optional if using ``<Sources>``, defines the path to the texture to use for this item
-        * ``Enabled``: optional, can be used to enable an item by default
-        * ``Reward``: optional, can be set to ``True`` to declare the item as a dungeon reward
-        * ``ExtraIndex``: optional, the index of the extra image to use, toggleable with the right click
-        * ``UseWheel``: optional, allows using the mouse wheel to update the items faster
-        * ``<Counter>``: optional, declares a new counter for this item
-            - ``TextSettings``: the index of the text setting to use for this counter
-            - ``Min``: the lowest amount the counter can take
-            - ``Max``: the highest amount the counter can take
-            - ``Increment``: how much it's adding/substracting when the item gets updated
-            - ``Pos``: position of the counter (relative to the item)
-            - ``Width``: the width of the counter label
-            - ``Height``: the height of the counter label
-            - ``MiddleIncrement``: optional, secondary increment with the middle click
-        * ``<Sources>``: optional if using ``Source``, list of texture paths
-            - ``<Item>``: an element of the list
-                * ``Path``: the path to the texture
-        * ``<Positions>``: optional if using ``Pos``, list of positions, this will use the same set of sources to draw N items, N being the number of elements of that list
-            - ``<Item>``: an element of the list
-                * ``X``: the position on the X axis
-                * ``Y``: the position on the Y axis
-    - ``<Reward>``: dungeon reward settings
-        * ``UseWheel``: optional, allows using the mouse wheel to update the reward's name faster (warning: ignored if the reward item is using the wheel)
-        * ``<Item>``: adds a dungeon entry
-            - ``Name``: the display name of the dungeon
-            - ``TextSettings``: the index of the text setting to use for the name
-            - ``Pos``: position of the reward name (relative to the item)
-            - ``Width``: the width of the label
-            - ``Height``: the height of the label
+* `<Config>`: declares a new config
+    - `DefaultInventory`: the index to the default inventory settings to use
+    - `StatePath`: optional, can be used to set a path to save and load the tracker's state, skips the file dialogs if used
+    - `ShowTimer`: optional, show the timer by default
+* `<Fonts>`: list of external fonts to use
+    - `<Item>`: an element of the list
+        * `Index`: the index of the font
+        * `Name`: the name of the font (same name as the one that shows in the font preview)
+        * `Source`: the path to the font file (.ttf/.otf)
+* `<TextSettings>`: list of text settings, controls bold, size, default/max colors and the font to use
+    - `<Item>`: an element of the list
+        * `Index`: the index of the setting
+        * `Name`: the name of the setting
+        * `FontIndex`: the font index to specify which font to use
+        * `Size`: the size of the text
+        * `Bold`: toggles bold on the text
+        * `Color`: the default color, usually white (0xFFFFFF)
+        * `ColorAlt`: alternative color, in most cases the color to use when reaching the maximum value (for counters for instance), usually green (0x00FF00)
+        * `OutlineThickness`: the size of the outline
+        * `IsTimer`: optional, sets this entry to be a timer entry (used for the LiveSplit integration), it will use the first text settings found with this value set to true
+        * `UseGradient`: optional, default value for the gradient, usually set to true
+        * `Minimal`: optional, default value for the time's format, toggles between `HH:MM:SS.ms` and `SS.ms`, usually set to true
+* `<Flags>`: optional, list of custom extra text to display
+    - `Text`: can be used to show an extra dungeon flag with the middle click, you can use several texts separated by a `;` (that's something to improve in the future™)
+    - `Pos`: can be used set the flag's position (relative to the reward icon)
+    - `TextSettings`: the index of the text setting to use for the flag
+    - `Hidden`: optional, used to set the default visibility
+    - `Width`: the width of the label
+    - `Height`: the height of the label
+* `<GoMode>`: optional, configurable image to set the "go mode"
+* `<Extras>`: optional, configurable extra image to display on an item, for instance a checkmark on songs for OoT, the image will set the width and height of the label
+    - `Index`: the index of the extra image
+    - `Pos`: the position of the image (relative to the item it's binded to)
+    - `Path`: the path of the image
+* `<Inventory>`:
+    - `Index`: the index of the inventory
+    - `Name`: the name of the inventory configuration
+    - `Background`: the background image to use for this inventory
+    - `BackgroundColor`: the color of the background if the image has transparency
+    - `<Item>`: an element of the list
+        * `Pos`: optional if using `<Positions>`, defines the X and Y position in the window (format: `Pos="X;Y"`)
+        * `Name`: the name of the inventory item
+        * `Source`: optional if using `<Sources>`, defines the path to the texture to use for this item
+        * `Enabled`: optional, can be used to enable an item by default
+        * `Reward`: optional, can be set to `True` to declare the item as a dungeon reward
+        * `ExtraIndex`: optional, the index of the extra image to use, toggleable with the right click
+        * `UseWheel`: optional, allows using the mouse wheel to update the items faster
+        * `<Counter>`: optional, declares a new counter for this item
+            - `TextSettings`: the index of the text setting to use for this counter
+            - `Min`: the lowest amount the counter can take
+            - `Max`: the highest amount the counter can take
+            - `Increment`: how much it's adding/substracting when the item gets updated
+            - `Pos`: position of the counter (relative to the item)
+            - `Width`: the width of the counter label
+            - `Height`: the height of the counter label
+            - `MiddleIncrement`: optional, secondary increment with the middle click
+        * `<Sources>`: optional if using `Source`, list of texture paths
+            - `<Item>`: an element of the list
+                * `Path`: the path to the texture
+        * `<Positions>`: optional if using `Pos`, list of positions, this will use the same set of sources to draw N items, N being the number of elements of that list
+            - `<Item>`: an element of the list
+                * `X`: the position on the X axis
+                * `Y`: the position on the Y axis
+    - `<Reward>`: dungeon reward settings
+        * `UseWheel`: optional, allows using the mouse wheel to update the reward's name faster (warning: ignored if the reward item is using the wheel)
+        * `<Item>`: adds a dungeon entry
+            - `Name`: the display name of the dungeon
+            - `TextSettings`: the index of the text setting to use for the name
+            - `Pos`: position of the reward name (relative to the item)
+            - `Width`: the width of the label
+            - `Height`: the height of the label
 
 ## Creating a configuration
 
-To create your own configuration, start by creating a directory named ``config``. For executable builds you need to place it in the folder where the executable is located, if running from source it needs to be in the same folder where the ``src`` folder is (see how this repository does this)
+To create your own configuration, start by creating a directory named `config`. For executable builds you need to place it in the folder where the executable is located, if running from source it needs to be in the same folder where the `src` folder is (see how this repository does this)
 
-Next, add a subfolder in the folder you just created, the name doesn't matter. Every file in this subfolder can be named and organised like you want, the only file that requires a fixed path and name is ``config.xml``, that should be located at the top-level of the config's subfolder (example: ``config/oot/config.xml``)
+Next, add a subfolder in the folder you just created, the name doesn't matter. Every file in this subfolder can be named and organised like you want, the only file that requires a fixed path and name is `config.xml`, that should be located at the top-level of the config's subfolder (example: `config/oot/config.xml`)
 
-See the configuration file's documentation to learn more about how to create your own configuration (manually at least), an example is provided in this repo (look inside the ``config`` folder)
+See the configuration file's documentation to learn more about how to create your own configuration (manually at least), an example is provided in this repo (look inside the `config` folder)
 
 The background image's width and height will be used to set the window's width and height.
 
@@ -159,11 +164,12 @@ The background image's width and height will be used to set the window's width a
 Any help is welcome!
 
 If you wish to add support for another file format (for config files):
-- go in the ``__init__`` function of the class named ``Config`` in ``config.py``
-- create a new function called ``parse_FORMAT_config``, it requires at least one parameter called ``self`` (``def parse_FORMAT_config(self)``)
-- find ``match self.config_path.suffix``, then add a case with the file extension of the format you want to add (like ``.json`` or ``.yml`` for example)
-- call the function you created in this new case (``self.parse_FORMAT_config()``)
+- go in the `__init__` function of the class named `Config` in `config.py`
+- create a new function called `parse_FORMAT_config`, it requires at least one parameter called `self` (`def parse_FORMAT_config(self)`)
+- find `match self.config_path.suffix`, then add a case with the file extension of the format you want to add (like `.json` or `.yml` for example)
+- call the function you created in this new case (`self.parse_FORMAT_config()`)
 
 ## Credits
 
 Made with ♥ by me, some concepts comes from [LinSoTracker](https://github.com/linsorak/LinSoTracker) (like the "Go Mode" thing for instance)
+This project is using [livesplit-core](https://github.com/LiveSplit/livesplit-core).

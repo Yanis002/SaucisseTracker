@@ -1,5 +1,6 @@
 import math
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
@@ -480,6 +481,27 @@ class Rotation(QThread):
             self.position = round((self.position + diff) % 360, 2)
             self.positionChanged.emit(self.position)
             self.msleep(int(self.thread_refresh * 1000))
+
+
+class Color:
+    def __init__(self, r: int = 0, g: int = 0, b: int = 0):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    @staticmethod
+    def unpack(value: int):
+        return Color((value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF)
+
+    @staticmethod
+    def pack(color: "Color"):
+        return ((color.r & 0xFF) << 16) | ((color.g & 0xFF) << 8) | (color.b & 0xFF)
+
+
+@dataclass
+class Pos:
+    x: int
+    y: int
 
 
 def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str):

@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Debug",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "src/main.py",
             "console": "integratedTerminal",
@@ -11,15 +11,23 @@
         },
         {
             "name": "Debug Test",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "test.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
         {
+            "name": "Debug Timer Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tools/timer_test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",

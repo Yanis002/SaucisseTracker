@@ -7,28 +7,7 @@ from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import QRect
 
-from common import OutlinedLabel, Label, RotationWidget, show_error, GLOBAL_HALF_OPACITY
-
-
-class Color:
-    def __init__(self, r: int = 0, g: int = 0, b: int = 0):
-        self.r = r
-        self.g = g
-        self.b = b
-
-    @staticmethod
-    def unpack(value: int):
-        return Color((value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF)
-
-    @staticmethod
-    def pack(color: "Color"):
-        return ((color.r & 0xFF) << 16) | ((color.g & 0xFF) << 8) | (color.b & 0xFF)
-
-
-@dataclass
-class Pos:
-    x: int
-    y: int
+from common import OutlinedLabel, Label, RotationWidget, Color, Pos, show_error, GLOBAL_HALF_OPACITY
 
 
 @dataclass
@@ -52,8 +31,11 @@ class TextSettings:
     size: float
     bold: bool
     color: Color
-    color_max: Color
+    color_alt: Color
     outline_thickness: float
+    is_timer: bool
+    use_gradient: bool
+    is_minimal: bool  # hh:mm:ss.ms vs ss.ms
 
     def __post_init__(self):
         if self.name is None:
@@ -206,6 +188,7 @@ class Config:
         self.config_dir = self.config_path.parent
 
         self.default_inv = 0
+        self.show_timer = False
         self.fonts: list[Font] = []
         self.text_settings: list[TextSettings] = []
         self.flags: list[FlagItem] = []
@@ -237,6 +220,27 @@ class Config:
         # set the active inventory from default value
         self.active_inv = self.inventories[self.default_inv]
 
+    def get_timer_text_settings(self):
+        for settings in self.text_settings:
+            if settings.is_timer:
+                return settings
+
+        # default settings
+        return TextSettings(
+            self.widget,
+            self.text_settings[-1].index + 1,
+            "Default Timer Settings",
+            0,
+            30.0,
+            True,
+            Color(171, 171, 171),
+            Color(0, 0, 0),
+            0.0,
+            True,
+            True,
+            True,
+        )
+
     def get_text_settings(self, text_settings_index: int):
         return self.text_settings[text_settings_index]
 
@@ -244,7 +248,7 @@ class Config:
         return self.fonts[text_settings.font]
 
     def get_color(self, text_settings: TextSettings, is_max: bool = False):
-        return text_settings.color_max if is_max else text_settings.color
+        return text_settings.color_alt if is_max else text_settings.color
 
     def parse_int(self, value: Optional[str]):
         if value is not None:
@@ -293,6 +297,7 @@ class Config:
             show_error(self.widget, "ERROR: config settings not found")
 
         self.default_inv = int(config.get("DefaultInventory", "0"))
+        self.show_timer = self.parse_bool(config.get("ShowTimer", "False"))
 
         p = config.get("StatePath")
         self.state_path = Path(p).resolve() if p is not None else None
@@ -320,8 +325,11 @@ class Config:
                                 float(item.get("Size", "10")),
                                 self.parse_bool(item.get("Bold", "False")),
                                 Color.unpack(int(item.get("Color", "0x000000"), 0)),
-                                Color.unpack(int(item.get("ColorMax", "0x000000"), 0)),
+                                Color.unpack(int(item.get("ColorAlt", "0x000000"), 0)),
                                 float(item.get("OutlineThickness", "0")),
+                                self.parse_bool(item.get("IsTimer", "False")),
+                                self.parse_bool(item.get("UseGradient", "False")),
+                                self.parse_bool(item.get("Minimal", "False")),
                             )
                         )
                 case "Flags":

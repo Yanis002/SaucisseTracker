@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Table>
-    <Config DefaultInventory="0" StatePath="config/oot/state.txt">
+    <Config DefaultInventory="0" StatePath="config/oot/state.txt" ShowTimer="True">
         <Fonts>
             <Item Index="0" Name="LEMON MILK Bold" Source="fonts/LEMONMILK-Bold.otf"/>
             <Item Index="1" Name="Upheaval TT (BRK)" Source="fonts/upheavtt.ttf"/>
             <Item Index="2" Name="Visitor TT1 BRK" Source="fonts/visitor1.ttf"/>
             <Item Index="3" Name="Windows Command Prompt" Source="fonts/windows_command_prompt.ttf"/>
+            <Item Index="4" Name="LiveSplit Timer" Source="fonts/Timer.ttf"/>
         </Fonts>
         <TextSettings>
-            <Item Index="0" Name="Counters" FontIndex="2" Size="12.3" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00" OutlineThickness="2"/>
+            <Item Index="0" Name="Counters" FontIndex="2" Size="12.3" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="2"/>
             <Item Index="1" Name="Rewards" FontIndex="3" Size="10.2" Bold="False" Color="0xFFFFFF" OutlineThickness="1.8"/>
-            <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="15" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00" OutlineThickness="2"/>
+            <Item Index="2" Name="Skulltula Counter" FontIndex="2" Size="15" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="2"/>
             <Item Index="3" Name="Dungeon Flag" FontIndex="0" Size="9" Bold="True" Color="0x00FFFF" OutlineThickness="1.8"/>
-            <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorMax="0x00FF00" OutlineThickness="1.8"/>
+            <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="1.8"/>
+            <!-- note: `ColorAlt` is used as the background's color -->
+            <Item Index="5" Name="LiveSplit" FontIndex="4" Size="40" Bold="True" Color="0xA0A0A0" ColorAlt="0x000000" IsTimer="True" UseGradient="True" Minimal="True"/>
         </TextSettings>
         <Flags>
             <!-- the flags' positions are relative to the item there are associate to -->
