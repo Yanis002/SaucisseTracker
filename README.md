@@ -41,13 +41,13 @@ Planned:
 
 ### Timer Window
 
-- Ctrl + S: start the timer
-- Ctrl + P: pause the timer
-- Ctrl + E: stop the timer
-- Ctrl + T: set the timer's offset
-- Ctrl + F: switch between minimal time format and full `HH:MM:SS.ms` format
-- Ctrl + G: toggle gradient
-- Ctrl + H: toggles the visibility of the menu at the top
+- Ctrl + S: start the timer (same as `Controls -> Start`)
+- Ctrl + P: pause the timer (same as `Controls -> Pause`)
+- Ctrl + E: stop the timer (same as `Controls -> Stop`)
+- Ctrl + T: set the timer's offset (same as `Controls -> Set Time`)
+- Ctrl + F: switch between minimal time format and full `HH:MM:SS.ms` format (same as `Appearence -> Toggle Style`)
+- Ctrl + G: toggle gradient (same as `Appearence -> Toggle Gradient`)
+- Ctrl + H: toggles the visibility of the menu at the top (same as `Appearence -> Hide Menu`)
 
 ## Project Structure
 
@@ -63,6 +63,7 @@ Planned:
     - `.github/`: hosts the GitHub workflows (to provide automated builds and releases)
     - `.vscode/`: settings and launch profiles for Visual Studio Code
     - `config/`: the tracker's configurations data, currently only hosting one example config file (not packed when building)
+    - `lib/`: hosts external libraries used by this project (packed when building)
     - `res/`: the program's resources (packed when building)
     - `temp/`: working folder only used for zip archives, created automatically when the program starts and deleted automatically when it's closing
     - `tools/`: collection of tools made to test features before implementing them in the tracker
