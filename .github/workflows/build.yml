@@ -34,7 +34,7 @@ jobs:
             BUILD_NAME: SaucisseTracker_Mac
             BUILD_ARGS: -F -w --add-data "res:res" -i "res/icon.png" src/main.py
             CMD_EXEC: pyinstaller
-            FILE_TYPE: ".app"
+            FILE_TYPE: ""
     steps:
       - uses: actions/checkout@v4
         with:
