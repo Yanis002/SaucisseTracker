@@ -42,11 +42,12 @@ class LiveSplitThread(QThread):
         if self.full_format:
             text = f"{hour:02}:{min:02}:{sec:02}"
         else:
-            text = f"{sec}"
             if min > 0:
-                text = f"{min:02}:{text}"
-            if hour > 0:
-                text = f"{hour:02}:{text}"
+                text = f"{min:02}:{sec:02}"
+            elif hour > 0:
+                text = f"{hour:02}:{sec:02}"
+            else:
+                text = f"{sec}"
 
         self.main.time_lbl.setText(f"{text}.{ms_str}")
 
