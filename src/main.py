@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
     QMenu,
 )
 
-from common import ListViewModel, show_error, OS_MENU_OFFSET
+from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET
 from config import Config
 from tracker import TrackerWindow
 
@@ -168,6 +168,10 @@ class MainWindow(QMainWindow):
             self.configs.clear()
             self.model_cache.clear()
             model_items = []
+
+            if not self.config_dir.exists():
+                show_info(self, f"This path does not exist ('{self.config_dir}').")
+                return
 
             # look for zip files
             for path in sorted(self.config_dir.rglob("*.zip")):

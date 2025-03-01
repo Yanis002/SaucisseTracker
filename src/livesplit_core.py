@@ -5,12 +5,10 @@ import sys, ctypes
 from ctypes import c_char_p, c_void_p, c_int8, c_int16, c_int32, c_int64, c_uint8, c_uint16, c_uint32, c_uint64, c_size_t, c_ssize_t, c_float, c_double, c_bool, c_char, c_byte
 
 # SaucisseTracker modification: fix the path to the library binaries
-from pathlib import Path
-lib_path = Path(str(Path(__file__).resolve().parent).removesuffix("lib")).resolve()
 prefix = {'win32': ''}.get(sys.platform, 'lib')
 
 extension = {'darwin': '.dylib', 'win32': '.dll'}.get(sys.platform, '.so')
-livesplit_core_native = ctypes.cdll.LoadLibrary(str(lib_path / "lib" / (prefix + "livesplit_core" + extension)))
+livesplit_core_native = ctypes.cdll.LoadLibrary("lib/" + prefix + "livesplit_core" + extension)
 
 livesplit_core_native.Analysis_calculate_sum_of_best.argtypes = (c_void_p, c_bool, c_bool, c_uint8, )
 livesplit_core_native.Analysis_calculate_sum_of_best.restype = c_void_p

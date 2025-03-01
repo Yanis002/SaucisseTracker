@@ -13,28 +13,32 @@ permissions:
 
 jobs:
   build:
-    name: Build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: windows-latest
+            shell: pwsh
+            name: Build for Windows
             BUILD_NAME: SaucisseTracker_Windows
-            BUILD_ARGS: -F -w --add-data "lib;lib" --add-data "res;res" -i "res/icon.png" src/main.py
+            BUILD_ARGS: -F -w --add-data "res;res" -i "res/icon.png" src/main.py
             CMD_EXEC: PyInstaller
             FILE_TYPE: ".exe"
+            LIB_EXTENSION: dll
+            CMD_ZIP: New-Item -Path "dist/lib" -ItemType Directory; New-Item -Path "output" -ItemType Directory; Copy-Item "lib/*.dll" -Destination "dist/lib/"; Compress-Archive -Path "dist/" -DestinationPath "output/SaucisseTracker.zip"
 
           - os: ubuntu-latest
+            shell: bash
+            name: Build for Linux
             BUILD_NAME: SaucisseTracker_Linux
-            BUILD_ARGS: -F -w --add-data "lib:lib" --add-data "res:res" src/main.py
+            BUILD_ARGS: -F -w --add-data "res:res" src/main.py
             CMD_EXEC: pyinstaller
             FILE_TYPE: ""
+            LIB_EXTENSION: so
+            CMD_ZIP: mkdir -p dist/lib/ output && cp -v lib/*.so dist/lib/ && zip -r output/SaucisseTracker.zip dist/
 
-          - os: macos-latest
-            BUILD_NAME: SaucisseTracker_Mac
-            BUILD_ARGS: -F -w --add-data "lib:lib" --add-data "res:res" -i "res/icon.png" src/main.py
-            CMD_EXEC: pyinstaller
-            FILE_TYPE: ""
+    name: "${{ matrix.name }}"
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,11 +57,14 @@ jobs:
       - name: Build Project for ${{ matrix.os }}
         run: ${{ matrix.CMD_EXEC }} ${{ matrix.BUILD_ARGS }} -n ${{ matrix.BUILD_NAME }}
 
+      - name: Create Archive
+        run: ${{ matrix.CMD_ZIP }}
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.BUILD_NAME }}
-          path: dist/${{ matrix.BUILD_NAME }}${{ matrix.FILE_TYPE }}
+          path: output/SaucisseTracker.zip
 
       - name: Upload main rolling release
         uses: softprops/action-gh-release@v2
@@ -68,7 +75,7 @@ jobs:
           target_commitish: main
           tag_name: 'rolling_pre-release'
           prerelease: true
-          files: dist/${{ matrix.BUILD_NAME }}${{ matrix.FILE_TYPE }}
+          files: output/SaucisseTracker.zip
         continue-on-error: true
 
       - name: Upload dev rolling pre-release
@@ -80,5 +87,5 @@ jobs:
           target_commitish: dev
           tag_name: 'rolling_pre-release'
           prerelease: true
-          files: dist/${{ matrix.BUILD_NAME }}${{ matrix.FILE_TYPE }}
+          files: output/SaucisseTracker.zip
         continue-on-error: true

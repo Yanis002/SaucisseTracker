@@ -14,5 +14,5 @@ target-version = [
 # This is a regular expression, escape dots with a backslash like '\.'
 # Note: All whitespace seems to be trimmed (thankfully), probably by Black?
 extend-exclude = '''
-^/lib/livesplit_core\.py
+^/src/livesplit_core\.py
 '''

@@ -519,3 +519,7 @@ def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str)
 
 def show_error(parent: QWidget, text: str):
     show_message(parent, "Error", QMessageBox.Icon.Critical, text)
+
+
+def show_info(parent: QWidget, text: str):
+    show_message(parent, "Info", QMessageBox.Icon.Information, text)

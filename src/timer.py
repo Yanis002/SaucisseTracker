@@ -1,7 +1,7 @@
 import colorsys
 
 # https://github.com/LiveSplit/livesplit-core
-import lib.livesplit_core as LS
+import livesplit_core as LS
 
 from pathlib import Path
 from PyQt6.QtCore import QThread, QSize, QRect, Qt
