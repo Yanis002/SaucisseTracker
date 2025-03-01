@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Table>
+<Root>
     <Config DefaultInventory="0" StatePath="config/oot/state.txt" ShowTimer="True">
         <Fonts>
             <Item Index="0" Name="LEMON MILK Bold" Source="fonts/LEMONMILK-Bold.otf"/>
@@ -226,4 +226,4 @@
             <Item ExtraIndex="0" Pos="258;352" Name="Prelude of Light" Source="items/songs/prelude.png"/>
         </Inventory>
     </Config>
-</Table>
+</Root>

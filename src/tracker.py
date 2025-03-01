@@ -21,7 +21,18 @@ from PyQt6.QtWidgets import (
     QFileDialog,
 )
 
-from common import OutlinedLabel, Label, Rotation, RotationWidget, Pos, show_message, show_error, GLOBAL_HALF_OPACITY
+from common import (
+    OutlinedLabel,
+    Label,
+    Rotation,
+    RotationWidget,
+    Pos,
+    show_message,
+    show_error,
+    GLOBAL_HALF_OPACITY,
+    OS_MENU_OFFSET,
+)
+
 from config import Config
 from state import State, LabelState
 from timer import LiveSplit
@@ -89,7 +100,7 @@ class TrackerWindow(QMainWindow):
         width, height = self.get_background_size()
 
         # accounts for platform differences for the windows' size
-        self.offset = 34 if os.name == "nt" else 22
+        self.offset = OS_MENU_OFFSET
 
         # create the window itself
         self.create_window(width, height)

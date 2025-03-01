@@ -1,4 +1,3 @@
-import os
 import colorsys
 
 # https://github.com/LiveSplit/livesplit-core
@@ -8,7 +7,7 @@ from pathlib import Path
 from PyQt6.QtCore import QThread, QSize, QRect, Qt
 from PyQt6.QtGui import QAction, QKeyEvent, QIcon
 from PyQt6.QtWidgets import QMainWindow, QMenuBar, QMenu, QLabel, QWidget, QInputDialog
-from common import Color
+from common import Color, OS_MENU_OFFSET
 from config import Config
 
 
@@ -104,7 +103,7 @@ class LiveSplit(QMainWindow):
         self.is_paused = False
         self.is_stopped = False
         self.use_gradient = self.text_settings.use_gradient
-        self.offset = 34 if os.name == "nt" else 22
+        self.offset = OS_MENU_OFFSET
 
         # colors defined in the config file
         self.timer_color = self.text_settings.color

@@ -10,7 +10,7 @@ from typing import Optional
 from copy import copy
 from shutil import rmtree
 
-from PyQt6.QtGui import QIcon, QPixmap, QShowEvent, QCloseEvent
+from PyQt6.QtGui import QIcon, QPixmap, QShowEvent, QCloseEvent, QAction
 from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtWidgets import (
     QWidget,
@@ -21,9 +21,11 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QLineEdit,
     QListView,
+    QMenuBar,
+    QMenu,
 )
 
-from common import ListViewModel, show_error
+from common import ListViewModel, show_error, OS_MENU_OFFSET
 from config import Config
 from tracker import TrackerWindow
 
@@ -43,9 +45,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("SaucisseTracker")
         self.setObjectName("MainWindow")
-        self.resize(275, 371)
-        self.setMinimumSize(QSize(275, 371))
-        self.setMaximumSize(QSize(275, 371))
+        self.setFixedSize(QSize(275, 355))
         icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
         self.setWindowIcon(QIcon(str(icon_path)))
 
@@ -55,62 +55,78 @@ class MainWindow(QMainWindow):
 
         self.btn_set_config_dir = QPushButton(self.centralwidget)
         self.btn_set_config_dir.setObjectName("btn_set_config_dir")
-        self.btn_set_config_dir.setGeometry(QRect(224, 29, 41, 23))
+        self.btn_set_config_dir.setGeometry(QRect(224, 44, 41, 23))
         self.btn_set_config_dir.setText("Set")
 
         self.line_edit_config_folder = QLineEdit(self.centralwidget)
         self.line_edit_config_folder.setObjectName("line_edit_config_folder")
-        self.line_edit_config_folder.setGeometry(QRect(10, 30, 211, 20))
+        self.line_edit_config_folder.setGeometry(QRect(10, 45, 211, 20))
         self.line_edit_config_folder.setReadOnly(True)
 
         self.label_found = QLabel(self.centralwidget)
         self.label_found.setObjectName("label_found")
-        self.label_found.setGeometry(QRect(10, 60, 130, 16))
+        self.label_found.setGeometry(QRect(10, 75, 130, 16))
         self.label_found.setText("Found configurations")
 
         self.label_config_folder = QLabel(self.centralwidget)
         self.label_config_folder.setObjectName("label_config_folder")
-        self.label_config_folder.setGeometry(QRect(10, 10, 120, 16))
+        self.label_config_folder.setGeometry(QRect(10, 25, 120, 16))
         self.label_config_folder.setText("Configuration folder")
 
         self.btn_go = QPushButton(self.centralwidget)
         self.btn_go.setObjectName("btn_go")
-        self.btn_go.setGeometry(QRect(10, 310, 256, 51))
+        self.btn_go.setGeometry(QRect(10, 295, 256, 51))
         self.btn_go.setStyleSheet('font: 75 15pt "MS Shell Dlg 2";')
         self.btn_go.setText("GO!")
 
-        self.btn_new = QPushButton(self.centralwidget)
-        self.btn_new.setObjectName("btn_new")
-        self.btn_new.setGeometry(QRect(10, 280, 75, 23))
-        self.btn_new.setText("New")
-
-        self.btn_edit = QPushButton(self.centralwidget)
-        self.btn_edit.setObjectName("btn_edit")
-        self.btn_edit.setGeometry(QRect(100, 280, 75, 23))
-        self.btn_edit.setText("Edit")
-
-        self.btn_delete = QPushButton(self.centralwidget)
-        self.btn_delete.setObjectName("btn_delete")
-        self.btn_delete.setGeometry(QRect(190, 280, 75, 23))
-        self.btn_delete.setText("Delete")
-
         self.list_configs = QListView(self.centralwidget)
         self.list_configs.setObjectName("list_configs")
-        self.list_configs.setGeometry(QRect(11, 80, 253, 192))
+        self.list_configs.setGeometry(QRect(11, 95, 253, 192))
+
+        # menu
+        self.menu = QMenuBar(parent=self)
+        self.menu.setObjectName("menu")
+        self.menu.setGeometry(QRect(0, 0, 275, OS_MENU_OFFSET))
+
+        self.menu_file = QMenu(parent=self.menu)
+        self.menu_file.setObjectName("main_menu_file")
+        self.menu_file.setTitle("File")
+
+        self.action_new = QAction(parent=self.menu_file)
+        self.action_new.setObjectName("action_new")
+        self.action_new.setText("New")
+
+        self.action_edit = QAction(parent=self.menu_file)
+        self.action_edit.setObjectName("action_edit")
+        self.action_edit.setText("Edit")
+
+        self.action_duplicate = QAction(parent=self.menu_file)
+        self.action_duplicate.setObjectName("action_duplicate")
+        self.action_duplicate.setText("Duplicate")
+
+        self.action_delete = QAction(parent=self.menu_file)
+        self.action_delete.setObjectName("action_delete")
+        self.action_delete.setText("Delete")
+
+        self.menu_file.addAction(self.action_new)
+        self.menu_file.addAction(self.action_edit)
+        self.menu_file.addAction(self.action_duplicate)
+        self.menu_file.addAction(self.action_delete)
+
+        self.menu.addAction(self.menu_file.menuAction())
 
         # connections
         self.btn_set_config_dir.clicked.connect(self.btn_set_config_dir_clicked)
         self.line_edit_config_folder.textChanged.connect(self.line_edit_config_folder_update)
         self.btn_go.clicked.connect(self.btn_go_clicked)
         self.list_configs.doubleClicked.connect(self.btn_go_clicked)
+        self.action_new.triggered.connect(self.action_new_triggered)
+        self.action_edit.triggered.connect(self.action_edit_triggered)
+        self.action_duplicate.triggered.connect(self.action_duplicate_triggered)
+        self.action_delete.triggered.connect(self.action_delete_triggered)
 
         # set the default config folder path
         self.line_edit_config_folder.setText(str(Path("config/").resolve()))
-
-        # not implemented yet
-        self.btn_new.setEnabled(False)
-        self.btn_edit.setEnabled(False)
-        self.btn_delete.setEnabled(False)
 
     def showEvent(self, e: Optional[QShowEvent]):
         super(QMainWindow, self).showEvent(e)
@@ -195,6 +211,18 @@ class MainWindow(QMainWindow):
                 self.hide()
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
+
+    def action_new_triggered(self):
+        pass
+
+    def action_edit_triggered(self):
+        pass
+
+    def action_duplicate_triggered(self):
+        config = list(self.configs.values())[self.list_configs.currentIndex().row()]
+
+    def action_delete_triggered(self):
+        pass
 
 
 def main():

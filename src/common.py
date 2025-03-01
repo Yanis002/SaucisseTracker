@@ -1,4 +1,5 @@
 import math
+import os
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     from state import State
 
 
+OS_MENU_OFFSET = 34 if os.name == "nt" else 22
 GLOBAL_HALF_OPACITY = 0.6
 
 
@@ -502,6 +504,9 @@ class Color:
 class Pos:
     x: int
     y: int
+
+    def to_str(self):
+        return f"{self.x};{self.y}"
 
 
 def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str):
