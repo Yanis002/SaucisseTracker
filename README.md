@@ -54,10 +54,11 @@ Planned:
 * Files:
     - `src/common.py`: hosts classes and functions that can be used in any other file
     - `src/config.py`: handles reading the configuration file and storing the informations in classes
+    - `src/livesplit_core.py`: python bindings to use the [LiveSplit library](https://github.com/LiveSplit/livesplit-core)
     - `src/main.py`: the main menu and the starting point of the program
     - `src/state.py`: handles importing and exporting savestates
-    - `src/tracker.py`: the tracker window's logic is handled there (creating and updating the window/widgets/menus)
     - `src/timer.py`: integrated timer based on LiveSplit
+    - `src/tracker.py`: the tracker window's logic is handled there (creating and updating the window/widgets/menus)
 
 * Folders:
     - `.github/`: hosts the GitHub workflows (to provide automated builds and releases)
