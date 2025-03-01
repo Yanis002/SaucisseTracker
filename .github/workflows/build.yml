@@ -25,7 +25,7 @@ jobs:
             CMD_EXEC: PyInstaller
             FILE_TYPE: ".exe"
             LIB_EXTENSION: dll
-            CMD_ZIP: New-Item -Path "dist/lib" -ItemType Directory; New-Item -Path "output" -ItemType Directory; Copy-Item "lib/*.dll" -Destination "dist/lib/"; Compress-Archive -Path "dist/" -DestinationPath "output/SaucisseTracker.zip"
+            CMD_ZIP: New-Item -Path "dist/lib" -ItemType Directory; New-Item -Path "output" -ItemType Directory; Copy-Item "lib/*.dll" -Destination "dist/lib/"; Compress-Archive -Path "dist/" -DestinationPath "output/SaucisseTracker_Windows.zip"
 
           - os: ubuntu-latest
             shell: bash
@@ -35,7 +35,7 @@ jobs:
             CMD_EXEC: pyinstaller
             FILE_TYPE: ""
             LIB_EXTENSION: so
-            CMD_ZIP: mkdir -p dist/lib/ output && cp -v lib/*.so dist/lib/ && zip -r output/SaucisseTracker.zip dist/
+            CMD_ZIP: mkdir -p dist/lib/ output && cp -v lib/*.so dist/lib/ && zip -r output/SaucisseTracker_Linux.zip dist/
 
     name: "${{ matrix.name }}"
 
@@ -75,7 +75,7 @@ jobs:
           target_commitish: main
           tag_name: 'rolling_pre-release'
           prerelease: true
-          files: output/SaucisseTracker.zip
+          files: output/${{ matrix.BUILD_NAME }}.zip
         continue-on-error: true
 
       - name: Upload dev rolling pre-release
@@ -87,5 +87,5 @@ jobs:
           target_commitish: dev
           tag_name: 'rolling_pre-release'
           prerelease: true
-          files: output/SaucisseTracker.zip
+          files: output/${{ matrix.BUILD_NAME }}.zip
         continue-on-error: true
