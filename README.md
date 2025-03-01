@@ -180,9 +180,9 @@ Any help is welcome!
 
 If you wish to add support for another file format (for config files):
 - go in the `__init__` function of the class named `Config` in `config.py`
-- create a new function called `parse_FORMAT_config`, it requires at least one parameter called `self` (`def parse_FORMAT_config(self)`)
+- create a new function called `from_FORMAT`, it requires at least one parameter called `self` (`def from_FORMAT(self)`)
 - find `match self.config_path.suffix`, then add a case with the file extension of the format you want to add (like `.json` or `.yml` for example)
-- call the function you created in this new case (`self.parse_FORMAT_config()`)
+- call the function you created in this new case (`self.from_FORMAT()`)
 
 ## Credits
 

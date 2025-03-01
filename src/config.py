@@ -10,6 +10,8 @@ from PyQt6.QtCore import QRect
 
 from common import OutlinedLabel, Label, RotationWidget, Color, Pos, show_error, GLOBAL_HALF_OPACITY
 
+active_config_dir: Optional[Path] = None
+
 
 @dataclass
 class Font:
@@ -29,7 +31,7 @@ class Font:
             {
                 "Index": f"{index}",
                 "Name": f"{self.name}",
-                "Source": f"{self.path}",
+                "Source": f"{self.path.relative_to(active_config_dir)}",
             },
         )
 
@@ -180,12 +182,12 @@ class InventoryItem:
 
         if len(self.paths) > 0:
             if len(self.paths) == 1:
-                attrib["Source"] = str(self.paths[0])
+                attrib["Source"] = str(self.paths[0].relative_to(active_config_dir))
             else:
                 sources = ET.SubElement(item, "Sources")
 
                 for path in self.paths:
-                    _ = ET.SubElement(sources, "Item", {"Path": f"{path}"})
+                    _ = ET.SubElement(sources, "Item", {"Path": f"{path.relative_to(active_config_dir)}"})
 
         if len(self.positions) > 0:
             if len(self.positions) == 1:
@@ -290,7 +292,7 @@ class ExtraItem:
             {
                 "Index": f"{self.index}",
                 "Pos": self.pos.to_str(),
-                "Path": f"{self.path}",
+                "Path": f"{self.path.relative_to(active_config_dir)}",
             },
         )
 
@@ -330,9 +332,9 @@ class Inventory:
             "Inventory",
             {
                 "Index": f"{self.index}",
-                "Icon": f"{self.icon_path}",
+                "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
                 "Name": f"{self.name}",
-                "Background": f"{self.background}",
+                "Background": f"{self.background.relative_to(active_config_dir)}",
                 "BackgroundColor": f"0x{Color.pack(self.background_color):06X}",
             },
         )
@@ -357,19 +359,19 @@ class GoModeSettings:
     thread_refresh_rate: float
 
     def to_xml(self, parent: ET.Element):
-        return ET.SubElement(
-            parent,
-            "GoMode",
-            {
-                "Pos": self.pos.to_str(),
-                "HideIfDisabled": f"{self.hide_if_disabled}",
-                "Source": f"{self.path}",
-                "LightPath": f"{self.light_path}",
-                "LightPos": self.light_pos.to_str(),
-                "LightRotSpeed": f"{self.rotation_speed}",
-                "LightRotRefresh": f"{self.thread_refresh_rate}",
-            },
-        )
+        attrib = {
+            "Pos": self.pos.to_str(),
+            "HideIfDisabled": f"{self.hide_if_disabled}",
+            "Source": f"{self.path.relative_to(active_config_dir)}",
+        }
+
+        if self.light_path is not None and self.light_pos is not None:
+            attrib["LightPath"] = (f"{self.light_path.relative_to(active_config_dir)}",)
+            attrib["LightPos"] = (self.light_pos.to_str(),)
+            attrib["LightRotSpeed"] = (f"{self.rotation_speed}",)
+            attrib["LightRotRefresh"] = (f"{self.thread_refresh_rate}",)
+
+        return ET.SubElement(parent, "GoMode", attrib)
 
 
 class Config:
@@ -395,7 +397,7 @@ class Config:
 
         match self.config_path.suffix:
             case ".xml":
-                self.parse_xml_config()
+                self.from_xml()
             case _:
                 show_error(self.widget, "ERROR: the config file's format isn't supported yet.")
 
@@ -478,6 +480,9 @@ class Config:
         return None
 
     def to_xml(self):
+        global active_config_dir
+
+        active_config_dir = self.config_dir
         root = ET.Element("Root")
 
         config = ET.SubElement(
@@ -485,7 +490,7 @@ class Config:
             "Config",
             {
                 "DefaultInventory": f"{self.default_inv}",
-                "StatePath": f"{self.state_path}",
+                "StatePath": f"{self.state_path.relative_to(active_config_dir)}",
                 "ShowTimer": f"{self.show_timer}",
             },
         )
@@ -513,13 +518,13 @@ class Config:
             elif data is not None:
                 _ = data.to_xml(config)
 
-        for index, inventory in self.inventories.items():
+        for inventory in self.inventories.values():
             _ = inventory.to_xml(config)
 
         xml_str = MD.parseString(ET.tostring(root)).toprettyxml(indent=" " * 4, encoding="UTF-8")
-        Path("test.xml").write_bytes(b"\n".join([s for s in xml_str.splitlines() if s.strip()]) + b"\n")
+        self.config_path.write_bytes(b"\n".join([s for s in xml_str.splitlines() if s.strip()]) + b"\n")
 
-    def parse_xml_config(self):
+    def from_xml(self):
         try:
             root = ET.parse(self.config_path).getroot()
         except:

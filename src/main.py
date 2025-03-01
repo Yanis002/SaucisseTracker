@@ -8,7 +8,7 @@ from zipfile import ZipFile
 from pathlib import Path
 from typing import Optional
 from copy import copy
-from shutil import rmtree
+from shutil import rmtree, copytree
 
 from PyQt6.QtGui import QIcon, QPixmap, QShowEvent, QCloseEvent, QAction
 from PyQt6.QtCore import QSize, QRect
@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
     QListView,
     QMenuBar,
     QMenu,
+    QMessageBox,
 )
 
 from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET
@@ -117,7 +118,7 @@ class MainWindow(QMainWindow):
 
         # connections
         self.btn_set_config_dir.clicked.connect(self.btn_set_config_dir_clicked)
-        self.line_edit_config_folder.textChanged.connect(self.line_edit_config_folder_update)
+        self.line_edit_config_folder.textChanged.connect(self.update_config_list)
         self.btn_go.clicked.connect(self.btn_go_clicked)
         self.list_configs.doubleClicked.connect(self.btn_go_clicked)
         self.action_new.triggered.connect(self.action_new_triggered)
@@ -162,7 +163,10 @@ class MainWindow(QMainWindow):
             absolute = path.resolve()
             self.configs[absolute] = Config(self, absolute)
 
-    def line_edit_config_folder_update(self):
+    def get_config(self):
+        return list(self.configs.values())[self.list_configs.currentIndex().row()]
+
+    def update_config_list(self):
         try:
             self.config_dir = Path(self.line_edit_config_folder.text()).resolve()
             self.configs.clear()
@@ -223,10 +227,33 @@ class MainWindow(QMainWindow):
         pass
 
     def action_duplicate_triggered(self):
-        config = list(self.configs.values())[self.list_configs.currentIndex().row()]
+        # TODO: rename config
+        config = self.get_config()
+        new_config_dir = Path(str(config.config_dir))
+        i = -1
+
+        while new_config_dir.exists():
+            new_config_dir = Path(str(new_config_dir) + "_copy")
+            i += 1
+
+        copytree(config.config_dir, new_config_dir)
+        self.update_config_list()
 
     def action_delete_triggered(self):
-        pass
+        config = self.get_config()
+
+        answer = QMessageBox.question(
+            self,
+            "Warning",
+            f"Are you sure you want to delete '{config.active_inv.name}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+
+        if answer == QMessageBox.StandardButton.Yes:
+            if config.config_dir.exists():
+                rmtree(config.config_dir)
+
+            self.update_config_list()
 
 
 def main():
