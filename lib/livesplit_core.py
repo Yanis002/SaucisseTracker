@@ -10,7 +10,7 @@ lib_path = Path(str(Path(__file__).resolve().parent).removesuffix("lib")).resolv
 prefix = {'win32': ''}.get(sys.platform, 'lib')
 
 extension = {'darwin': '.dylib', 'win32': '.dll'}.get(sys.platform, '.so')
-livesplit_core_native = ctypes.cdll.LoadLibrary(lib_path / "lib" / (prefix + "livesplit_core" + extension))
+livesplit_core_native = ctypes.cdll.LoadLibrary(str(lib_path / "lib" / (prefix + "livesplit_core" + extension)))
 
 livesplit_core_native.Analysis_calculate_sum_of_best.argtypes = (c_void_p, c_bool, c_bool, c_uint8, )
 livesplit_core_native.Analysis_calculate_sum_of_best.restype = c_void_p
