@@ -72,12 +72,13 @@ class AutosaveThread(QThread):
 class TrackerWindow(QMainWindow):
     keyPressed = pyqtSignal()
 
-    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
+    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int, is_editor: bool = False):
         super().__init__()
 
         self.parent_ = parent
         self.configs = configs
         self.config_index = config_index
+        self.is_editor = is_editor
 
         self.config = list(self.configs.values())[self.config_index]
         self.bg_path = self.config.active_inv.background
@@ -114,10 +115,10 @@ class TrackerWindow(QMainWindow):
         # create the necessary labels based on the config
         self.create_labels()
 
-        if self.config.show_timer:
+        if not self.is_editor and self.config.show_timer:
             self.timer.show()
 
-    def get_background_size(self):
+    def get_background_size(self) -> tuple[int, int]:
         return Image.open(self.bg_path).size
 
     def set_window_size(self, width: int, height: int, ignore_offset: bool = False):

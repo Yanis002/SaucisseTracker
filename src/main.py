@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
 from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET
 from config import Config
 from tracker import TrackerWindow
+from editor import TrackerEditor
 
 TEMP_DIR = Path("temp").resolve()
 TEMP_ICONS_DIR = TEMP_DIR / "icons"
@@ -224,7 +225,13 @@ class MainWindow(QMainWindow):
         pass
 
     def action_edit_triggered(self):
-        pass
+        index = self.list_configs.currentIndex()
+        item_name: str = list(self.list_configs.model().itemData(index).values())[0]
+
+        if len(self.configs) > 0 and not item_name.endswith(".zip"):
+            self.tracker_editor = TrackerEditor(self, copy(self.configs), index.row())
+            self.tracker_editor.show()
+            self.hide()
 
     def action_duplicate_triggered(self):
         # TODO: rename config
