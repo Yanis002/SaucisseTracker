@@ -185,6 +185,16 @@ If you wish to add support for another file format (for config files):
 - find `match self.config_path.suffix`, then add a case with the file extension of the format you want to add (like `.json` or `.yml` for example)
 - call the function you created in this new case (`self.from_FORMAT()`)
 
+## Building
+
+You can find auto-builds in the [releases](https://github.com/Yanis002/SaucisseTracker/releases).
+
+If you wish to build it yourself, make sure you have the requirements installed (`pip install -r requirements.txt`) then run:
+- `pyinstaller -F -w --add-data "res:res" src/main.py -n SaucisseTracker_Linux` for Linux
+- `PyInstaller -F -w --add-data "res;res" -i "res/icon.png" src/main.py -n SaucisseTracker_Windows` for Windows
+
+The built binary will be located in the `dist` folder created by PyInstaller. Note: PyInstaller will target the OS that runs it, this means you can't cross-compile a Windows binary on Linux and vice-versa.
+
 ## Credits
 
 Made with ♥ by me, some concepts comes from [LinSoTracker](https://github.com/linsorak/LinSoTracker) (like the "Go Mode" thing for instance)
