@@ -48,7 +48,8 @@ if TYPE_CHECKING:
 
 
 OS_MENU_OFFSET = 34 if os.name == "nt" else 22
-GLOBAL_HALF_OPACITY = 0.5
+GLOBAL_HALF_OPACITY = 0.58
+CURRENT_XML_VERSION = (1, 0)
 
 
 class ListViewModel(QAbstractListModel):

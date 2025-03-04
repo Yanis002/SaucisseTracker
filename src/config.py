@@ -463,6 +463,10 @@ class Config:
         self.extras: Optional[Extras] = None
         self.state_saved = False
         self.autosave_enabled = False
+        self.xml_version = (0, 0)
+        self.name = str()
+        self.icon_path: Optional[Path] = None
+        self.default_icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/config_icon.png"
 
         self.label_gomode: Optional[PixmapItem] = None
         self.label_gomode_light: Optional[PixmapItem] = None
@@ -545,9 +549,13 @@ class Config:
 
         return None
 
-    def parse_path(self, raw_path: Optional[str], name: str, raise_error: bool):
+    def parse_path(self, raw_path: Optional[str | Path], name: str, raise_error: bool):
         if raw_path is not None:
-            return Path(self.config_dir / raw_path).resolve()
+            # str if read from xml, path if using a default value in the elem.get() function
+            if isinstance(raw_path, str):
+                return Path(self.config_dir / raw_path).resolve()
+            else:
+                return raw_path
         elif raise_error:
             show_error(self.widget, f"ERROR: Missing path(s) for item '{name}'")
 
@@ -563,6 +571,9 @@ class Config:
             root,
             "Config",
             {
+                "Version": f"{self.version[0]}.{self.version[1]}",
+                "Name": self.name,
+                "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
                 "DefaultInventory": f"{self.default_inv}",
                 "StatePath": f"{self.state_path.relative_to(active_config_dir)}",
                 "ShowTimer": f"{self.show_timer}",
@@ -609,6 +620,11 @@ class Config:
         if config is None:
             show_error(self.widget, "ERROR: config settings not found")
 
+        xml_version = config.get("XMLVersion", "0.0").split(".")
+
+        self.xml_version = (int(xml_version[0]), int(xml_version[1]))
+        self.name = config.get("Name", "Unknown Config")
+        self.icon_path = self.parse_path(config.get("Icon", self.default_icon_path), "config icon path", False)
         self.default_inv = int(config.get("DefaultInventory", "0"))
         self.show_timer = self.parse_bool(config.get("ShowTimer", "False"))
 
