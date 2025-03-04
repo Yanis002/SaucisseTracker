@@ -145,6 +145,9 @@ class NewTrackerWindow(QMainWindow):
         self.setFixedSize(geo.width(), geo.height())
         self.setWindowTitle("SaucisseTracker")
 
+        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
+        self.setWindowIcon(QIcon(str(icon_path)))
+
         # start centered
         qtRectangle = self.frameGeometry()
         centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
@@ -155,16 +158,15 @@ class NewTrackerWindow(QMainWindow):
 
     def set_movable(self):
         # TODO: unset flags
-        self.set_selectable()
         for item in self.scene.items():
             if item is not self.background:
-                item.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+                item.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def set_selectable(self):
         # TODO: unset flags
         for item in self.scene.items():
             if item is not self.background:
-                item.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+                item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def find_scene_item(self, item_index: int):
         for scene_item in self.scene.items():
@@ -188,9 +190,10 @@ class NewTrackerWindow(QMainWindow):
         geometry: QRect,
         text: str,
         text_settings_index: int,
+        rotation: int = 0,
         parent: Optional[QGraphicsItem] = None,
     ):
-        new_item = OutlinedGraphicsTextItem.new(self.config, obj_name, geometry, text, text_settings_index, parent)
+        new_item = OutlinedGraphicsTextItem.new(self.config, obj_name, geometry, text, text_settings_index, rotation, parent)
         self.scene.addItem(new_item)
         return new_item
 
@@ -202,7 +205,9 @@ class NewTrackerWindow(QMainWindow):
         # recent items will show in the foreground, hence why the
         # gomode stuff is created at the end
 
-        for i, item in enumerate(self.config.active_inv.items):
+        active_inv = self.config.active_inv
+
+        for i, item in enumerate(active_inv.items):
             for j, item_pos in enumerate(item.positions):
                 obj_name = f"item{item.index}_pos_{j}"
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
@@ -238,7 +243,7 @@ class NewTrackerWindow(QMainWindow):
                     self.scene.addItem(pixmap.label_counter)
 
                 if item.is_reward:
-                    reward_info = self.config.active_inv.rewards.items[pixmap.reward_index]
+                    reward_info = active_inv.rewards.items[pixmap.reward_index]
                     geometry = QRect(
                         pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
                     )
@@ -277,13 +282,24 @@ class NewTrackerWindow(QMainWindow):
                     pixmap.flag.item_pixmap = pixmap
 
             for static_text in item.static_texts:
-                if static_text.index not in item.text_map:
-                    item.text_map[static_text.index] = self.add_outline_text(
+                if static_text.index not in active_inv.text_map:
+                    active_inv.text_map[static_text.index] = self.add_outline_text(
                         f"item{item.index}_text_{static_text.index}",
                         QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
                         static_text.content,
                         static_text.text_settings_index,
+                        static_text.rotation
                     )
+
+        for static_text in active_inv.static_texts:
+            if static_text.index not in active_inv.text_map:
+                active_inv.text_map[static_text.index] = self.add_outline_text(
+                    f"inventory{active_inv.index}_text_{static_text.index}",
+                    QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                    static_text.content,
+                    static_text.text_settings_index,
+                    static_text.rotation
+                )
 
         if self.config.gomode_settings is not None:
             gomode_settings = self.config.gomode_settings

@@ -308,6 +308,7 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         geometry: QRect,
         text: str,
         text_settings_index: int,
+        rotation: int,
         parent: Optional[QGraphicsItem] = None,
     ):
         new_item = OutlinedGraphicsTextItem(config, parent)
@@ -315,6 +316,7 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         new_item.setPlainText(text)
         new_item.set_text_style(text_settings_index, False)
         new_item.setObjectName(obj_name)
+        new_item.setRotation(float(rotation))
         return new_item
 
     def setPlainText(self, text):
@@ -343,6 +345,10 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
                     self.item_pixmap.update_item(True, True)
                 case Qt.MouseButton.RightButton:
                     self.item_pixmap.update_item(False)
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        print("new pos:", self.pos())
 
     def wheelEvent(self, event):
         super().wheelEvent(event)

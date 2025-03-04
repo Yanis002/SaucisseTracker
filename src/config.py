@@ -159,18 +159,20 @@ class TextItem:
     pos: Pos
     width: int
     height: int
+    rotation: int
     content: str
     text_settings_index: int
 
     def to_xml(self, parent: ET.Element, index: int):
         return ET.SubElement(
             parent,
-            "Item",
+            "Text",
             {
                 "Index": f"{self.index}",
                 "Pos": self.pos.to_str(),
                 "Width": f"{self.width}",
                 "Height": f"{self.height}",
+                "Rot": f"{self.rotation}",
                 "Content": self.content,
                 "TextSettings": f"{self.text_settings_index}",
             },
@@ -192,7 +194,6 @@ class InventoryItem:
     extra_index: Optional[int]
     static_texts: list[TextItem]
     reward_map: dict[int, OutlinedGraphicsTextItem]
-    text_map: dict[int, OutlinedGraphicsTextItem]
 
     def update_reward(self, index: int, reward_info: RewardItem):
         pos = self.reward_map[index].item_pixmap.pos()
@@ -354,19 +355,21 @@ class Extras:
 
 
 class Inventory:
-    def __init__(self, index: int, name: str, bg_path: Path, bg_color: Color, icon_path: Path, icon: QPixmap):
+    def __init__(self, index: int, name: str, bg_path: Path, bg_color: Color, icon_path: Path, icon: QPixmap, static_texts: list[TextItem]):
         self.index = index
         self.name = name
         self.background = bg_path
         self.background_color = bg_color
         self.icon_path = icon_path
         self.icon = icon
+        self.static_texts = static_texts
 
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
 
         # { item_index: { pos_index: data } }
         # self.label_map: dict[int, dict[int, Label]] = {}
+        self.text_map: dict[int, OutlinedGraphicsTextItem] = {}
 
     def to_xml(self, parent: ET.Element):
         inventory = ET.SubElement(
@@ -380,6 +383,10 @@ class Inventory:
                 "BackgroundColor": f"0x{Color.pack(self.background_color):06X}",
             },
         )
+
+        if len(self.static_texts) > 0:
+            for i, text in enumerate(self.static_texts):
+                _ = text.to_xml(inventory, i)
 
         if len(self.items) > 0:
             for i, item in enumerate(self.items):
@@ -596,6 +603,7 @@ class Config:
             root = ET.parse(self.config_path).getroot()
         except:
             show_error(self.widget, f"ERROR: File '{self.config_path}' is missing or malformed.")
+            return
 
         config = root.find("Config")
         if config is None:
@@ -681,6 +689,21 @@ class Config:
                         Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/config_icon.png"
                     )
                     path = self.parse_path(elem.get("Icon", str(icon_path)), "icon", False)
+
+                    text_labels: list[TextItem] = []
+                    for j, static_label in enumerate(elem.iterfind("Text")):
+                        text_labels.append(
+                            TextItem(
+                                j,
+                                self.parse_pos(static_label.get("Pos"), "inventory item label", False),
+                                self.parse_int(static_label.get("Width"), True),
+                                self.parse_int(static_label.get("Height"), True),
+                                self.parse_int(static_label.get("Rot", "0")),
+                                static_label.get("Content", "Unset"),
+                                self.parse_int(static_label.get("TextSettings", "0")),
+                            )
+                        )
+
                     inventory = Inventory(
                         int(elem.get("Index", "0")),
                         elem.get("Name", "Unknown"),
@@ -688,6 +711,7 @@ class Config:
                         Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0)),
                         path,
                         QPixmap(str(path)),
+                        text_labels,
                     )
 
                     for i, item in enumerate(elem.iterfind("Item")):
@@ -736,10 +760,11 @@ class Config:
                         for j, static_label in enumerate(item.iterfind("Text")):
                             text_labels.append(
                                 TextItem(
-                                    j,
+                                    self.parse_int(static_label.get("Index"), True),
                                     self.parse_pos(static_label.get("Pos"), "inventory item label", False),
                                     self.parse_int(static_label.get("Width"), True),
                                     self.parse_int(static_label.get("Height"), True),
+                                    self.parse_int(static_label.get("Rot", "0")),
                                     static_label.get("Content", "Unset"),
                                     self.parse_int(static_label.get("TextSettings", "0")),
                                 )
@@ -759,7 +784,6 @@ class Config:
                                 self.parse_bool(item.get("UseWheel", "False")),
                                 self.parse_int(item.get("ExtraIndex")),
                                 text_labels,
-                                dict(),
                                 dict(),
                             )
                         )
