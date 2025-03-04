@@ -9,9 +9,6 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import QRect
 
 from common import (
-    OutlinedLabel,
-    Label,
-    RotationWidget,
     Color,
     Pos,
     PixmapItem,
@@ -195,7 +192,7 @@ class InventoryItem:
     extra_index: Optional[int]
     static_texts: list[TextItem]
     reward_map: dict[int, OutlinedGraphicsTextItem]
-    text_map: dict[int, OutlinedLabel]
+    text_map: dict[int, OutlinedGraphicsTextItem]
 
     def update_reward(self, index: int, reward_info: RewardItem):
         pos = self.reward_map[index].item_pixmap.pos()
@@ -369,7 +366,7 @@ class Inventory:
         self.rewards = Rewards()
 
         # { item_index: { pos_index: data } }
-        self.label_map: dict[int, dict[int, Label]] = {}
+        # self.label_map: dict[int, dict[int, Label]] = {}
 
     def to_xml(self, parent: ET.Element):
         inventory = ET.SubElement(
@@ -460,8 +457,8 @@ class Config:
         self.state_saved = False
         self.autosave_enabled = False
 
-        self.label_gomode: Optional[Label] = None
-        self.label_gomode_light: Optional[RotationWidget] = None
+        self.label_gomode: Optional[PixmapItem] = None
+        self.label_gomode_light: Optional[PixmapItem] = None
 
         match self.config_path.suffix:
             case ".xml":

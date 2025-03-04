@@ -40,10 +40,7 @@ from PyQt6.QtWidgets import (
 )
 
 from common import (
-    OutlinedLabel,
-    Label,
     Rotation,
-    RotationWidget,
     Pos,
     PixmapItem,
     OutlinedGraphicsTextItem,
@@ -108,6 +105,10 @@ class NewTrackerWindow(QMainWindow):
         self.task_autosave = AutosaveThread(self, self.config)
         self.task_autosave.start()
 
+        self.task_rotation = Rotation(self.config)
+        self.task_rotation.positionChanged.connect(self.task_rotation_position_changed)
+        self.task_rotation.start()
+
         self.monitor = QFileSystemWatcher([str(path) for path in self.config.config_path.parent.rglob("*")], self)
         self.monitor.fileChanged.connect(self.monitor_execute)
         self.monitor.setObjectName("configMonitor")
@@ -154,11 +155,16 @@ class NewTrackerWindow(QMainWindow):
 
     def set_movable(self):
         # TODO: unset flags
+        self.set_selectable()
         for item in self.scene.items():
             if item is not self.background:
-                item.setFlags(
-                    QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable
-                )
+                item.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+
+    def set_selectable(self):
+        # TODO: unset flags
+        for item in self.scene.items():
+            if item is not self.background:
+                item.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def find_scene_item(self, item_index: int):
         for scene_item in self.scene.items():
@@ -190,6 +196,11 @@ class NewTrackerWindow(QMainWindow):
 
     def create_items(self):
         offset = -1 if os.name == "nt" else 0
+
+        # the order the scene items are created defines the "priority",
+        # this means older items will be more in the background while
+        # recent items will show in the foreground, hence why the
+        # gomode stuff is created at the end
 
         for i, item in enumerate(self.config.active_inv.items):
             for j, item_pos in enumerate(item.positions):
@@ -264,6 +275,40 @@ class NewTrackerWindow(QMainWindow):
                     )
                     pixmap.flag.setVisible(not flag.hidden)
                     pixmap.flag.item_pixmap = pixmap
+
+            for static_text in item.static_texts:
+                if static_text.index not in item.text_map:
+                    item.text_map[static_text.index] = self.add_outline_text(
+                        f"item{item.index}_text_{static_text.index}",
+                        QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                        static_text.content,
+                        static_text.text_settings_index,
+                    )
+
+        if self.config.gomode_settings is not None:
+            gomode_settings = self.config.gomode_settings
+
+            if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
+                pixmap = QPixmap(str(gomode_settings.light_path))
+                self.config.label_gomode_light = self.add_pixmap(
+                    pixmap, 0, "label_gomode_light", 0.0, LabelState(0, 0, "")
+                )
+                self.config.label_gomode_light.setPos(gomode_settings.light_pos.x, gomode_settings.light_pos.y)
+                self.config.label_gomode_light.setVisible(False)
+                self.config.label_gomode_light.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+                self.config.label_gomode_light.setTransformOriginPoint(pixmap.rect().center().toPointF())
+                self.config.label_gomode_light.is_go_mode_light = True
+
+            self.config.label_gomode = self.add_pixmap(
+                QPixmap(str(gomode_settings.path)), 0, "label_gomode", 1.0, LabelState(0, 0, "")
+            )
+            self.config.label_gomode.setPos(gomode_settings.pos.x, gomode_settings.pos.y)
+
+            # extremely low opacity to workaround an issue where invisible pixmaps aren't clickable
+            self.config.label_gomode.setOpacity(0.001)
+
+            self.config.label_gomode.setShapeMode(QGraphicsPixmapItem.ShapeMode.BoundingRectShape)
+            self.config.label_gomode.is_go_mode = True
 
     def get_background_size(self):
         return Image.open(self.bg_path).size
@@ -445,3 +490,8 @@ class NewTrackerWindow(QMainWindow):
             QMessageBox.Icon.Information,
             "Made with ♥ by Yanis.\n" + "Version 0.1.0.\n\n" + "Licensed under GNU General Public License v3.0.",
         )
+
+    def task_rotation_position_changed(self, pos):
+        # only update the rotation when it's supposed to be shown
+        if self.config.label_gomode_light is not None and self.config.label_gomode_light.opacity() != 0.001:
+            self.config.label_gomode_light.setRotation(pos)
