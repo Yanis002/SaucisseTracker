@@ -6,6 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "src/main.py",
+            "args": ["-d"],
             "console": "integratedTerminal",
             "justMyCode": true
         },
