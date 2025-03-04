@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.configs: dict[Path, Config] = {}
+        self.configs: dict[str, Config] = {}
         self.config_dir = Path()
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         self.tracker_window: Optional[TrackerWindow] = None
@@ -136,7 +136,7 @@ class MainWindow(QMainWindow):
         if any(TEMP_CONFIG_DIR.iterdir()):
             rmtree(TEMP_CONFIG_DIR)
             TEMP_CONFIG_DIR.mkdir()
-            self.configs.pop(TEMP_CONFIG_DIR / "config.xml")
+            self.configs.pop(str(TEMP_CONFIG_DIR / "config.xml"))
 
         if self.tracker_window is not None:
             self.tracker_window = None
@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
         # any file that is called "config." with a format extension (xml, yml, json, etc...)
         for path in sorted(dir.rglob("config.*")):
             absolute = path.resolve()
-            self.configs[absolute] = Config(self, absolute)
+            self.configs[str(absolute)] = Config(self, absolute)
 
     def get_config(self):
         return list(self.configs.values())[self.list_configs.currentIndex().row()]
@@ -211,7 +211,7 @@ class MainWindow(QMainWindow):
                 zip_file.extractall(TEMP_CONFIG_DIR)
                 xml_path = Path(TEMP_CONFIG_DIR / "config.xml").resolve()
 
-                self.configs[xml_path] = Config(self, xml_path)
+                self.configs[str(xml_path)] = Config(self, xml_path)
 
             if len(self.configs) > 0:
                 self.tracker_window = TrackerWindow(self, copy(self.configs), index.row())

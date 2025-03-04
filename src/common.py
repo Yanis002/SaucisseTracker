@@ -266,12 +266,16 @@ class Label(QLabel):
 
         return new_label
 
-    def set_label_settings(self, geometry: QRect, img_path: str, opacity: float, scale_content: bool):
+    def set_label_settings(
+        self, config: "Config", geometry: QRect, img_path: str, opacity: float, strength: float, scale_content: bool
+    ):
+        self.config = config
         self.setGeometry(geometry)
         self.original_pixmap = QPixmap(img_path)
         self.setPixmap(self.original_pixmap)
         self.set_pixmap_opacity(opacity)
         self.setScaledContents(scale_content)
+        self.label_effect.setStrength(strength)
 
     def next_reward(self):
         item = self.config.active_inv.items[self.index]
@@ -399,7 +403,7 @@ class Label(QLabel):
                     self.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
                 else:
                     self.setPixmap(self.original_pixmap)
-            elif self.label_counter is not None:
+            elif self.label_counter is not None and item.counter is not None:
                 if increase:
                     item.counter.incr(middle_click)
                 else:

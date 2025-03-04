@@ -146,6 +146,30 @@ class RewardItem:
 
 
 @dataclass
+class TextItem:
+    index: int
+    pos: Pos
+    width: int
+    height: int
+    content: str
+    text_settings_index: int
+
+    def to_xml(self, parent: ET.Element, index: int):
+        return ET.SubElement(
+            parent,
+            "Item",
+            {
+                "Index": f"{self.index}",
+                "Pos": self.pos.to_str(),
+                "Width": f"{self.width}",
+                "Height": f"{self.height}",
+                "Content": self.content,
+                "TextSettings": f"{self.text_settings_index}",
+            },
+        )
+
+
+@dataclass
 class InventoryItem:
     index: int
     name: str
@@ -158,7 +182,9 @@ class InventoryItem:
     flag_index: Optional[int]
     use_wheel: bool
     extra_index: Optional[int]
+    static_texts: list[TextItem]
     reward_map: dict[int, OutlinedLabel]
+    text_map: dict[int, OutlinedLabel]
 
     def update_reward(self, index: int, reward_info: RewardItem):
         item_geo = self.reward_map[index].item_label.geometry()
@@ -197,6 +223,21 @@ class InventoryItem:
 
                 for pos in self.positions:
                     _ = ET.SubElement(positions, "Item", {"X": f"{pos.x}", "Y": f"{pos.y}"})
+
+        if len(self.static_texts) > 0:
+            for label in self.static_texts:
+                _ = ET.SubElement(
+                    item,
+                    "Label",
+                    {
+                        "Index": f"{label.index}",
+                        "Pos": label.pos.to_str(),
+                        "Width": f"{label.width}",
+                        "Height": f"{label.height}",
+                        "Content": label.content,
+                        "TextSettings": f"{label.text_settings_index}",
+                    },
+                )
 
         if self.counter is not None:
             _ = ET.SubElement(
@@ -347,6 +388,29 @@ class Inventory:
 
         return inventory
 
+    def find_item_by_index(self, index: int):
+        for item in self.items:
+            if index == item.index:
+                return item
+        return None
+
+    def find_item_by_name(self, name: str):
+        for item in self.items:
+            if name == item.name:
+                return item
+        return None
+
+    def find_item(self, index: int, name: str):
+        result_1 = self.find_item_by_index(index)
+        if result_1 is not None:
+            return result_1
+
+        result_2 = self.find_item_by_name(name)
+        if result_2 is not None:
+            return result_2
+
+        return None
+
 
 @dataclass
 class GoModeSettings:
@@ -443,9 +507,11 @@ class Config:
     def get_color(self, text_settings: TextSettings, is_max: bool = False):
         return text_settings.color_alt if is_max else text_settings.color
 
-    def parse_int(self, value: Optional[str]):
+    def parse_int(self, value: Optional[str], raise_error: bool = False):
         if value is not None:
             return int(value, 0)
+        elif raise_error:
+            show_error(self.widget, f"ERROR: there's a missing attribute.")
 
         return None
 
@@ -562,8 +628,8 @@ class Config:
                                 int(item.get("FontIndex", "0")),
                                 float(item.get("Size", "10")),
                                 self.parse_bool(item.get("Bold", "False")),
-                                Color.unpack(int(item.get("Color", "0x000000"), 0)),
-                                Color.unpack(int(item.get("ColorAlt", "0x000000"), 0)),
+                                Color.unpack(int(item.get("Color", "0xFFFFFF"), 0)),
+                                Color.unpack(int(item.get("ColorAlt", "0xFFFFFF"), 0)),
                                 float(item.get("OutlineThickness", "0")),
                                 self.parse_bool(item.get("IsTimer", "False")),
                                 self.parse_bool(item.get("UseGradient", "False")),
@@ -665,6 +731,19 @@ class Config:
                                 self.parse_bool(c.get("UseWheel", "False")),
                             )
 
+                        text_labels: list[TextItem] = []
+                        for j, static_label in enumerate(item.iterfind("Text")):
+                            text_labels.append(
+                                TextItem(
+                                    j,
+                                    self.parse_pos(static_label.get("Pos"), "inventory item label", False),
+                                    self.parse_int(static_label.get("Width"), True),
+                                    self.parse_int(static_label.get("Height"), True),
+                                    static_label.get("Content", "Unset"),
+                                    self.parse_int(static_label.get("TextSettings", "0")),
+                                )
+                            )
+
                         inventory.items.append(
                             InventoryItem(
                                 i,
@@ -678,6 +757,8 @@ class Config:
                                 self.parse_int(item.get("FlagIndex")),
                                 self.parse_bool(item.get("UseWheel", "False")),
                                 self.parse_int(item.get("ExtraIndex")),
+                                text_labels,
+                                dict(),
                                 dict(),
                             )
                         )

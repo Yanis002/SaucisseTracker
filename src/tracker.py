@@ -72,7 +72,7 @@ class AutosaveThread(QThread):
 class TrackerWindow(QMainWindow):
     keyPressed = pyqtSignal()
 
-    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
+    def __init__(self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int):
         super().__init__()
 
         self.parent_ = parent
@@ -148,10 +148,11 @@ class TrackerWindow(QMainWindow):
         offset = -1 if os.name == "nt" else 0
 
         # backup important data
+        prev_active_inv = copy(self.config.active_inv)
         label_map = copy(self.config.active_inv.label_map)
 
         # update the config
-        self.configs[self.config.config_path] = Config(self.config.widget, self.config.config_path)
+        self.configs[str(self.config.config_path)] = Config(self.config.widget, self.config.config_path)
         self.config = list(self.configs.values())[self.config_index]
         self.bg_path = self.config.active_inv.background
 
@@ -172,24 +173,102 @@ class TrackerWindow(QMainWindow):
 
         # update labels for every items of the active inventory
         for i, item in enumerate(self.config.active_inv.items):
-            label_map = self.config.active_inv.label_map[item.index]
+            if item.index in self.config.active_inv.label_map:
+                label_map = self.config.active_inv.label_map[item.index]
+            else:
+                label_map: dict[int, Label] = {}
+
+            if item.scale_content:
+                width = 32
+                height = 32
+            else:
+                width, height = Image.open(item.paths[0]).size
 
             for j, item_pos in enumerate(item.positions):
-                label = label_map[j]
+                obj_name = f"item{item.index}_pos_{j}"
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
-                if item.scale_content:
-                    width = 32
-                    height = 32
+                if j in label_map:
+                    label = label_map[j]
+                    label.set_label_settings(
+                        self.config,
+                        QRect(pos.x, pos.y, width, height),
+                        str(item.paths[0]),
+                        1.0,
+                        0.0,
+                        item.scale_content,
+                    )
                 else:
-                    width, height = Image.open(item.paths[0]).size
+                    label = Label.new(
+                        self.config,
+                        self.state,
+                        self.centralwidget,
+                        item.index,
+                        item.name,
+                        obj_name,
+                        QRect(pos.x, pos.y, width, height),
+                        str(item.paths[0]),
+                        1.0,
+                        item.scale_content,
+                        0.0,
+                    )
 
-                label.set_label_settings(
-                    QRect(pos.x, pos.y, width, height),
-                    str(item.paths[0]),
-                    1.0 if item.enabled else GLOBAL_HALF_OPACITY,
-                    item.scale_content,
-                )
+                if item.counter is not None:
+                    if label.label_counter is not None:
+                        label.label_counter.config = self.config
+                        label.label_counter.set_text_style(item.counter.text_settings_index, False)
+                        label.label_counter.setGeometry(
+                            QRect(
+                                pos.x + item.counter.pos.x,
+                                pos.y + item.counter.pos.y,
+                                item.counter.width,
+                                item.counter.height,
+                            ),
+                        )
+                    else:
+                        label.label_counter = OutlinedLabel.new(
+                            self.centralwidget,
+                            self.config,
+                            f"{obj_name}_counter",
+                            QRect(
+                                pos.x + item.counter.pos.x,
+                                pos.y + item.counter.pos.y,
+                                item.counter.width,
+                                item.counter.height,
+                            ),
+                            "",
+                            item.counter.text_settings_index,
+                        )
+
+                        # emit a click if the counter label is clicked (workaround for priority)
+                        label.label_counter.item_label = label
+                        label.label_counter.clicked_left.connect(self.outlinedLabel_clicked_left)
+                        label.label_counter.clicked_middle.connect(self.outlinedLabel_clicked_middle)
+                        label.label_counter.clicked_right.connect(self.outlinedLabel_clicked_right)
+
+        for i, item in enumerate(self.config.active_inv.items):
+            # attempt to find the previous item based on the new item's index and name
+            prev_item = prev_active_inv.find_item(item.index, item.name)
+
+            if prev_item is not None:
+                for static_text in prev_item.static_texts:
+                    if static_text.index in prev_item.text_map:
+                        text_label = prev_item.text_map[static_text.index]
+                        text_label.setText(static_text.content)
+                        text_label.setGeometry(
+                            QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height)
+                        )
+                        item.text_map[static_text.index] = text_label
+                    else:
+                        item.text_map[static_text.index] = OutlinedLabel.new(
+                            self.centralwidget,
+                            self.config,
+                            f"item{item.index}_text_{static_text.index}",
+                            QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                            static_text.content,
+                            static_text.text_settings_index,
+                        )
+                    item.text_map[static_text.index].raise_()
 
     def monitor_execute(self, raw_path: str):
         path = Path(raw_path).resolve()
@@ -509,6 +588,20 @@ class TrackerWindow(QMainWindow):
                 label_map[j] = label
 
             self.config.active_inv.label_map[item.index] = label_map
+
+        # treat this later to make sure the texts are organized properly (foreground/background)
+        for item in self.config.active_inv.items:
+            for static_text in item.static_texts:
+                if static_text.index not in item.text_map:
+                    item.text_map[static_text.index] = OutlinedLabel.new(
+                        self.centralwidget,
+                        self.config,
+                        f"item{item.index}_text_{static_text.index}",
+                        QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                        static_text.content,
+                        static_text.text_settings_index,
+                    )
+                    item.text_map[static_text.index].raise_()
 
         # draw the go mode stuff in front of the items
         # - side effect: can't click on the items behind them when they're visible
