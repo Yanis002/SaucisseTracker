@@ -156,6 +156,38 @@ class NewTrackerWindow(QMainWindow):
 
         self.show()
 
+    def update_window(self):
+        # update the config
+        self.configs[str(self.config.config_path)] = Config(self.config.widget, self.config.config_path)
+        self.config = list(self.configs.values())[self.config_index]
+
+        if not self.config.active_inv.background.exists():
+            show_error(self, f"ERROR: the following background path does not exist: {repr(self.bg_path)}")
+            return
+
+        # clear current scene items
+        self.scene.clear()
+        self.config.label_gomode_light = None
+
+        # similar to the init function
+
+        # create the new background and update the scene's geometry
+        bg_img = QPixmap(str(self.config.active_inv.background))
+        img_size = bg_img.size()
+        self.scene.setSceneRect(0, 0, img_size.width(), img_size.height())
+        self.background = self.scene.addPixmap(bg_img)
+
+        # update ze layout's geometry
+        self.ze_layout.setGeometry(QRect(0, 0, img_size.width(), img_size.height()))
+
+        # create the new items
+        self.create_items()
+
+        # update main window's geometry
+        geo = QRect(0, 0, img_size.width(), img_size.height() + self.menu.sizeHint().height())
+        self.setGeometry(geo)
+        self.setFixedSize(geo.width(), geo.height())
+
     def set_movable(self):
         # TODO: unset flags
         for item in self.scene.items():
@@ -240,7 +272,6 @@ class NewTrackerWindow(QMainWindow):
                         item.counter.text_settings_index,
                     )
                     pixmap.label_counter.item_pixmap = pixmap
-                    self.scene.addItem(pixmap.label_counter)
 
                 if item.is_reward:
                     reward_info = active_inv.rewards.items[pixmap.reward_index]
@@ -334,7 +365,7 @@ class NewTrackerWindow(QMainWindow):
 
         if self.autoreload_enabled:
             print("change detected", path)
-            # self.update_window()
+            self.update_window()
         else:
             print("change detected but autoreload is disabled", path)
 
