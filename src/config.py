@@ -8,7 +8,17 @@ from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import QRect
 
-from common import OutlinedLabel, Label, RotationWidget, Color, Pos, show_error, GLOBAL_HALF_OPACITY
+from common import (
+    OutlinedLabel,
+    Label,
+    RotationWidget,
+    Color,
+    Pos,
+    PixmapItem,
+    OutlinedGraphicsTextItem,
+    show_error,
+    GLOBAL_HALF_OPACITY,
+)
 
 active_config_dir: Optional[Path] = None
 
@@ -111,16 +121,17 @@ class Counter:
             self.value = self.max
             self.show = True
 
-    def update(self, label: Label):
-        if self.show:
-            label.label_effect.setStrength(0.0)  # disable filter
-            label.setPixmap(label.original_pixmap)
-            label.label_counter.setText(f"{self.value}")
-            label.label_counter.set_text_style(self.text_settings_index, self.value == self.max)
-        else:
-            label.label_effect.setStrength(1.0)  # enable filter
-            label.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
-            label.label_counter.setText("")
+    def update(self, pixmap: PixmapItem):
+        if pixmap.label_counter is not None:
+            if self.show:
+                pixmap.effect.setStrength(0.0)  # disable filter
+                pixmap.setOpacity(1.0)
+                pixmap.label_counter.setPlainText(f"{self.value}")
+                pixmap.label_counter.set_text_style(self.text_settings_index, self.value == self.max)
+            else:
+                pixmap.effect.setStrength(1.0)  # enable filter
+                pixmap.setOpacity(GLOBAL_HALF_OPACITY)
+                pixmap.label_counter.setPlainText("")
 
 
 @dataclass
@@ -183,20 +194,13 @@ class InventoryItem:
     use_wheel: bool
     extra_index: Optional[int]
     static_texts: list[TextItem]
-    reward_map: dict[int, OutlinedLabel]
+    reward_map: dict[int, OutlinedGraphicsTextItem]
     text_map: dict[int, OutlinedLabel]
 
     def update_reward(self, index: int, reward_info: RewardItem):
-        item_geo = self.reward_map[index].item_label.geometry()
-        self.reward_map[index].setText(reward_info.name)
-        self.reward_map[index].setGeometry(
-            QRect(
-                item_geo.x() + reward_info.pos.x,
-                item_geo.y() + reward_info.pos.y,
-                reward_info.width,
-                reward_info.height,
-            )
-        )
+        pos = self.reward_map[index].item_pixmap.pos()
+        self.reward_map[index].setPlainText(reward_info.name)
+        self.reward_map[index].setPos(pos.x() + reward_info.pos.x, pos.y() + reward_info.pos.y)
 
     def to_xml(self, parent: ET.Element, index: int):
         if index != self.index:
