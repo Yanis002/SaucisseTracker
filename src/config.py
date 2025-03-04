@@ -355,7 +355,16 @@ class Extras:
 
 
 class Inventory:
-    def __init__(self, index: int, name: str, bg_path: Path, bg_color: Color, icon_path: Path, icon: QPixmap, static_texts: list[TextItem]):
+    def __init__(
+        self,
+        index: int,
+        name: str,
+        bg_path: Path,
+        bg_color: Color,
+        icon_path: Path,
+        icon: QPixmap,
+        static_texts: list[TextItem],
+    ):
         self.index = index
         self.name = name
         self.background = bg_path
@@ -466,7 +475,9 @@ class Config:
         self.xml_version = (0, 0)
         self.name = str()
         self.icon_path: Optional[Path] = None
-        self.default_icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/config_icon.png"
+        self.default_icon_path = (
+            Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/config_icon.png"
+        )
 
         self.label_gomode: Optional[PixmapItem] = None
         self.label_gomode_light: Optional[PixmapItem] = None

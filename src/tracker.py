@@ -192,7 +192,9 @@ class TrackerWindow(QMainWindow):
         # TODO: unset flags
         for item in self.scene.items():
             if item is not self.background:
-                item.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+                item.setFlags(
+                    QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable
+                )
 
     def set_selectable(self):
         # TODO: unset flags
@@ -225,7 +227,9 @@ class TrackerWindow(QMainWindow):
         rotation: int = 0,
         parent: Optional[QGraphicsItem] = None,
     ):
-        new_item = OutlinedGraphicsTextItem.new(self.config, obj_name, geometry, text, text_settings_index, rotation, parent)
+        new_item = OutlinedGraphicsTextItem.new(
+            self.config, obj_name, geometry, text, text_settings_index, rotation, parent
+        )
         self.scene.addItem(new_item)
         return new_item
 
@@ -319,7 +323,7 @@ class TrackerWindow(QMainWindow):
                         QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
                         static_text.content,
                         static_text.text_settings_index,
-                        static_text.rotation
+                        static_text.rotation,
                     )
 
         for static_text in active_inv.static_texts:
@@ -329,7 +333,7 @@ class TrackerWindow(QMainWindow):
                     QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
                     static_text.content,
                     static_text.text_settings_index,
-                    static_text.rotation
+                    static_text.rotation,
                 )
 
         if self.config.gomode_settings is not None:
