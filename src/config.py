@@ -1,21 +1,13 @@
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Any
 from xml.etree import ElementTree as ET
 from xml.dom import minidom as MD
-from dataclasses import dataclass
-from typing import Optional, Any
-from pathlib import Path
 
 from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtCore import QRect
 
-from common import (
-    Color,
-    Pos,
-    PixmapItem,
-    OutlinedGraphicsTextItem,
-    show_error,
-    GLOBAL_HALF_OPACITY,
-)
+from common import Color, OutlinedGraphicsTextItem, PixmapItem, Pos, show_error, GLOBAL_HALF_OPACITY
 
 active_config_dir: Optional[Path] = None
 

@@ -1,57 +1,32 @@
-import sys
 import os
+import sys
 import time
 
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from copy import copy
 
 from PIL import Image
-from PyQt6.QtGui import (
-    QIcon,
-    QPixmap,
-    QAction,
-    QCloseEvent,
-    QKeyEvent,
-    QGuiApplication,
-    QPainterPathStroker,
-    QPainterPath,
-    QPen,
-    QColor,
-)
-from PyQt6.QtCore import QSize, Qt, QRect, QThread, QFileSystemWatcher, pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QFileSystemWatcher, QRect, Qt, QThread
+from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QKeyEvent, QPixmap
 from PyQt6.QtWidgets import (
-    QWidget,
-    QMessageBox,
-    QLabel,
+    QFileDialog,
     QMainWindow,
-    QFrame,
     QMenu,
     QMenuBar,
-    QFileDialog,
-    QGraphicsScene,
-    QGraphicsView,
-    QGraphicsTextItem,
-    QGraphicsPixmapItem,
+    QMessageBox,
     QGraphicsItem,
-    QGraphicsColorizeEffect,
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsView,
     QVBoxLayout,
+    QWidget,
 )
 
-from common import (
-    Rotation,
-    Pos,
-    PixmapItem,
-    OutlinedGraphicsTextItem,
-    show_message,
-    show_error,
-    GLOBAL_HALF_OPACITY,
-    OS_MENU_OFFSET,
-)
-
+from common import OutlinedGraphicsTextItem, PixmapItem, Pos, Rotation, show_error, show_message, OS_MENU_OFFSET
 from config import Config
-from state import State, LabelState
+from state import LabelState, State
 from timer import LiveSplit
 
 

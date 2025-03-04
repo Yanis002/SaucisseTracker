@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 
-import sys
-import os
-import traceback
 import argparse
+import os
+import sys
+import traceback
 
-from zipfile import ZipFile
-from pathlib import Path
-from typing import Optional
 from copy import copy
-from shutil import rmtree, copytree
+from pathlib import Path
+from shutil import copytree, rmtree
+from typing import Optional
+from zipfile import ZipFile
 
-from PyQt6.QtGui import QIcon, QPixmap, QShowEvent, QCloseEvent, QAction, QGuiApplication
+from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QPixmap, QShowEvent
 from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtWidgets import (
-    QWidget,
-    QLabel,
-    QMainWindow,
     QApplication,
     QFileDialog,
-    QPushButton,
+    QLabel,
     QLineEdit,
     QListView,
-    QMenuBar,
+    QMainWindow,
     QMenu,
+    QMenuBar,
     QMessageBox,
+    QPushButton,
+    QWidget,
 )
 
 from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET, CURRENT_XML_VERSION

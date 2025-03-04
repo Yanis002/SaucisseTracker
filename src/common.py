@@ -1,50 +1,23 @@
-import math
 import os
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
-from PyQt6.QtCore import (
-    pyqtSignal,
-    Qt,
-    QSize,
-    QPoint,
-    QPointF,
-    QRect,
-    QAbstractListModel,
-    QThread,
-    QSignalBlocker,
-    QObject,
-)
+from PyQt6.QtCore import pyqtSignal, QAbstractListModel, QObject, QRect, QSignalBlocker, QThread, Qt
+from PyQt6.QtGui import QColor, QFont, QPainterPath, QPen, QPixmap, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (
-    QLabel,
-    QWidget,
     QGraphicsColorizeEffect,
-    QMessageBox,
-    QGraphicsPixmapItem,
     QGraphicsItem,
+    QGraphicsPixmapItem,
     QGraphicsTextItem,
-)
-from PyQt6.QtGui import (
-    QMouseEvent,
-    QPixmap,
-    QPainter,
-    QPainterPath,
-    QBrush,
-    QPen,
-    QFontMetrics,
-    QColor,
-    QWheelEvent,
-    QTransform,
-    QTextCharFormat,
-    QTextCursor,
-    QFont,
+    QMessageBox,
+    QWidget,
 )
 
 if TYPE_CHECKING:
     from config import Config
-    from state import State, LabelState
+    from state import LabelState, State
 
 
 OS_MENU_OFFSET = 34 if os.name == "nt" else 22
