@@ -99,8 +99,6 @@ class PixmapItem(QGraphicsPixmapItem):
         self.setGraphicsEffect(self.effect)
 
     def mousePressEvent(self, event):
-        super().mousePressEvent(event)
-
         # do nothing if this is the go mode light
         if self.is_go_mode_light:
             return
@@ -125,7 +123,7 @@ class PixmapItem(QGraphicsPixmapItem):
                     if self.is_go_mode:
                         self.update_gomode()
                     elif item.is_reward:
-                        self.next_reward()
+                        self.next_reward(True)
                     elif self.extra is not None:
                         self.extra.setVisible(not self.extra.isVisible())
                     else:
@@ -152,7 +150,7 @@ class PixmapItem(QGraphicsPixmapItem):
                         if item.use_wheel:
                             self.update_item(value > 0, False)
                         elif rewards.use_wheel:
-                            self.next_reward()
+                            self.next_reward(value > 0)
 
     def shape(self):
         # fixes a behavior where you need to click on the texture, which we don't want here
@@ -160,7 +158,7 @@ class PixmapItem(QGraphicsPixmapItem):
         path.addRect(self.boundingRect())
         return path
 
-    def next_reward(self):
+    def next_reward(self, increase: bool):
         item = self.config.active_inv.items[self.item_index]
 
         for i, _ in enumerate(item.positions):
@@ -168,10 +166,16 @@ class PixmapItem(QGraphicsPixmapItem):
                 reward = item.reward_map.get(i)
 
                 if reward is not None and reward.item_pixmap is not None:
-                    self.reward_index += 1
+                    if increase:
+                        self.reward_index += 1
 
-                    if self.reward_index > len(self.config.active_inv.rewards.items) - 1:
-                        self.reward_index = 0
+                        if self.reward_index > len(self.config.active_inv.rewards.items) - 1:
+                            self.reward_index = 0
+                    else:
+                        self.reward_index -= 1
+
+                        if self.reward_index < 0:
+                            self.reward_index = len(self.config.active_inv.rewards.items) - 1
 
                     item.update_reward(i, self.config.active_inv.rewards.items[self.reward_index])
 
@@ -327,16 +331,8 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
             super().paint(painter, option, widget)
 
     def mousePressEvent(self, event):
-        super().mousePressEvent(event)
-
         if event is not None and self.item_pixmap is not None:
-            match event.button():
-                case Qt.MouseButton.LeftButton:
-                    self.item_pixmap.update_item(True)
-                case Qt.MouseButton.MiddleButton:
-                    self.item_pixmap.update_item(True, True)
-                case Qt.MouseButton.RightButton:
-                    self.item_pixmap.update_item(False)
+            self.item_pixmap.mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
