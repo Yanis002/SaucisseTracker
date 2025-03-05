@@ -134,8 +134,6 @@ class PixmapItem(QGraphicsPixmapItem):
         print("new pos:", self.pos())
 
     def wheelEvent(self, event):
-        super().wheelEvent(event)
-
         if event is not None:
             item = self.config.active_inv.items[self.item_index]
             rewards = self.config.active_inv.rewards
@@ -339,24 +337,8 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         print("new pos:", self.pos())
 
     def wheelEvent(self, event):
-        super().wheelEvent(event)
-
-        if event is not None:
-            item = self.config.active_inv.items[self.item_pixmap.item_index]
-            rewards = self.config.active_inv.rewards
-
-            if item.use_wheel or rewards.use_wheel:
-                # adapted from https://stackoverflow.com/a/20152809
-                value = 0
-                steps = event.delta() // 120
-                for _ in range(1, abs(steps) + 1):
-                    value += steps and steps // abs(steps)  # 0, 1, or -1
-                    if value != 0:
-                        if item.use_wheel:
-                            self.item_pixmap.update_item(value > 0, False)
-                        elif rewards.use_wheel:
-                            # does nothing for now
-                            pass
+        if event is not None and self.item_pixmap is not None:
+            self.item_pixmap.wheelEvent(event)
 
     def update_format(self, font: QFont, color: QColor):
         self.outlineFormat.setTextOutline(
