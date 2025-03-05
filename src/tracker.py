@@ -251,6 +251,7 @@ class TrackerWindow(QMainWindow):
                         item.counter.text_settings_index,
                     )
                     pixmap.label_counter.item_pixmap = pixmap
+                    pixmap.label_counter.set_max_width(f"{item.counter.max}")
 
                 if item.is_reward:
                     reward_info = active_inv.rewards.items[pixmap.reward_index]
@@ -268,6 +269,7 @@ class TrackerWindow(QMainWindow):
                             reward_info.name,
                             reward_info.text_settings_index,
                         )
+                        item.reward_map[j].set_max_width(active_inv.rewards.get_longest_reward())
 
                     if item.reward_map[j].item_pixmap is None:
                         item.reward_map[j].item_pixmap = pixmap
@@ -290,6 +292,7 @@ class TrackerWindow(QMainWindow):
                     )
                     pixmap.flag.setVisible(not flag.hidden)
                     pixmap.flag.item_pixmap = pixmap
+                    pixmap.flag.set_max_width(flag.get_longest_flag())
 
             for static_text in item.static_texts:
                 if static_text.index not in active_inv.text_map:
@@ -300,6 +303,7 @@ class TrackerWindow(QMainWindow):
                         static_text.text_settings_index,
                         static_text.rotation,
                     )
+                    active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(True))
 
         for static_text in active_inv.static_texts:
             if static_text.index not in active_inv.text_map:
@@ -310,6 +314,7 @@ class TrackerWindow(QMainWindow):
                     static_text.text_settings_index,
                     static_text.rotation,
                 )
+                active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(False))
 
         if self.config.gomode_settings is not None:
             gomode_settings = self.config.gomode_settings

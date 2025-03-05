@@ -298,6 +298,13 @@ class FlagItem:
             },
         )
 
+    def get_longest_flag(self):
+        str_max = ""
+        for txt in self.texts:
+            if len(str_max) < len(txt):
+                str_max = txt
+        return str_max
+
 
 class Rewards:
     def __init__(self):
@@ -312,6 +319,13 @@ class Rewards:
             _ = reward.to_xml(rewards)
 
         return rewards
+
+    def get_longest_reward(self):
+        str_max = ""
+        for reward in self.items:
+            if len(str_max) < len(reward.name):
+                str_max = reward.name
+        return str_max
 
 
 @dataclass
@@ -419,6 +433,20 @@ class Inventory:
             return result_2
 
         return None
+
+    def get_longest_static_text(self, is_items: bool):
+        str_max = ""
+
+        if is_items:
+            for item in self.items:
+                for text in item.static_texts:
+                    if len(str_max) < len(text.content):
+                        str_max = text.content
+        else:
+            for text in self.static_texts:
+                if len(str_max) < len(text.content):
+                    str_max = text.content
+        return str_max
 
 
 @dataclass

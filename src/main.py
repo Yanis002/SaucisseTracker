@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
         self.config_dir = Path()
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         self.tracker_window: Optional[TrackerWindow] = None
+        self.is_debug = is_debug
 
         self.setWindowTitle("SaucisseTracker")
         self.setObjectName("MainWindow")
@@ -202,7 +203,7 @@ class MainWindow(QMainWindow):
 
             self.get_configs(self.config_dir)
             for config in self.configs.values():
-                if config.xml_version < CURRENT_XML_VERSION:
+                if not self.is_debug and config.xml_version < CURRENT_XML_VERSION:
                     # previously the config's name was defined based on the first inventory name
                     show_info(self, f"Ignoring outdated config named '{config.active_inv.name}'.")
                 else:

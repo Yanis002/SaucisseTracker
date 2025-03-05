@@ -131,6 +131,10 @@ class PixmapItem(QGraphicsPixmapItem):
                     else:
                         self.update_item(False)
 
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        print("new pos:", self.pos())
+
     def wheelEvent(self, event):
         super().wheelEvent(event)
 
@@ -292,6 +296,20 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         new_item.setObjectName(obj_name)
         new_item.setRotation(float(rotation))
         return new_item
+
+    def set_max_width(self, string: str):
+        # sets the max width based on the longest string possible
+        prev = self.toPlainText()
+        self.setPlainText(string)
+
+        doc = self.document()
+        self.setTextWidth(doc.size().width())
+        option = doc.defaultTextOption()
+        option.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        doc.setDefaultTextOption(option)
+        self.setDocument(doc)
+
+        self.setPlainText(prev)
 
     def setPlainText(self, text):
         super().setPlainText(text)
