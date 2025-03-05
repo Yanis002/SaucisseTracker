@@ -6,7 +6,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from PIL import Image
 from PyQt6.QtCore import pyqtSignal, QFileSystemWatcher, QRect, Qt, QThread
 from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QKeyEvent, QPixmap
 from PyQt6.QtWidgets import (
@@ -107,9 +106,8 @@ class TrackerWindow(QMainWindow):
         # create the scene and generate the items from the config
         self.central_widget = QWidget(self)
         bg_img = QPixmap(str(self.config.active_inv.background))
-        img_size = bg_img.size()
 
-        self.scene = QGraphicsScene(0, 0, img_size.width(), img_size.height(), self.central_widget)
+        self.scene = QGraphicsScene(self.central_widget)
         self.background = self.scene.addPixmap(bg_img)
 
         self.view = QGraphicsView(self.scene)
@@ -119,19 +117,18 @@ class TrackerWindow(QMainWindow):
 
         self.ze_layout = QVBoxLayout(self.central_widget)
         self.ze_layout.setContentsMargins(0, 0, 0, 0)
-        self.ze_layout.setGeometry(QRect(0, 0, img_size.width(), img_size.height()))
         self.ze_layout.addWidget(self.view)
 
         self.create_items()
 
-        geo = QRect(0, 0, img_size.width(), img_size.height() + self.menu.sizeHint().height())
         self.setCentralWidget(self.central_widget)
-        self.setGeometry(geo)
-        self.setFixedSize(geo.width(), geo.height())
         self.setWindowTitle("SaucisseTracker")
 
         icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
         self.setWindowIcon(QIcon(str(icon_path)))
+
+        # update geometry
+        self.update_window_geometry(True)
 
         # start centered
         qtRectangle = self.frameGeometry()
@@ -140,6 +137,17 @@ class TrackerWindow(QMainWindow):
         self.move(qtRectangle.topLeft())
 
         self.show()
+
+    def update_window_geometry(self, is_init: bool = False):
+        bg_size = self.background.pixmap().size()
+        menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
+
+        # update scene geometry and ze layout's geometry
+        self.scene.setSceneRect(0, 0, bg_size.width(), bg_size.height())
+        self.ze_layout.setGeometry(QRect(0, 0, bg_size.width(), bg_size.height()))
+
+        # update main window's geometry
+        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height)
 
     def update_window(self):
         # update the config
@@ -154,24 +162,17 @@ class TrackerWindow(QMainWindow):
         self.scene.clear()
         self.config.label_gomode_light = None
 
-        # similar to the init function
+        ### similar to the init function ###
 
         # create the new background and update the scene's geometry
         bg_img = QPixmap(str(self.config.active_inv.background))
-        img_size = bg_img.size()
-        self.scene.setSceneRect(0, 0, img_size.width(), img_size.height())
         self.background = self.scene.addPixmap(bg_img)
-
-        # update ze layout's geometry
-        self.ze_layout.setGeometry(QRect(0, 0, img_size.width(), img_size.height()))
 
         # create the new items
         self.create_items()
 
-        # update main window's geometry
-        geo = QRect(0, 0, img_size.width(), img_size.height() + self.menu.sizeHint().height())
-        self.setGeometry(geo)
-        self.setFixedSize(geo.width(), geo.height())
+        # update geometry
+        self.update_window_geometry()
 
     def set_movable(self):
         # TODO: unset flags
@@ -358,9 +359,6 @@ class TrackerWindow(QMainWindow):
             self.config.label_gomode.setShapeMode(QGraphicsPixmapItem.ShapeMode.BoundingRectShape)
             self.config.label_gomode.state.is_gomode = True
 
-    def get_background_size(self):
-        return Image.open(self.bg_path).size
-
     def monitor_execute(self, raw_path: str):
         path = Path(raw_path).resolve()
 
@@ -495,8 +493,7 @@ class TrackerWindow(QMainWindow):
 
     def update_menu_visibility(self, hide: bool):
         self.menu.setHidden(hide)
-        width, height = self.get_background_size()
-        self.set_window_size(width, height, hide)
+        self.update_window_geometry()
 
     # connections callbacks
 
