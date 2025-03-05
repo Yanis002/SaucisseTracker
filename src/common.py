@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 OS_MENU_OFFSET = 34 if os.name == "nt" else 22
 GLOBAL_HALF_OPACITY = 0.58
 CURRENT_XML_VERSION = (1, 0)
+CURRENT_STATE_VERSION = (1, 0)
 
 
 class ListViewModel(QAbstractListModel):
@@ -78,18 +79,13 @@ class PixmapItem(QGraphicsPixmapItem):
         super().__init__(pixmap, parent)
 
         self.config = config
-        self.item_index = item_index
         self.state = state
         self.opacity_value = GLOBAL_HALF_OPACITY if default_strength == 1.0 else 1.0
         self.setOpacity(self.opacity_value)
         self.label_counter: Optional["OutlinedGraphicsTextItem"] = None
         self.extra: Optional["PixmapItem"] = None
         self.flag: Optional["OutlinedGraphicsTextItem"] = None
-        self.reward_index = 0
-        self.flag_text_index = 0
         self.obj_name = obj_name
-        self.is_go_mode = False
-        self.is_go_mode_light = False
 
         # black & white effect, todo find something better? idk, enabled by default
         self.effect = QGraphicsColorizeEffect()
@@ -100,32 +96,34 @@ class PixmapItem(QGraphicsPixmapItem):
 
     def mousePressEvent(self, event):
         # do nothing if this is the go mode light
-        if self.is_go_mode_light:
+        if self.state.is_gomode_light:
             return
 
         self.config.state_saved = False
-        item = self.config.active_inv.items[self.item_index]
+        item = self.config.active_inv.items[self.state.index]
 
         if event is not None:
             match event.button():
                 case Qt.MouseButton.LeftButton:
-                    if self.is_go_mode:
+                    if self.state.is_gomode:
                         self.update_gomode()
                     else:
                         self.update_item(True)
                 case Qt.MouseButton.MiddleButton:
-                    if not self.is_go_mode:
+                    if not self.state.is_gomode:
                         if self.flag is not None:
                             self.flag.setVisible(not self.flag.isVisible())
+                            self.state.infos.show_flag = self.flag.isVisible()
                         else:
                             self.update_item(True, True)
                 case Qt.MouseButton.RightButton:
-                    if self.is_go_mode:
+                    if self.state.is_gomode:
                         self.update_gomode()
                     elif item.is_reward:
                         self.next_reward(True)
                     elif self.extra is not None:
                         self.extra.setVisible(not self.extra.isVisible())
+                        self.state.infos.show_extra_img = self.extra.isVisible()
                     else:
                         self.update_item(False)
 
@@ -135,7 +133,7 @@ class PixmapItem(QGraphicsPixmapItem):
 
     def wheelEvent(self, event):
         if event is not None:
-            item = self.config.active_inv.items[self.item_index]
+            item = self.config.active_inv.items[self.state.index]
             rewards = self.config.active_inv.rewards
 
             if item.use_wheel or rewards.use_wheel:
@@ -157,7 +155,8 @@ class PixmapItem(QGraphicsPixmapItem):
         return path
 
     def next_reward(self, increase: bool):
-        item = self.config.active_inv.items[self.item_index]
+        assert self.state.index >= 0
+        item = self.config.active_inv.items[self.state.index]
 
         for i, _ in enumerate(item.positions):
             if self.obj_name.endswith(f"_pos_{i}"):
@@ -165,17 +164,17 @@ class PixmapItem(QGraphicsPixmapItem):
 
                 if reward is not None and reward.item_pixmap is not None:
                     if increase:
-                        self.reward_index += 1
+                        self.state.infos.reward_index += 1
 
-                        if self.reward_index > len(self.config.active_inv.rewards.items) - 1:
-                            self.reward_index = 0
+                        if self.state.infos.reward_index > len(self.config.active_inv.rewards.items) - 1:
+                            self.state.infos.reward_index = 0
                     else:
-                        self.reward_index -= 1
+                        self.state.infos.reward_index -= 1
 
-                        if self.reward_index < 0:
-                            self.reward_index = len(self.config.active_inv.rewards.items) - 1
+                        if self.state.infos.reward_index < 0:
+                            self.state.infos.reward_index = len(self.config.active_inv.rewards.items) - 1
 
-                    item.update_reward(i, self.config.active_inv.rewards.items[self.reward_index])
+                    item.update_reward(i, self.config.active_inv.rewards.items[self.state.infos.reward_index])
 
     def update_gomode(self, gomode_visibility: Optional[bool] = None):
         self.config.state_saved = False
@@ -186,57 +185,71 @@ class PixmapItem(QGraphicsPixmapItem):
             if cond:
                 self.effect.setStrength(0.0)
                 self.setOpacity(1.0)
+                self.state.infos.gomode_visibility = True
             else:
                 self.effect.setStrength(1.0)
                 self.setOpacity(0.001 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
+                self.state.infos.gomode_visibility = False
 
-        if gomode_visibility is None:
+        if gomode_visibility is None and self.config.label_gomode_light is not None:
             self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
+            self.state.infos.gomode_light_visibility = self.config.label_gomode_light.isVisible()
+
+    def update_item_visibility(self):
+        assert self.state.index >= 0
+        item = self.config.active_inv.items[self.state.index]
+        path_index = 0
+
+        if self.state.infos.img_index < 0:
+            self.effect.setStrength(1.0)  # enable filter
+            self.setOpacity(GLOBAL_HALF_OPACITY)
+            path_index = 0
+            item.enabled = False
+        else:
+            self.effect.setStrength(0.0)  # disable filter
+            self.setOpacity(1.0)
+            path_index = self.state.infos.img_index
+            item.enabled = True
+
+        self.state.infos.enabled = item.enabled
+        self.setPixmap(QPixmap(str(item.paths[path_index])))
+
+    def update_flag(self):
+        assert self.state.index >= 0
+        item = self.config.active_inv.items[self.state.index]
+
+        if self.flag is not None and item.flag_index is not None:
+            flag = self.config.flags[item.flag_index]
+            total = len(flag.texts) - 1
+
+            if self.state.infos.flag_text_index > total:
+                self.state.infos.flag_text_index = 0
+            if self.state.infos.flag_text_index < 0:
+                self.state.infos.flag_text_index = total
+
+            self.flag.setPlainText(flag.texts[self.state.infos.flag_text_index])
+            self.flag.set_text_style(flag.text_settings_index, self.state.infos.flag_text_index == total)
 
     def update_item(self, increase: bool, middle_click: bool = False):
-        item = self.config.active_inv.items[self.item_index]
-        path_index = 0
+        assert self.state.index >= 0
+        item = self.config.active_inv.items[self.state.index]
 
         if not middle_click and len(item.paths) > 1:
             if increase:
                 self.state.infos.img_index += 1
-                self.flag_text_index += 1
+                self.state.infos.flag_text_index += 1
             else:
                 self.state.infos.img_index -= 1
-                self.flag_text_index -= 1
+                self.state.infos.flag_text_index -= 1
 
-            if self.flag is not None and item.flag_index is not None:
-                flag = self.config.flags[item.flag_index]
-                total = len(flag.texts) - 1
-
-                if self.flag_text_index > total:
-                    self.flag_text_index = 0
-                if self.flag_text_index < 0:
-                    self.flag_text_index = total
-
-                self.flag.setPlainText(flag.texts[self.flag_text_index])
-                self.flag.set_text_style(flag.text_settings_index, self.flag_text_index == total)
+            self.update_flag()
 
             if self.state.infos.img_index > len(item.paths) - 1:
                 self.state.infos.img_index = -1
             if self.state.infos.img_index < -1:
                 self.state.infos.img_index = len(item.paths) - 1
 
-            if self.state.infos.img_index < 0:
-                self.effect.setStrength(1.0)  # enable filter
-                self.setOpacity(GLOBAL_HALF_OPACITY)
-                path_index = 0
-            else:
-                self.effect.setStrength(0.0)  # disable filter
-                self.setOpacity(1.0)
-                path_index = self.state.infos.img_index
-
-            self.setPixmap(QPixmap(str(item.paths[path_index])))
-
-            if self.state.infos.img_index < 0:
-                self.setOpacity(GLOBAL_HALF_OPACITY)
-            else:
-                self.setOpacity(1.0)
+            self.update_item_visibility()
         elif self.label_counter is not None and item.counter is not None:
             if increase:
                 item.counter.incr(middle_click)
@@ -245,13 +258,72 @@ class PixmapItem(QGraphicsPixmapItem):
 
             if self.effect is not None:
                 item.counter.update(self)
+
+            item.enabled = item.counter.show
+            self.state.infos.enabled = item.enabled
+            self.state.infos.counter_show = item.counter.show
+            self.state.infos.counter_value = item.counter.value
         else:
             if self.effect.strength() > 0.0:
                 self.effect.setStrength(0.0)
                 self.setOpacity(1.0)
+                self.state.infos.enabled = True
             else:
                 self.effect.setStrength(1.0)
                 self.setOpacity(GLOBAL_HALF_OPACITY)
+                self.state.infos.enabled = False
+
+    def apply_state(self):
+        if self.state.index >= 0 and "extra_img" not in self.state.name:
+            item = self.config.active_inv.items[self.state.index]
+
+            if item.is_reward:
+                # rewards
+                for i, _ in enumerate(item.positions):
+                    if self.obj_name.endswith(f"_pos_{i}"):
+                        reward = item.reward_map.get(i)
+
+                        if reward is not None and reward.item_pixmap is not None:
+                            item.update_reward(i, self.config.active_inv.rewards.items[self.state.infos.reward_index])
+
+                if self.flag is not None:
+                    self.flag.setVisible(self.state.infos.show_flag)
+
+            if self.state.is_gomode and self.effect is not None:
+                # go-mode image
+                gomode_settings = self.config.gomode_settings
+
+                if self.state.infos.gomode_visibility:
+                    self.effect.setStrength(0.0)
+                    self.setOpacity(1.0)
+                else:
+                    self.effect.setStrength(1.0)
+                    self.setOpacity(0.001 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
+            elif self.state.is_gomode_light and self.config.label_gomode_light is not None:
+                # go-mode light
+                self.config.label_gomode_light.setVisible(self.state.infos.gomode_light_visibility)
+            elif len(item.paths) > 1:
+                # items using multiple images (like OoT bottles)
+                self.update_flag()
+                self.update_item_visibility()
+            elif self.label_counter is not None and item.counter is not None:
+                # items with a counter
+                item.counter.show = self.state.infos.counter_show
+                item.counter.value = self.state.infos.counter_value
+                item.counter.update(self)
+            elif self.extra is not None:
+                # item extras (like the checkmark on OoT songs)
+                self.extra.setVisible(self.state.infos.show_extra_img)
+            else:
+                # normal items
+                if self.state.infos.enabled:
+                    self.effect.setStrength(0.0)
+                    self.setOpacity(1.0)
+                else:
+                    self.effect.setStrength(1.0)
+                    self.setOpacity(GLOBAL_HALF_OPACITY)
+
+            item.enabled = self.state.infos.enabled
 
 
 # from https://stackoverflow.com/a/78362730

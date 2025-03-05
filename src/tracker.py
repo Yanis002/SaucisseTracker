@@ -24,7 +24,17 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from common import OutlinedGraphicsTextItem, PixmapItem, Pos, Rotation, show_error, show_message, OS_MENU_OFFSET
+from common import (
+    OutlinedGraphicsTextItem,
+    PixmapItem,
+    Pos,
+    Rotation,
+    show_error,
+    show_message,
+    OS_MENU_OFFSET,
+    CURRENT_STATE_VERSION,
+)
+
 from config import Config
 from state import LabelState, State
 from timer import LiveSplit
@@ -179,7 +189,7 @@ class TrackerWindow(QMainWindow):
 
     def find_scene_item(self, item_index: int):
         for scene_item in self.scene.items():
-            if isinstance(scene_item, PixmapItem) and scene_item.item_index == item_index:
+            if isinstance(scene_item, PixmapItem) and scene_item.state.index == item_index:
                 return scene_item
         return None
 
@@ -231,6 +241,7 @@ class TrackerWindow(QMainWindow):
                     LabelState(item.index, j, item.name),
                 )
                 pixmap.setPos(pos.x, pos.y)
+                pixmap.state.infos.enabled = item.enabled
 
                 # rescale to 32x32 if necessary
                 # TODO: allow custom values in config files?
@@ -254,7 +265,7 @@ class TrackerWindow(QMainWindow):
                     pixmap.label_counter.set_max_width(f"{item.counter.max}")
 
                 if item.is_reward:
-                    reward_info = active_inv.rewards.items[pixmap.reward_index]
+                    reward_info = active_inv.rewards.items[pixmap.state.infos.reward_index]
                     geometry = QRect(
                         pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
                     )
@@ -276,8 +287,9 @@ class TrackerWindow(QMainWindow):
 
                 if item.extra_index is not None:
                     extra = self.config.extras.items[item.extra_index]
+                    n = f"{obj_name}_extra_img"
                     pixmap.extra = self.add_pixmap(
-                        QPixmap(str(extra.path)), item.index, f"{obj_name}_extra_img", 0.0, LabelState(0, 0, "")
+                        QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, j, n)
                     )
                     pixmap.extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
                     pixmap.extra.setVisible(False)
@@ -287,13 +299,14 @@ class TrackerWindow(QMainWindow):
                     pixmap.flag = self.add_outline_text(
                         f"{obj_name}_flag",
                         QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
-                        flag.texts[pixmap.flag_text_index],
+                        flag.texts[pixmap.state.infos.flag_text_index],
                         flag.text_settings_index,
                     )
                     pixmap.flag.setVisible(not flag.hidden)
                     pixmap.flag.item_pixmap = pixmap
                     pixmap.flag.set_max_width(flag.get_longest_flag())
 
+        for item in active_inv.items:
             for static_text in item.static_texts:
                 if static_text.index not in active_inv.text_map:
                     active_inv.text_map[static_text.index] = self.add_outline_text(
@@ -322,16 +335,20 @@ class TrackerWindow(QMainWindow):
             if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
                 pixmap = QPixmap(str(gomode_settings.light_path))
                 self.config.label_gomode_light = self.add_pixmap(
-                    pixmap, 0, "label_gomode_light", 0.0, LabelState(0, 0, "")
+                    pixmap, 0, "label_gomode_light", 0.0, LabelState(-1, -1, "label_gomode_light", is_gomode_light=True)
                 )
                 self.config.label_gomode_light.setPos(gomode_settings.light_pos.x, gomode_settings.light_pos.y)
                 self.config.label_gomode_light.setVisible(False)
                 self.config.label_gomode_light.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
                 self.config.label_gomode_light.setTransformOriginPoint(pixmap.rect().center().toPointF())
-                self.config.label_gomode_light.is_go_mode_light = True
+                self.config.label_gomode_light.state.is_gomode_light = True
 
             self.config.label_gomode = self.add_pixmap(
-                QPixmap(str(gomode_settings.path)), 0, "label_gomode", 1.0, LabelState(0, 0, "")
+                QPixmap(str(gomode_settings.path)),
+                0,
+                "label_gomode",
+                1.0,
+                LabelState(-1, -1, "label_gomode", is_gomode=True),
             )
             self.config.label_gomode.setPos(gomode_settings.pos.x, gomode_settings.pos.y)
 
@@ -339,7 +356,7 @@ class TrackerWindow(QMainWindow):
             self.config.label_gomode.setOpacity(0.001)
 
             self.config.label_gomode.setShapeMode(QGraphicsPixmapItem.ShapeMode.BoundingRectShape)
-            self.config.label_gomode.is_go_mode = True
+            self.config.label_gomode.state.is_gomode = True
 
     def get_background_size(self):
         return Image.open(self.bg_path).size
@@ -348,8 +365,9 @@ class TrackerWindow(QMainWindow):
         path = Path(raw_path).resolve()
 
         if self.autoreload_enabled:
-            print("change detected", path)
-            self.update_window()
+            if path.stem == "config":
+                print("change detected", path)
+                self.update_window()
         else:
             print("change detected but autoreload is disabled", path)
 
@@ -366,8 +384,12 @@ class TrackerWindow(QMainWindow):
                 case Qt.Key.Key_S:
                     # kinda hacky but whatever
                     self.file_save_triggered()
+                case Qt.Key.Key_O:
+                    self.file_open_triggered()
                 case Qt.Key.Key_T:
                     self.timer.show()
+                case Qt.Key.Key_R:
+                    self.update_window()
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
@@ -485,7 +507,21 @@ class TrackerWindow(QMainWindow):
             ).resolve()
 
         if self.config.state_path.exists():
-            self.state.open()
+            state_items = self.state.open()
+            scene_states: list[PixmapItem] = []
+
+            if self.state.version < CURRENT_STATE_VERSION:
+                show_error(self, "This state file cannot be loaded because it's outdated.")
+            else:
+                for item in reversed(self.scene.items()):
+                    if isinstance(item, PixmapItem):
+                        scene_states.append(item)
+
+                assert len(state_items) == len(scene_states)
+
+                for read, cur in zip(state_items, scene_states):
+                    LabelState.copy(read, cur.state)
+                    cur.apply_state()
 
     def file_save_triggered(self):
         if self.config.state_path is None:
@@ -494,6 +530,15 @@ class TrackerWindow(QMainWindow):
             ).resolve()
 
         if self.config.state_path.parent.exists():
+            self.state.items.clear()
+
+            for item in reversed(self.scene.items()):
+                if isinstance(item, PixmapItem):
+                    self.state.items.append(item.state)
+
+                    if "Bombchu" in item.state.name:
+                        pass
+
             self.state.save()
         else:
             show_error(self, f"ERROR: This path can't be found: {repr(self.config.state_path)}")
