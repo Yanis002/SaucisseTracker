@@ -14,6 +14,14 @@ active_config_dir: Optional[Path] = None
 
 @dataclass
 class Font:
+    """Defines a font item from `<Fonts>` (or equivalents). Hosts the name of the font, the index and the path to the font file.
+
+    XML bindings:
+    - `index` -> `Index="..."`
+    - `name` -> `Name="..."`
+    - `path` -> `Source="..."`
+    """
+
     widget: QWidget
     index: int
     name: str
@@ -37,6 +45,24 @@ class Font:
 
 @dataclass
 class TextSettings:
+    """Defines a text setting item from `<TextSettings>` (or equivalents).
+
+    XML bindings:
+    - `index` -> `Index="..."`
+    - `name` -> `Name="..."`
+    - `font` -> `FontIndex="..."`
+    - `size` -> `Size="..."`
+    - `bold` -> `Bold="..."`
+    - `color` -> `Color="..."`
+    - `color_alt` -> `ColorAlt="..."`
+
+    * Optional:
+        - `outline_thickness` -> `OutlineThickness="..."`
+        - `is_timer` -> `IsTimer="..."`
+        - `use_gradient` -> `UseGradient="..."`
+        - `is_minimal` -> `Minimal="..."`
+    """
+
     widget: QWidget
     index: int
     name: str
@@ -76,6 +102,22 @@ class TextSettings:
 
 @dataclass
 class Counter:
+    """Defines a text setting item from `<Counter>` (or equivalents).
+
+    XML bindings:
+    - `text_settings_index` -> `TextSettings="..."`
+    - `min` -> `Min="..."`
+    - `max` -> `Max="..."`
+    - `increment` -> `Increment="..."`
+    - `pos` -> `Pos="..."`
+    - `width` -> `Width="..."`
+    - `height` -> `Height="..."`
+
+    * Optional:
+        - `middle_click_increment` -> `MiddleIncrement="..."`
+        - `use_wheel` -> `UseWheel="..."`
+    """
+
     min: int
     max: int
     increment: int
