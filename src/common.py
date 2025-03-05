@@ -27,6 +27,8 @@ CURRENT_STATE_VERSION = (1, 0)
 
 
 class ListViewModel(QAbstractListModel):
+    """Widget that handles a list where each entry can have both a name and an image."""
+
     def __init__(self, items: list[tuple[bool, str, Path]]):
         super(ListViewModel, self).__init__()
         self.items = items
@@ -46,8 +48,10 @@ class ListViewModel(QAbstractListModel):
 
 
 class Rotation(QThread):
+    """Thread used to update the rotation value of the go-mode light effect."""
+
+    # signal to use to get the value since you can't do that directly from the `run` function
     positionChanged = pyqtSignal(object)
-    delta_angle = 1
 
     def __init__(self, config: "Config", position: int = 0):
         super().__init__()
@@ -66,6 +70,11 @@ class Rotation(QThread):
 
 
 class PixmapItem(QGraphicsPixmapItem):
+    """
+    Widget used to add more functionnalities to `QGraphicsPixmapItem`.
+    It's handling item updates (from user actions or when loading a savestate).
+    """
+
     def __init__(
         self,
         config: "Config",
@@ -87,7 +96,7 @@ class PixmapItem(QGraphicsPixmapItem):
         self.flag: Optional["OutlinedGraphicsTextItem"] = None
         self.obj_name = obj_name
 
-        # black & white effect, todo find something better? idk, enabled by default
+        # used for the black & white effect, enabled by default
         self.effect = QGraphicsColorizeEffect()
         self.effect.setStrength(default_strength)
         self.effect.setColor(QColor("black"))
@@ -95,6 +104,8 @@ class PixmapItem(QGraphicsPixmapItem):
         self.setGraphicsEffect(self.effect)
 
     def mousePressEvent(self, event):
+        """Actions to do when there's a click (left, right or middle). This is the entrypoint of updating items."""
+
         # do nothing if this is the go mode light
         if self.state.is_gomode_light:
             return
@@ -105,11 +116,14 @@ class PixmapItem(QGraphicsPixmapItem):
         if event is not None:
             match event.button():
                 case Qt.MouseButton.LeftButton:
+                    # left clicks are used to enable the go-mode thing (takes the priority) and the other items from the tracker
                     if self.state.is_gomode:
                         self.update_gomode()
                     else:
                         self.update_item(True)
                 case Qt.MouseButton.MiddleButton:
+                    # middle clicks are used to enable flags on the rewards, it can also be used to update items but it will do
+                    # special actions like incrementing by N a counter (if the feature is used, as set by the config file)
                     if not self.state.is_gomode:
                         if self.flag is not None:
                             self.flag.setVisible(not self.flag.isVisible())
@@ -117,6 +131,8 @@ class PixmapItem(QGraphicsPixmapItem):
                         else:
                             self.update_item(True, True)
                 case Qt.MouseButton.RightButton:
+                    # right clicks can also show or hide the go-mode thing, it's also used to update rewards and the extra stuff
+                    # used for the songs for OoT (for example), also it can updates other items like the other clicks
                     if self.state.is_gomode:
                         self.update_gomode()
                     elif item.is_reward:
@@ -128,10 +144,17 @@ class PixmapItem(QGraphicsPixmapItem):
                         self.update_item(False)
 
     def mouseReleaseEvent(self, event):
+        """
+        Completely useless for the end users currently, it prints the position of the item.
+        It's useful when items are set to be moveable.
+        """
+
         super().mouseReleaseEvent(event)
         print("new pos:", self.pos())
 
     def wheelEvent(self, event):
+        """Actions to do when the wheel is 'moved'. Used as a fast-cycle feature when enabled in the config."""
+
         if event is not None:
             item = self.config.active_inv.items[self.state.index]
             rewards = self.config.active_inv.rewards
@@ -149,12 +172,15 @@ class PixmapItem(QGraphicsPixmapItem):
                             self.next_reward(value > 0)
 
     def shape(self):
-        # fixes a behavior where you need to click on the texture, which we don't want here
+        """Override to fix a behavior where you need to click on the texture, which we don't want here"""
+
         path = QPainterPath()
         path.addRect(self.boundingRect())
         return path
 
     def next_reward(self, increase: bool):
+        """Switches to the next or previous reward depending if we're incrementing or decrementing the index."""
+
         assert self.state.index >= 0
         item = self.config.active_inv.items[self.state.index]
 
@@ -177,6 +203,8 @@ class PixmapItem(QGraphicsPixmapItem):
                     item.update_reward(i, self.config.active_inv.rewards.items[self.state.infos.reward_index])
 
     def update_gomode(self, gomode_visibility: Optional[bool] = None):
+        """Shows or hides the go-mode thing depending on the previous state."""
+
         self.config.state_saved = False
         gomode_settings = self.config.gomode_settings
         cond = gomode_visibility if gomode_visibility is not None else self.effect.strength() > 0.0
@@ -196,6 +224,8 @@ class PixmapItem(QGraphicsPixmapItem):
             self.state.infos.gomode_light_visibility = self.config.label_gomode_light.isVisible()
 
     def update_item_visibility(self):
+        """Handles enabling or disabling an item, disabled means the black & white filter is enabled and the opacity lowered."""
+
         assert self.state.index >= 0
         item = self.config.active_inv.items[self.state.index]
         path_index = 0
@@ -215,6 +245,11 @@ class PixmapItem(QGraphicsPixmapItem):
         self.setPixmap(QPixmap(str(item.paths[path_index])))
 
     def update_flag(self):
+        """
+        Updates the flag, flags are special text used (for OoT) to display the H/L on the hookshot or the MQ texts.
+        Note: this is just an example of usage, it can be used for other purposes probably.
+        """
+
         assert self.state.index >= 0
         item = self.config.active_inv.items[self.state.index]
 
@@ -231,10 +266,16 @@ class PixmapItem(QGraphicsPixmapItem):
             self.flag.set_text_style(flag.text_settings_index, self.state.infos.flag_text_index == total)
 
     def update_item(self, increase: bool, middle_click: bool = False):
+        """
+        Main item update function, Left and Right clicks are used to increment and decrement values,
+        Middle clicks are used to perform other actions.
+        """
+
         assert self.state.index >= 0
         item = self.config.active_inv.items[self.state.index]
 
         if not middle_click and len(item.paths) > 1:
+            # items using multiple images, like bottles on OoT
             if increase:
                 self.state.infos.img_index += 1
                 self.state.infos.flag_text_index += 1
@@ -251,6 +292,7 @@ class PixmapItem(QGraphicsPixmapItem):
 
             self.update_item_visibility()
         elif self.label_counter is not None and item.counter is not None:
+            # items with counters
             if increase:
                 item.counter.incr(middle_click)
             else:
@@ -264,6 +306,7 @@ class PixmapItem(QGraphicsPixmapItem):
             self.state.infos.counter_show = item.counter.show
             self.state.infos.counter_value = item.counter.value
         else:
+            # normal items
             if self.effect.strength() > 0.0:
                 self.effect.setStrength(0.0)
                 self.setOpacity(1.0)
@@ -274,6 +317,8 @@ class PixmapItem(QGraphicsPixmapItem):
                 self.state.infos.enabled = False
 
     def apply_state(self):
+        """Updates the item based on the `State` values. Basically combines the different update functions without the increment stuff."""
+
         if self.state.index >= 0 and "extra_img" not in self.state.name:
             item = self.config.active_inv.items[self.state.index]
 
@@ -328,6 +373,8 @@ class PixmapItem(QGraphicsPixmapItem):
 
 # from https://stackoverflow.com/a/78362730
 class OutlinedGraphicsTextItem(QGraphicsTextItem):
+    """Custom `QGraphicsTextItem` used to display a text with an outside outline."""
+
     def __init__(self, config: "Config", parent: Optional[QGraphicsItem] = None):
         super().__init__(parent)
 
@@ -372,7 +419,8 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         return new_item
 
     def set_max_width(self, string: str):
-        # sets the max width based on the longest string possible
+        """Sets the max width based on the longest string possible."""
+
         prev = self.toPlainText()
         self.setPlainText(string)
 
@@ -401,18 +449,29 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
             super().paint(painter, option, widget)
 
     def mousePressEvent(self, event):
+        """See `PixmalItem.mousePressEvent`."""
+
         if event is not None and self.item_pixmap is not None:
             self.item_pixmap.mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
+        """
+        Completely useless for the end users currently, it prints the position of the item.
+        It's useful when items are set to be moveable.
+        """
+
         super().mouseReleaseEvent(event)
         print("new pos:", self.pos())
 
     def wheelEvent(self, event):
+        """See `PixmalItem.wheelEvent`."""
+
         if event is not None and self.item_pixmap is not None:
             self.item_pixmap.wheelEvent(event)
 
     def update_format(self, font: QFont, color: QColor):
+        """Sets the font and the color of the text."""
+
         self.outlineFormat.setTextOutline(
             QPen(
                 Qt.GlobalColor.black,
@@ -430,6 +489,8 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         cursor.mergeCharFormat(self.format)
 
     def set_text_style(self, text_settings_index: int, is_max: bool):
+        """Applies the new style on the widget based on the config settings."""
+
         text_settings = self.config.get_text_settings(text_settings_index)
         font = self.config.get_font(text_settings)
         color = self.config.get_color(text_settings, is_max)
@@ -440,6 +501,8 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
 
 
 class Color:
+    """Simple color class used to get RGB values and convert them easily."""
+
     def __init__(self, r: int = 0, g: int = 0, b: int = 0):
         self.r = r
         self.g = g
@@ -447,27 +510,39 @@ class Color:
 
     @staticmethod
     def unpack(value: int):
+        """Get a new `Color` element from an hexadecimal value (0xRRGGBB)."""
+
         return Color((value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF)
 
     @staticmethod
     def pack(color: "Color"):
+        """Get an hexadecimal value (well, actually it's an int but whatever) from the provided `Color` element."""
+
         return ((color.r & 0xFF) << 16) | ((color.g & 0xFF) << 8) | (color.b & 0xFF)
 
     @staticmethod
     def convert(color: "Color"):
+        """Converts the provided color to a `QColor`."""
+
         return QColor(color.r, color.g, color.b)
 
 
 @dataclass
 class Pos:
+    """Simple class to handle a 2-axis position."""
+
     x: int
     y: int
 
     def to_str(self):
+        """Format of the `Pos` attribute used by the config"""
+
         return f"{self.x};{self.y}"
 
 
 def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str):
+    """Shows a message."""
+
     message_box = QMessageBox(parent)
     message_box.setWindowTitle(title)
     message_box.setIcon(icon)
@@ -476,8 +551,12 @@ def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str)
 
 
 def show_error(parent: QWidget, text: str):
+    """Shows an error message."""
+
     show_message(parent, "Error", QMessageBox.Icon.Critical, text)
 
 
 def show_info(parent: QWidget, text: str):
+    """Shows a normal message with an information."""
+
     show_message(parent, "Info", QMessageBox.Icon.Information, text)
