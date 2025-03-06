@@ -68,11 +68,10 @@ class LabelState:
         dst.name = src.name
         dst.is_gomode = src.is_gomode
         dst.is_gomode_light = src.is_gomode_light
-        dst.item = src.item
         LabelStateInfos.copy(src.infos, dst.infos)
 
     def export(self):
-        assert self.item is not None, "inventory item is required for exporting the state"
+        assert self.item is not None, f"inventory item is required for exporting the state ({repr(self.name)})"
 
         data = [
             f"Label #{self.index:02}:",
