@@ -1,32 +1,33 @@
 #!/usr/bin/env python3
 
-import sys
+import argparse
 import os
+import sys
 import traceback
 
-from zipfile import ZipFile
-from pathlib import Path
-from typing import Optional
 from copy import copy
-from shutil import rmtree, copytree
+from pathlib import Path
+from shutil import copytree, rmtree
+from typing import Optional
+from zipfile import ZipFile
 
-from PyQt6.QtGui import QIcon, QPixmap, QShowEvent, QCloseEvent, QAction
+from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QPixmap, QShowEvent
 from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtWidgets import (
-    QWidget,
-    QLabel,
-    QMainWindow,
     QApplication,
     QFileDialog,
-    QPushButton,
+    QLabel,
     QLineEdit,
     QListView,
-    QMenuBar,
+    QMainWindow,
     QMenu,
+    QMenuBar,
     QMessageBox,
+    QPushButton,
+    QWidget,
 )
 
-from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET
+from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET, CURRENT_XML_VERSION
 from config import Config
 from tracker import TrackerWindow
 from editor import TrackerEditor
@@ -37,13 +38,21 @@ TEMP_CONFIG_DIR = TEMP_DIR / "config"
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    """
+    This class represents the window of the main menu,
+    it handles reading and initializing configurations and going in the sub-modes (editor and tracker).
+    """
+
+    def __init__(self, is_debug: bool):
+        """Creates the widgets of the main menu and binds them to function callbacks when required."""
+
         super().__init__()
 
-        self.configs: dict[Path, Config] = {}
+        self.configs: dict[str, Config] = {}
         self.config_dir = Path()
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         self.tracker_window: Optional[TrackerWindow] = None
+        self.is_debug = is_debug
 
         self.setWindowTitle("SaucisseTracker")
         self.setObjectName("MainWindow")
@@ -130,19 +139,32 @@ class MainWindow(QMainWindow):
         # set the default config folder path
         self.line_edit_config_folder.setText(str(Path("config/").resolve()))
 
+        # start centered
+        qtRectangle = self.frameGeometry()
+        centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
+
+        if is_debug:
+            self.btn_go_clicked()
+
     def showEvent(self, e: Optional[QShowEvent]):
+        """Actions to do when the window is showing."""
+
         super(QMainWindow, self).showEvent(e)
 
         # if the folder isn't empty
         if any(TEMP_CONFIG_DIR.iterdir()):
             rmtree(TEMP_CONFIG_DIR)
             TEMP_CONFIG_DIR.mkdir()
-            self.configs.pop(TEMP_CONFIG_DIR / "config.xml")
+            self.configs.pop(str(TEMP_CONFIG_DIR / "config.xml"))
 
         if self.tracker_window is not None:
-            self.tracker_window = None
+            self.tracker_window.deleteLater()
 
     def closeEvent(self, e: Optional[QCloseEvent]):
+        """Actions to do when the window is closing (not hiding)."""
+
         super(QMainWindow, self).closeEvent(e)
 
         # delete the temporary folder
@@ -151,6 +173,8 @@ class MainWindow(QMainWindow):
     # connections callbacks
 
     def btn_set_config_dir_clicked(self):
+        """Asks the user which directory to use and set the line edit's value with the path (if chosen)."""
+
         try:
             path = QFileDialog.getExistingDirectory(None, "Open Splits Images Folder", str(Path.cwd()))
             if len(path) > 0:
@@ -159,15 +183,27 @@ class MainWindow(QMainWindow):
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
     def get_configs(self, dir: Path):
+        """Finds config files (any format) and creates a new `Config`, note that each format requires its own parser."""
+
         # any file that is called "config." with a format extension (xml, yml, json, etc...)
         for path in sorted(dir.rglob("config.*")):
             absolute = path.resolve()
-            self.configs[absolute] = Config(self, absolute)
+            new_config = Config(self, absolute)
+
+            if not self.is_debug and new_config.xml_version < CURRENT_XML_VERSION:
+                # previously the config's name was defined based on the first inventory name
+                show_info(self, f"Ignoring outdated config named '{new_config.active_inv.name}'.")
+            else:
+                self.configs[str(absolute)] = new_config
 
     def get_config(self):
+        """Returns the `Config` for the selected element in the list."""
+
         return list(self.configs.values())[self.list_configs.currentIndex().row()]
 
     def update_config_list(self):
+        """Populates the config list."""
+
         try:
             self.config_dir = Path(self.line_edit_config_folder.text()).resolve()
             self.configs.clear()
@@ -193,7 +229,11 @@ class MainWindow(QMainWindow):
 
             self.get_configs(self.config_dir)
             for config in self.configs.values():
-                model_items.append((True, config.active_inv.name, config.active_inv.icon.scaledToHeight(32)))
+                if config.icon_path is not None:
+                    icon = QPixmap(str(config.icon_path))
+                else:
+                    icon = QPixmap(str(config.default_icon_path))
+                model_items.append((True, config.name, icon.scaledToHeight(32)))
 
             self.model_cache = [(elem[0], elem[1], elem[2]) for elem in model_items]
             self.list_configs.setModel(ListViewModel(self.model_cache))
@@ -201,7 +241,10 @@ class MainWindow(QMainWindow):
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
     def btn_go_clicked(self):
+        """Switches to the tracker window by hiding the main menu and creating a new tracker window for the chosen config."""
+
         try:
+            # get selected list item infos
             index = self.list_configs.currentIndex()
             item_name: str = list(self.list_configs.model().itemData(index).values())[0]
 
@@ -212,19 +255,21 @@ class MainWindow(QMainWindow):
                 zip_file.extractall(TEMP_CONFIG_DIR)
                 xml_path = Path(TEMP_CONFIG_DIR / "config.xml").resolve()
 
-                self.configs[xml_path] = Config(self, xml_path)
+                self.configs[str(xml_path)] = Config(self, xml_path)
 
             if len(self.configs) > 0:
                 self.tracker_window = TrackerWindow(self, copy(self.configs), index.row())
-                self.tracker_window.show()
                 self.hide()
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
     def action_new_triggered(self):
+        """Not implemented yet. Supposed to be opening the future editor to create a new config from scratch."""
         pass
 
     def action_edit_triggered(self):
+        """Not implemented yet. Supposed to be opening the future editor to edit an existing config."""
+
         index = self.list_configs.currentIndex()
         item_name: str = list(self.list_configs.model().itemData(index).values())[0]
 
@@ -234,6 +279,8 @@ class MainWindow(QMainWindow):
             self.hide()
 
     def action_duplicate_triggered(self):
+        """Creates a duplicate of the selected config."""
+
         # TODO: rename config
         config = self.get_config()
         new_config_dir = Path(str(config.config_dir))
@@ -247,6 +294,8 @@ class MainWindow(QMainWindow):
         self.update_config_list()
 
     def action_delete_triggered(self):
+        """Deletes the selected config."""
+
         config = self.get_config()
 
         answer = QMessageBox.question(
@@ -264,6 +313,11 @@ class MainWindow(QMainWindow):
 
 
 def main():
+    # argument used to display the tracker window directly, saves some time
+    parser = argparse.ArgumentParser(description="Yet another randomizer item tracker.")
+    parser.add_argument("--debug", "-d", dest="is_debug", action="store_true", help="debug mode")
+    args = parser.parse_args()
+
     app = QApplication(sys.argv)
 
     # taskbar icon trick for Windows
@@ -282,8 +336,10 @@ def main():
     TEMP_ICONS_DIR.mkdir()
     TEMP_CONFIG_DIR.mkdir()
 
-    main_window = MainWindow()
-    main_window.show()
+    # create main menu window and show it if applicable
+    main_window = MainWindow(args.is_debug)
+    if not args.is_debug:
+        main_window.show()
 
     sys.exit(app.exec())
 

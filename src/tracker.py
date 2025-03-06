@@ -1,40 +1,42 @@
-import sys
 import os
+import sys
 import time
 
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from copy import copy
 
-from PIL import Image
-from PyQt6.QtGui import QIcon, QPixmap, QAction, QCloseEvent, QKeyEvent
-from PyQt6.QtCore import QSize, Qt, QRect, QThread, QFileSystemWatcher, pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QFileSystemWatcher, QRect, Qt, QThread
+from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QKeyEvent, QPixmap
 from PyQt6.QtWidgets import (
-    QWidget,
-    QMessageBox,
-    QLabel,
+    QFileDialog,
     QMainWindow,
-    QFrame,
     QMenu,
     QMenuBar,
-    QFileDialog,
+    QMessageBox,
+    QGraphicsItem,
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsView,
+    QVBoxLayout,
+    QWidget,
 )
 
 from common import (
-    OutlinedLabel,
-    Label,
-    Rotation,
-    RotationWidget,
+    Color,
+    OutlinedGraphicsTextItem,
+    PixmapItem,
     Pos,
-    show_message,
+    Rotation,
     show_error,
-    GLOBAL_HALF_OPACITY,
+    show_message,
     OS_MENU_OFFSET,
+    CURRENT_STATE_VERSION,
 )
 
 from config import Config
-from state import State, LabelState
+from state import LabelState, State
 from timer import LiveSplit
 
 
@@ -72,7 +74,7 @@ class AutosaveThread(QThread):
 class TrackerWindow(QMainWindow):
     keyPressed = pyqtSignal()
 
-    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int, is_editor: bool = False):
+    def __init__(self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False):
         super().__init__()
 
         self.parent_ = parent
@@ -97,107 +99,285 @@ class TrackerWindow(QMainWindow):
         self.monitor.fileChanged.connect(self.monitor_execute)
         self.monitor.setObjectName("configMonitor")
 
-        # get the background's size
-        width, height = self.get_background_size()
-
         # accounts for platform differences for the windows' size
         self.offset = OS_MENU_OFFSET
-
-        # create the window itself
-        self.create_window(width, height)
-
-        # create the background image
-        self.create_background(width, height)
 
         # create the top menu bar
         self.create_menubar()
 
-        # create the necessary labels based on the config
-        self.create_labels()
+        # create the scene and generate the items from the config
+        self.central_widget = QWidget(self)
+        bg_img = QPixmap(str(self.config.active_inv.background))
+
+        self.scene = QGraphicsScene(self.central_widget)
+        self.background = self.scene.addPixmap(bg_img)
+
+        self.view = QGraphicsView(self.scene)
+        self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        self.ze_layout = QVBoxLayout(self.central_widget)
+        self.ze_layout.setContentsMargins(0, 0, 0, 0)
+        self.ze_layout.addWidget(self.view)
+
+        self.create_items()
+
+        self.setCentralWidget(self.central_widget)
+        self.setWindowTitle("SaucisseTracker")
+
+        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
+        self.setWindowIcon(QIcon(str(icon_path)))
+
+        # update geometry
+        self.update_window_geometry(True)
+
+        # start centered
+        qtRectangle = self.frameGeometry()
+        centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
+
+        # load the state if existing
+        if self.config.state_path is not None:
+            self.file_open_triggered()
+            self.config.state_saved = True
 
         if not self.is_editor and self.config.show_timer:
             self.timer.show()
 
-    def get_background_size(self) -> tuple[int, int]:
-        return Image.open(self.bg_path).size
+        self.show()
 
-    def set_window_size(self, width: int, height: int, ignore_offset: bool = False):
-        offset = 0 if ignore_offset else self.offset
-        self.resize(width, height + offset)
-        self.setMinimumSize(QSize(width, height + offset))
-        self.setMaximumSize(QSize(width, height + offset))
+    def update_window_geometry(self, is_init: bool = False):
+        bg_size = self.background.pixmap().size()
+        menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
 
-    def set_bg_settings(self, width: int, height: int):
-        color = self.config.active_inv.background_color
-        self.bg.setGeometry(QRect(0, 0, width, height))
-        self.bg.setMinimumSize(QSize(width, height))
-        self.bg.setMaximumSize(QSize(width, height))
-        self.bg.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
-        self.bg.setAutoFillBackground(False)
-        self.bg.setStyleSheet(f"background-color: rgb({color.r}, {color.g}, {color.b});")
-        self.bg.setFrameShape(QFrame.Shape.StyledPanel)
-        self.bg.setFrameShadow(QFrame.Shadow.Raised)
-        self.bg.setLineWidth(1)
+        # set background color and remove border
+        self.view.setStyleSheet(
+            f"background-color: {Color.to_css(self.config.active_inv.background_color)}; border: 0px;"
+        )
 
-    def set_bg_image(self, width: int, height: int):
-        # for some reasons using stylesheet for bg doesn't work on windows but this does :)
-        self.bg_label.setGeometry(QRect(0, 0, width, height))
-        self.bg_label.setText("")
-        self.bg_label.setPixmap(QPixmap(str(self.bg_path)))
+        # update scene geometry and ze layout's geometry
+        self.scene.setSceneRect(0, 0, bg_size.width(), bg_size.height())
+        self.ze_layout.setGeometry(QRect(0, 0, bg_size.width(), bg_size.height()))
+
+        # update main window's geometry
+        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height)
 
     def update_window(self):
-        offset = -1 if os.name == "nt" else 0
-
-        # backup important data
-        label_map = copy(self.config.active_inv.label_map)
-
         # update the config
-        self.configs[self.config.config_path] = Config(self.config.widget, self.config.config_path)
+        self.configs[str(self.config.config_path)] = Config(self.config.widget, self.config.config_path)
         self.config = list(self.configs.values())[self.config_index]
-        self.bg_path = self.config.active_inv.background
 
-        # restore important data
-        self.config.active_inv.label_map = copy(label_map)
-
-        if not self.bg_path.exists():
+        if not self.config.active_inv.background.exists():
             show_error(self, f"ERROR: the following background path does not exist: {repr(self.bg_path)}")
             return
 
-        # update the window's size
-        width, height = self.get_background_size()
-        self.set_window_size(width, height)
+        # clear current scene items
+        self.scene.clear()
+        self.config.label_gomode_light = None
 
-        # update the background
-        self.set_bg_settings(width, height)
-        self.set_bg_image(width, height)
+        ### similar to the init function ###
 
-        # update labels for every items of the active inventory
-        for i, item in enumerate(self.config.active_inv.items):
-            label_map = self.config.active_inv.label_map[item.index]
+        # create the new background and update the scene's geometry
+        bg_img = QPixmap(str(self.config.active_inv.background))
+        self.background = self.scene.addPixmap(bg_img)
 
+        # create the new items
+        self.create_items()
+
+        # update geometry
+        self.update_window_geometry()
+
+    def set_movable(self):
+        # TODO: unset flags
+        for item in self.scene.items():
+            if item is not self.background:
+                item.setFlags(
+                    QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable
+                )
+
+    def set_selectable(self):
+        # TODO: unset flags
+        for item in self.scene.items():
+            if item is not self.background:
+                item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+
+    def find_scene_item(self, item_index: int):
+        for scene_item in self.scene.items():
+            if isinstance(scene_item, PixmapItem) and scene_item.state.index == item_index:
+                return scene_item
+        return None
+
+    def add_pixmap(self, pixmap: QPixmap, item_index: int, obj_name: str, default_strength: float, state: LabelState):
+        new_item = PixmapItem(self.config, pixmap, item_index, obj_name, default_strength, state)
+        self.scene.addItem(new_item)
+        return new_item
+
+    def add_text(self, content: str):
+        new_item = QGraphicsTextItem(content)
+        self.scene.addItem(new_item)
+        return new_item
+
+    def add_outline_text(
+        self,
+        obj_name: str,
+        geometry: QRect,
+        text: str,
+        text_settings_index: int,
+        rotation: int = 0,
+        parent: Optional[QGraphicsItem] = None,
+    ):
+        new_item = OutlinedGraphicsTextItem.new(
+            self.config, obj_name, geometry, text, text_settings_index, rotation, parent
+        )
+        self.scene.addItem(new_item)
+        return new_item
+
+    def create_items(self):
+        offset = -1 if os.name == "nt" else 0
+
+        # the order the scene items are created defines the "priority",
+        # this means older items will be more in the background while
+        # recent items will show in the foreground, hence why the
+        # gomode stuff is created at the end
+
+        active_inv = self.config.active_inv
+
+        for item in active_inv.items:
             for j, item_pos in enumerate(item.positions):
-                label = label_map[j]
+                obj_name = f"item{item.index}_pos_{j}"
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
-                if item.scale_content:
-                    width = 32
-                    height = 32
-                else:
-                    width, height = Image.open(item.paths[0]).size
-
-                label.set_label_settings(
-                    QRect(pos.x, pos.y, width, height),
-                    str(item.paths[0]),
-                    1.0 if item.enabled else GLOBAL_HALF_OPACITY,
-                    item.scale_content,
+                pixmap = self.add_pixmap(
+                    QPixmap(str(item.paths[0])),
+                    item.index,
+                    obj_name,
+                    0.0 if item.enabled else 1.0,
+                    LabelState(item.index, j, item.name, item),
                 )
+                pixmap.setPos(pos.x, pos.y)
+                pixmap.state.infos.enabled = item.enabled
+
+                # rescale to 32x32 if necessary
+                # TODO: allow custom values in config files?
+                if item.scale_content:
+                    p = pixmap.pixmap()
+                    pixmap.setScale(min(32 / p.width(), 32 / p.height()))
+
+                if item.counter is not None:
+                    pixmap.label_counter = self.add_outline_text(
+                        f"{obj_name}_counter",
+                        QRect(
+                            pos.x + item.counter.pos.x,
+                            pos.y + item.counter.pos.y,
+                            item.counter.width,
+                            item.counter.height,
+                        ),
+                        "",
+                        item.counter.text_settings_index,
+                    )
+                    pixmap.label_counter.item_pixmap = pixmap
+                    pixmap.label_counter.set_max_width(f"{item.counter.max}")
+
+                if item.is_reward:
+                    reward_info = active_inv.rewards.items[pixmap.state.infos.reward_index]
+                    geometry = QRect(
+                        pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
+                    )
+
+                    item.reward_map[j] = self.add_outline_text(
+                        f"{obj_name}_reward",
+                        geometry,
+                        reward_info.name,
+                        reward_info.text_settings_index,
+                    )
+                    item.reward_map[j].set_max_width(active_inv.rewards.get_longest_reward())
+
+                    if item.reward_map[j].item_pixmap is None:
+                        item.reward_map[j].item_pixmap = pixmap
+
+                if item.extra_index is not None:
+                    extra = self.config.extras.items[item.extra_index]
+                    n = f"{obj_name}_extra_img"
+                    pixmap.extra = self.add_pixmap(
+                        QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, j, n, item)
+                    )
+                    pixmap.extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
+                    pixmap.extra.setVisible(False)
+
+                if len(self.config.flags) > 0 and item.flag_index is not None:
+                    flag = self.config.flags[item.flag_index]
+                    pixmap.flag = self.add_outline_text(
+                        f"{obj_name}_flag",
+                        QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
+                        flag.texts[pixmap.state.infos.flag_text_index],
+                        flag.text_settings_index,
+                    )
+                    pixmap.flag.setVisible(not flag.hidden)
+                    pixmap.flag.item_pixmap = pixmap
+                    pixmap.flag.set_max_width(flag.get_longest_flag())
+
+        for item in active_inv.items:
+            for static_text in item.static_texts:
+                active_inv.text_map[static_text.index] = self.add_outline_text(
+                    f"item{item.index}_text_{static_text.index}",
+                    QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                    static_text.content,
+                    static_text.text_settings_index,
+                    static_text.rotation,
+                )
+                active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(True))
+
+        for static_text in active_inv.static_texts:
+            active_inv.text_map[static_text.index] = self.add_outline_text(
+                f"inventory{active_inv.index}_text_{static_text.index}",
+                QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                static_text.content,
+                static_text.text_settings_index,
+                static_text.rotation,
+            )
+            active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(False))
+
+        if self.config.gomode_settings is not None:
+            gomode_settings = self.config.gomode_settings
+
+            if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
+                pixmap = QPixmap(str(gomode_settings.light_path))
+                self.config.label_gomode_light = self.add_pixmap(
+                    pixmap,
+                    0,
+                    "label_gomode_light",
+                    0.0,
+                    LabelState(-1, -1, "label_gomode_light", item, is_gomode_light=True),
+                )
+                self.config.label_gomode_light.setPos(gomode_settings.light_pos.x, gomode_settings.light_pos.y)
+                self.config.label_gomode_light.setVisible(False)
+                self.config.label_gomode_light.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+                self.config.label_gomode_light.setTransformOriginPoint(pixmap.rect().center().toPointF())
+                self.config.label_gomode_light.state.is_gomode_light = True
+
+            self.config.label_gomode = self.add_pixmap(
+                QPixmap(str(gomode_settings.path)),
+                0,
+                "label_gomode",
+                1.0,
+                LabelState(-1, -1, "label_gomode", item, is_gomode=True),
+            )
+            self.config.label_gomode.setPos(gomode_settings.pos.x, gomode_settings.pos.y)
+
+            # extremely low opacity to workaround an issue where invisible pixmaps aren't clickable
+            self.config.label_gomode.setOpacity(0.001)
+
+            self.config.label_gomode.setShapeMode(QGraphicsPixmapItem.ShapeMode.BoundingRectShape)
+            self.config.label_gomode.state.is_gomode = True
 
     def monitor_execute(self, raw_path: str):
         path = Path(raw_path).resolve()
 
         if self.autoreload_enabled:
-            print("change detected", path)
-            self.update_window()
+            if path.stem == "config":
+                print("change detected", path)
+                self.update_window()
         else:
             print("change detected but autoreload is disabled", path)
 
@@ -214,8 +394,12 @@ class TrackerWindow(QMainWindow):
                 case Qt.Key.Key_S:
                     # kinda hacky but whatever
                     self.file_save_triggered()
+                case Qt.Key.Key_O:
+                    self.file_open_triggered()
                 case Qt.Key.Key_T:
                     self.timer.show()
+                case Qt.Key.Key_R:
+                    self.update_window()
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
@@ -240,37 +424,22 @@ class TrackerWindow(QMainWindow):
         self.task_autosave = None
         self.task_rotation = None
 
+        # cleanup existing references
         for item in self.config.active_inv.items:
             for key, val in item.reward_map.items():
-                del key
-                del val
-            item.reward_map = {}
+                val.deleteLater()
+            item.reward_map.clear()
+
+        for key, val in self.config.active_inv.text_map.items():
+            val.deleteLater()
+        self.config.active_inv.text_map.clear()
+
+        self.scene.clear()
+        self.config.label_gomode_light = None
 
         if self.parent_ is not None:
             self.parent_.show()
             self.close()
-
-    def create_window(self, width: int, height: int):
-        # initialize the window's basic informations
-        self.setWindowTitle("SaucisseTracker")
-        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
-        self.setWindowIcon(QIcon(str(icon_path)))
-        self.set_window_size(width, height)
-        self.setAutoFillBackground(False)
-
-        # create the central widget
-        self.centralwidget = QWidget(self)
-        self.centralwidget.setObjectName("centralwidget")
-        self.setCentralWidget(self.centralwidget)
-
-    def create_background(self, width: int, height: int):
-        self.bg = QFrame(self.centralwidget)
-        self.bg.setObjectName("bg")
-        self.set_bg_settings(width, height)
-
-        self.bg_label = QLabel(self.bg)
-        self.bg_label.setObjectName(f"bg_label")
-        self.set_bg_image(width, height)
 
     def create_menubar(self):
         self.menu = QMenuBar(parent=self)
@@ -291,7 +460,7 @@ class TrackerWindow(QMainWindow):
 
         self.action_open = QAction(self.menu_file)
         self.action_open.setObjectName("action_open")
-        self.action_open.setText("Open State")
+        self.action_open.setText("Open State (Ctrl + O)")
         self.action_open.triggered.connect(self.file_open_triggered)
 
         self.action_save = QAction(self.menu_file)
@@ -349,176 +518,7 @@ class TrackerWindow(QMainWindow):
 
     def update_menu_visibility(self, hide: bool):
         self.menu.setHidden(hide)
-        width, height = self.get_background_size()
-        self.set_window_size(width, height, hide)
-
-    def create_labels(self):
-        offset = -1 if os.name == "nt" else 0
-
-        # create go mode label and light stuff
-        if self.config.gomode_settings is not None:
-            gomode_settings = self.config.gomode_settings
-            width, height = Image.open(gomode_settings.path).size
-
-            self.config.label_gomode = Label.new(
-                self.config,
-                self.state,
-                self.centralwidget,
-                0,
-                "Go Mode",
-                "label_gomode",
-                QRect(gomode_settings.pos.x, gomode_settings.pos.y, width, height),
-                str(gomode_settings.path),
-                0.0 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY,
-                False,
-                1.0,
-            )
-
-            if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
-                width, height = Image.open(gomode_settings.light_path).size
-
-                self.config.label_gomode_light = RotationWidget.new(
-                    self.centralwidget,
-                    "label_gomode_light",
-                    QRect(gomode_settings.light_pos.x, gomode_settings.light_pos.y, width, height),
-                    str(gomode_settings.light_path),
-                )
-
-                self.config.label_gomode_light.setVisible(False)
-
-            self.config.label_gomode.clicked_left.connect(self.label_gomode_clicked_left)
-            self.config.label_gomode.clicked_right.connect(self.label_gomode_clicked_right)
-
-        # create labels for every items of the active inventory
-        for i, item in enumerate(self.config.active_inv.items):
-            label_map: dict[int, Label] = {}
-
-            for j, item_pos in enumerate(item.positions):
-                obj_name = f"item{item.index}_pos_{j}"
-                pos = Pos(item_pos.x + offset, item_pos.y + offset)
-
-                if item.scale_content:
-                    width = 32
-                    height = 32
-                else:
-                    width, height = Image.open(item.paths[0]).size
-
-                label = Label.new(
-                    self.config,
-                    self.state,
-                    self.centralwidget,
-                    item.index,
-                    item.name,
-                    obj_name,
-                    QRect(pos.x, pos.y, width, height),
-                    str(item.paths[0]),
-                    1.0 if item.enabled else GLOBAL_HALF_OPACITY,
-                    item.scale_content,
-                    0.0 if item.enabled else 1.0,
-                )
-
-                label.clicked_left.connect(self.label_clicked_left)
-                label.clicked_middle.connect(self.label_clicked_middle)
-                label.clicked_right.connect(self.label_clicked_right)
-
-                if item.counter is not None:
-                    label.label_counter = OutlinedLabel.new(
-                        self.centralwidget,
-                        self.config,
-                        f"{obj_name}_counter",
-                        QRect(
-                            pos.x + item.counter.pos.x,
-                            pos.y + item.counter.pos.y,
-                            item.counter.width,
-                            item.counter.height,
-                        ),
-                        "",
-                        item.counter.text_settings_index,
-                    )
-
-                    # emit a click if the counter label is clicked (workaround for priority)
-                    label.label_counter.item_label = label
-                    label.label_counter.clicked_left.connect(self.outlinedLabel_clicked_left)
-                    label.label_counter.clicked_middle.connect(self.outlinedLabel_clicked_middle)
-                    label.label_counter.clicked_right.connect(self.outlinedLabel_clicked_right)
-
-                if item.is_reward:
-                    reward_info = self.config.active_inv.rewards.items[label.reward_index]
-                    geometry = QRect(
-                        pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
-                    )
-
-                    if item.reward_map.get(j) is not None:
-                        item.reward_map[j].setGeometry(geometry)
-                        item.reward_map[j].setText(reward_info.name)
-                    else:
-                        item.reward_map[j] = OutlinedLabel.new(
-                            self.centralwidget,
-                            self.config,
-                            f"{obj_name}_reward",
-                            geometry,
-                            reward_info.name,
-                            reward_info.text_settings_index,
-                        )
-
-                    if item.reward_map[j].item_label is None:
-                        item.reward_map[j].item_label = label
-                    label.raise_()
-
-                if item.extra_index is not None:
-                    extra = self.config.extras.items[item.extra_index]
-                    width, height = Image.open(extra.path).size
-                    label.label_extra_img = Label.new(
-                        self.config,
-                        self.state,
-                        self.centralwidget,
-                        item.index,
-                        item.name,
-                        f"{obj_name}_extra_img",
-                        QRect(pos.x + extra.pos.x, pos.y + extra.pos.y, width, height),
-                        str(extra.path),
-                        1.0,
-                        False,
-                        0.0,
-                    )
-
-                    label.label_extra_img.setVisible(False)
-                    label.label_extra_img.clicked_left.connect(self.label_clicked_left)
-                    label.label_extra_img.clicked_middle.connect(self.label_clicked_middle)
-                    label.label_extra_img.clicked_right.connect(self.label_clicked_right)
-
-                if len(self.config.flags) > 0 and item.flag_index is not None:
-                    flag = self.config.flags[item.flag_index]
-                    label.label_flag = OutlinedLabel.new(
-                        self.centralwidget,
-                        self.config,
-                        f"{obj_name}_flag",
-                        QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
-                        flag.texts[label.flag_text_index],
-                        flag.text_settings_index,
-                    )
-                    label.label_flag.setHidden(flag.hidden)
-
-                    label.label_flag.item_label = label
-                    label.label_flag.clicked_left.connect(self.outlinedLabel_clicked_left)
-                    label.label_flag.clicked_middle.connect(self.outlinedLabel_clicked_middle)
-                    label.label_flag.clicked_right.connect(self.outlinedLabel_clicked_right)
-
-                # create the state item
-                self.state.items.append(LabelState(item.index, j, item.name))
-
-                label_map[j] = label
-
-            self.config.active_inv.label_map[item.index] = label_map
-
-        # draw the go mode stuff in front of the items
-        # - side effect: can't click on the items behind them when they're visible
-        # - will I fix this? maybe one day, idk :peepoShrug:
-        if self.config.label_gomode_light is not None:
-            self.config.label_gomode_light.raise_()
-
-        if self.config.label_gomode is not None:
-            self.config.label_gomode.raise_()
+        self.update_window_geometry()
 
     # connections callbacks
 
@@ -528,8 +528,22 @@ class TrackerWindow(QMainWindow):
                 QFileDialog.getOpenFileName(None, "Open State File", str(Path.home()), "*.txt")[0]
             ).resolve()
 
-        if self.config.state_path.exists():
-            self.state.open()
+        if self.state.version >= CURRENT_STATE_VERSION and self.config.state_path.exists():
+            state_items = self.state.open()
+            scene_states: list[PixmapItem] = []
+
+            if state_items is None or self.state.version < CURRENT_STATE_VERSION:
+                show_error(self, "This state file cannot be loaded because it's outdated.")
+            else:
+                for item in reversed(self.scene.items()):
+                    if isinstance(item, PixmapItem):
+                        scene_states.append(item)
+
+                assert len(state_items) == len(scene_states), f"{len(state_items)}, {len(scene_states)}"
+
+                for read, cur in zip(state_items, scene_states):
+                    LabelState.copy(read, cur.state)
+                    cur.apply_state()
 
     def file_save_triggered(self):
         if self.config.state_path is None:
@@ -538,6 +552,15 @@ class TrackerWindow(QMainWindow):
             ).resolve()
 
         if self.config.state_path.parent.exists():
+            self.state.items.clear()
+
+            for item in reversed(self.scene.items()):
+                if isinstance(item, PixmapItem):
+                    self.state.items.append(item.state)
+
+                    if "Bombchu" in item.state.name:
+                        pass
+
             self.state.save()
         else:
             show_error(self, f"ERROR: This path can't be found: {repr(self.config.state_path)}")
@@ -566,58 +589,7 @@ class TrackerWindow(QMainWindow):
             "Made with ♥ by Yanis.\n" + "Version 0.1.0.\n\n" + "Licensed under GNU General Public License v3.0.",
         )
 
-    def outlinedLabel_clicked_left(self):
-        label: OutlinedLabel = self.sender()
-
-        if label.item_label is not None:
-            label.item_label.clicked_left.emit()
-
-    def outlinedLabel_clicked_middle(self):
-        label: OutlinedLabel = self.sender()
-
-        if label.item_label is not None:
-            label.item_label.clicked_middle.emit()
-
-    def outlinedLabel_clicked_right(self):
-        label: OutlinedLabel = self.sender()
-
-        if label.item_label is not None:
-            label.item_label.clicked_right.emit()
-
-    def label_clicked_left(self):
-        label: Label = self.sender()
-        label.update_label(True)
-        self.config.state_saved = False
-
-    def label_clicked_middle(self):
-        label: Label = self.sender()
-        self.config.state_saved = False
-
-        if label.label_flag is not None:
-            label.label_flag.setVisible(not label.label_flag.isVisible())
-        else:
-            label.update_label(True, True)
-
-    def label_clicked_right(self):
-        label: Label = self.sender()
-        self.config.state_saved = False
-        item = self.config.active_inv.items[label.index]
-
-        if item.is_reward:
-            label.next_reward()
-        elif label.label_extra_img is not None:
-            label.label_extra_img.setVisible(not label.label_extra_img.isVisible())
-        else:
-            label.update_label(False)
-
-    def label_gomode_clicked_left(self):
-        label: Label = self.sender()
-        label.update_gomode()
-
-    def label_gomode_clicked_right(self):
-        label: Label = self.sender()
-        label.update_gomode()
-
     def task_rotation_position_changed(self, pos):
-        if self.config.label_gomode_light is not None:
-            self.config.label_gomode_light.setPosition(pos)
+        # only update the rotation when it's supposed to be shown
+        if self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
+            self.config.label_gomode_light.setRotation(pos)

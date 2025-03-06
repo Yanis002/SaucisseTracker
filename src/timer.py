@@ -4,9 +4,11 @@ import colorsys
 import livesplit_core as LS
 
 from pathlib import Path
-from PyQt6.QtCore import QThread, QSize, QRect, Qt
-from PyQt6.QtGui import QAction, QKeyEvent, QIcon
-from PyQt6.QtWidgets import QMainWindow, QMenuBar, QMenu, QLabel, QWidget, QInputDialog
+
+from PyQt6.QtCore import QRect, QSize, Qt, QThread
+from PyQt6.QtGui import QAction, QIcon, QKeyEvent
+from PyQt6.QtWidgets import QInputDialog, QLabel, QMainWindow, QMenu, QMenuBar, QWidget
+
 from common import Color, OS_MENU_OFFSET
 from config import Config
 
@@ -44,7 +46,7 @@ class LiveSplitThread(QThread):
             if min > 0:
                 text = f"{min:02}:{sec:02}"
             elif hour > 0:
-                text = f"{hour:02}:{sec:02}"
+                text = f"{hour:02}:{min:02}:{sec:02}"
             else:
                 text = f"{sec}"
 
