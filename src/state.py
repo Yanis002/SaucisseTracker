@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
 
-from config import Config
+from config import Config, InventoryItem
 from common import show_error, CURRENT_STATE_VERSION
 
 
@@ -44,6 +44,7 @@ class LabelState:
         index: int,
         pos_index: int,
         name: str,
+        item: Optional[InventoryItem],
         infos: Optional[LabelStateInfos] = None,
         is_gomode: bool = False,
         is_gomode_light: bool = False,
@@ -53,6 +54,7 @@ class LabelState:
         self.name = name
         self.is_gomode = is_gomode
         self.is_gomode_light = is_gomode_light
+        self.item = item
 
         if infos is not None:
             self.infos = infos
@@ -66,7 +68,59 @@ class LabelState:
         dst.name = src.name
         dst.is_gomode = src.is_gomode
         dst.is_gomode_light = src.is_gomode_light
+        dst.item = src.item
         LabelStateInfos.copy(src.infos, dst.infos)
+
+    def export(self):
+        assert self.item is not None, "inventory item is required for exporting the state"
+
+        data = [
+            f"Label #{self.index:02}:",
+            f"pos_index = {self.pos_index}",
+            f"name = '{self.name}'",
+        ]
+
+        if self.is_gomode:
+            data.append(f"is_gomode = {self.is_gomode}")
+
+        if self.is_gomode_light:
+            data.append(f"is_gomode_light = {self.is_gomode_light}")
+
+        if self.infos.gomode_visibility:
+            data.append(f"gomode_visibility = {self.infos.gomode_visibility}")
+
+        if self.infos.gomode_light_visibility:
+            data.append(f"gomode_light_visibility = {self.infos.gomode_light_visibility}")
+
+        data.append(f"enabled = {self.infos.enabled}")
+
+        if len(self.item.paths) > 1:
+            data.append(f"img_index = {self.infos.img_index}")
+
+        if self.item.counter is not None:
+            data.extend(
+                [
+                    f"counter_value = {self.infos.counter_value}",
+                    f"counter_show = {self.infos.counter_show}",
+                ]
+            )
+
+        if self.item.is_reward:
+            data.append(f"reward_index = {self.infos.reward_index}")
+
+        if self.item.flag_index is not None:
+            data.extend(
+                [
+                    f"flag_index = {self.infos.flag_index}",
+                    f"flag_text_index = {self.infos.flag_text_index}",
+                    f"show_flag = {self.infos.show_flag}",
+                ]
+            )
+
+        if self.item.extra_index is not None:
+            data.append(f"show_extra_img = {self.infos.show_extra_img}")
+
+        return "\n\t".join(data) + "\n"
 
 
 class State:
@@ -99,10 +153,10 @@ class State:
 
     def get_states_from_file(self, filedata: str):
         new_state = None
-        found_global_settings = False
         items: list[LabelState] = []
 
         for i, line in enumerate(filedata):
+            can_add_item = True
             line = line.strip()
 
             if line.startswith("State Format Version"):
@@ -112,51 +166,56 @@ class State:
                 break
 
             if line == "" or i == 0:
-                if found_global_settings:
-                    found_global_settings = False
-                else:
-                    if new_state is not None:
-                        items.append(new_state)
-                    new_state = LabelState(0, 0, "")
+                if new_state is not None and can_add_item:
+                    items.append(new_state)
+                new_state = LabelState(0, 0, "", None)
 
-                    if line == "":
-                        continue
+                if line == "":
+                    continue
 
-            if not found_global_settings and line.startswith("Global Settings"):
-                found_global_settings = True
-            else:
-                if line.startswith("gomode_visibility"):
-                    self.gomode_visibility = True if line.split(" = ")[1] == "True" else False
-                elif line.startswith("gomode_light_visibility"):
-                    self.gomode_light_visibility = True if line.split(" = ")[1] == "True" else False
-                elif new_state is not None:
-                    if line.startswith("Label #"):
-                        new_state.index = int(line.split("#")[1].removesuffix(":"))
-                    elif line != "":
-                        value = line.split(" = ")[1]
+            if new_state is not None:
+                if line.startswith("Label #"):
+                    new_state.index = int(line.split("#")[1].removesuffix(":"))
+                elif line != "":
+                    elem, value = line.split(" = ")
 
-                        if line.startswith("pos_index"):
+                    match elem:
+                        case "pos_index":
                             new_state.pos_index = int(value)
-                        elif line.startswith("name"):
+                        case "name":
                             new_state.name = value.removeprefix("'").removesuffix("'")
-                        elif line.startswith("enabled"):
+                        case "is_gomode":
+                            new_state.is_gomode = True if value == "True" else False
+                        case "is_gomode_light":
+                            new_state.is_gomode_light = True if value == "True" else False
+                        case "gomode_visibility":
+                            new_state.infos.gomode_visibility = True if value == "True" else False
+                        case "gomode_light_visibility":
+                            new_state.infos.gomode_light_visibility = True if value == "True" else False
+                        case "enabled":
                             new_state.infos.enabled = True if value == "True" else False
-                        elif line.startswith("img_index"):
+                        case "img_index":
                             new_state.infos.img_index = int(value)
-                        elif line.startswith("counter_value"):
+                        case "counter_value":
                             new_state.infos.counter_value = int(value)
-                        elif line.startswith("counter_show"):
+                        case "counter_show":
                             new_state.infos.counter_show = True if value == "True" else False
-                        elif line.startswith("reward_index"):
+                        case "reward_index":
                             new_state.infos.reward_index = int(value)
-                        elif line.startswith("flag_index"):
+                        case "flag_index":
                             new_state.infos.flag_index = int(value) if value != "None" else None
-                        elif line.startswith("flag_text_index"):
+                        case "flag_text_index":
                             new_state.infos.flag_text_index = int(value)
-                        elif line.startswith("show_flag"):
+                        case "show_flag":
                             new_state.infos.show_flag = True if value == "True" else False
-                        elif line.startswith("show_extra_img"):
+                        case "show_extra_img":
                             new_state.infos.show_extra_img = True if value == "True" else False
+                        case _:
+                            can_add_item = False
+                else:
+                    can_add_item = False
+            else:
+                can_add_item = False
 
         return items
 
@@ -174,39 +233,9 @@ class State:
             show_error("ERROR: export path not set")
             return
 
-        gomode_visibility = False
-        gomode_light_visibility = False
-
-        gomode = self.find_gomode()
-        if gomode is not None:
-            gomode_visibility = gomode.infos.gomode_visibility
-
-        gomode_light = self.find_gomode_light()
-        if gomode_light is not None:
-            gomode_light_visibility = gomode_light.infos.gomode_light_visibility
-
         self.path.write_text(
             WARNING_TEXT
-            + (
-                "Global Settings:\n\t"
-                + f"gomode_visibility = {gomode_visibility}\n\t"
-                + f"gomode_light_visibility = {gomode_light_visibility}\n\n"
-            )
-            + "\n".join(
-                f"Label #{s.index:02}:\n\t"
-                + f"pos_index = {s.pos_index}\n\t"
-                + f"name = '{s.name}'\n\t"
-                + f"enabled = {s.infos.enabled}\n\t"
-                + f"img_index = {s.infos.img_index}\n\t"
-                + f"counter_value = {s.infos.counter_value}\n\t"
-                + f"counter_show = {s.infos.counter_show}\n\t"
-                + f"reward_index = {s.infos.reward_index}\n\t"
-                + f"flag_index = {s.infos.flag_index}\n\t"
-                + f"flag_text_index = {s.infos.flag_text_index}\n\t"
-                + f"show_flag = {s.infos.show_flag}\n\t"
-                + f"show_extra_img = {s.infos.show_extra_img}\n"
-                for s in self.items
-            )
+            + "\n".join(s.export() for s in self.items)
             + f"\nState Format Version: {CURRENT_STATE_VERSION[0]}.{CURRENT_STATE_VERSION[1]}\n"
         )
 

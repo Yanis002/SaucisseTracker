@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 )
 
 from common import (
+    Color,
     OutlinedGraphicsTextItem,
     PixmapItem,
     Pos,
@@ -113,7 +114,6 @@ class TrackerWindow(QMainWindow):
         self.view = QGraphicsView(self.scene)
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.view.setStyleSheet("border: 0px;")
 
         self.ze_layout = QVBoxLayout(self.central_widget)
         self.ze_layout.setContentsMargins(0, 0, 0, 0)
@@ -141,6 +141,11 @@ class TrackerWindow(QMainWindow):
     def update_window_geometry(self, is_init: bool = False):
         bg_size = self.background.pixmap().size()
         menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
+
+        # set background color and remove border
+        self.view.setStyleSheet(
+            f"background-color: {Color.to_css(self.config.active_inv.background_color)}; border: 0px;"
+        )
 
         # update scene geometry and ze layout's geometry
         self.scene.setSceneRect(0, 0, bg_size.width(), bg_size.height())
@@ -239,7 +244,7 @@ class TrackerWindow(QMainWindow):
                     item.index,
                     obj_name,
                     0.0 if item.enabled else 1.0,
-                    LabelState(item.index, j, item.name),
+                    LabelState(item.index, j, item.name, item),
                 )
                 pixmap.setPos(pos.x, pos.y)
                 pixmap.state.infos.enabled = item.enabled
@@ -290,7 +295,7 @@ class TrackerWindow(QMainWindow):
                     extra = self.config.extras.items[item.extra_index]
                     n = f"{obj_name}_extra_img"
                     pixmap.extra = self.add_pixmap(
-                        QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, j, n)
+                        QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, j, n, item)
                     )
                     pixmap.extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
                     pixmap.extra.setVisible(False)
@@ -336,7 +341,11 @@ class TrackerWindow(QMainWindow):
             if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
                 pixmap = QPixmap(str(gomode_settings.light_path))
                 self.config.label_gomode_light = self.add_pixmap(
-                    pixmap, 0, "label_gomode_light", 0.0, LabelState(-1, -1, "label_gomode_light", is_gomode_light=True)
+                    pixmap,
+                    0,
+                    "label_gomode_light",
+                    0.0,
+                    LabelState(-1, -1, "label_gomode_light", item, is_gomode_light=True),
                 )
                 self.config.label_gomode_light.setPos(gomode_settings.light_pos.x, gomode_settings.light_pos.y)
                 self.config.label_gomode_light.setVisible(False)
@@ -349,7 +358,7 @@ class TrackerWindow(QMainWindow):
                 0,
                 "label_gomode",
                 1.0,
-                LabelState(-1, -1, "label_gomode", is_gomode=True),
+                LabelState(-1, -1, "label_gomode", item, is_gomode=True),
             )
             self.config.label_gomode.setPos(gomode_settings.pos.x, gomode_settings.pos.y)
 
@@ -435,7 +444,7 @@ class TrackerWindow(QMainWindow):
 
         self.action_open = QAction(self.menu_file)
         self.action_open.setObjectName("action_open")
-        self.action_open.setText("Open State")
+        self.action_open.setText("Open State (Ctrl + O)")
         self.action_open.triggered.connect(self.file_open_triggered)
 
         self.action_save = QAction(self.menu_file)
@@ -514,7 +523,7 @@ class TrackerWindow(QMainWindow):
                     if isinstance(item, PixmapItem):
                         scene_states.append(item)
 
-                assert len(state_items) == len(scene_states)
+                assert len(state_items) == len(scene_states), f"{len(state_items)}, {len(scene_states)}"
 
                 for read, cur in zip(state_items, scene_states):
                     LabelState.copy(read, cur.state)
@@ -566,5 +575,5 @@ class TrackerWindow(QMainWindow):
 
     def task_rotation_position_changed(self, pos):
         # only update the rotation when it's supposed to be shown
-        if self.config.label_gomode_light is not None and self.config.label_gomode_light.opacity() != 0.001:
+        if self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
             self.config.label_gomode_light.setRotation(pos)

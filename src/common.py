@@ -106,6 +106,8 @@ class PixmapItem(QGraphicsPixmapItem):
     def mousePressEvent(self, event):
         """Actions to do when there's a click (left, right or middle). This is the entrypoint of updating items."""
 
+        super().mousePressEvent(event)
+
         # do nothing if this is the go mode light
         if self.state.is_gomode_light:
             return
@@ -155,6 +157,11 @@ class PixmapItem(QGraphicsPixmapItem):
     def wheelEvent(self, event):
         """Actions to do when the wheel is 'moved'. Used as a fast-cycle feature when enabled in the config."""
 
+        super().wheelEvent(event)
+
+        if self.is_gomode():
+            return
+
         if event is not None:
             item = self.config.active_inv.items[self.state.index]
             rewards = self.config.active_inv.rewards
@@ -178,10 +185,16 @@ class PixmapItem(QGraphicsPixmapItem):
         path.addRect(self.boundingRect())
         return path
 
+    def validate_item_index(self):
+        assert self.state.index >= 0, f"Assert triggered on {repr(self.obj_name)}"
+
+    def is_gomode(self):
+        return self.state.is_gomode or self.state.is_gomode_light
+
     def next_reward(self, increase: bool):
         """Switches to the next or previous reward depending if we're incrementing or decrementing the index."""
 
-        assert self.state.index >= 0
+        self.validate_item_index()
         item = self.config.active_inv.items[self.state.index]
 
         for i, _ in enumerate(item.positions):
@@ -209,15 +222,14 @@ class PixmapItem(QGraphicsPixmapItem):
         gomode_settings = self.config.gomode_settings
         cond = gomode_visibility if gomode_visibility is not None else self.effect.strength() > 0.0
 
-        if self.effect is not None:
-            if cond:
-                self.effect.setStrength(0.0)
-                self.setOpacity(1.0)
-                self.state.infos.gomode_visibility = True
-            else:
-                self.effect.setStrength(1.0)
-                self.setOpacity(0.001 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
-                self.state.infos.gomode_visibility = False
+        if cond:
+            self.effect.setStrength(0.0)
+            self.setOpacity(1.0)
+            self.state.infos.gomode_visibility = True
+        else:
+            self.effect.setStrength(1.0)
+            self.setOpacity(0.001 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
+            self.state.infos.gomode_visibility = False
 
         if gomode_visibility is None and self.config.label_gomode_light is not None:
             self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
@@ -226,7 +238,7 @@ class PixmapItem(QGraphicsPixmapItem):
     def update_item_visibility(self):
         """Handles enabling or disabling an item, disabled means the black & white filter is enabled and the opacity lowered."""
 
-        assert self.state.index >= 0
+        self.validate_item_index()
         item = self.config.active_inv.items[self.state.index]
         path_index = 0
 
@@ -250,7 +262,7 @@ class PixmapItem(QGraphicsPixmapItem):
         Note: this is just an example of usage, it can be used for other purposes probably.
         """
 
-        assert self.state.index >= 0
+        self.validate_item_index()
         item = self.config.active_inv.items[self.state.index]
 
         if self.flag is not None and item.flag_index is not None:
@@ -271,8 +283,8 @@ class PixmapItem(QGraphicsPixmapItem):
         Middle clicks are used to perform other actions.
         """
 
-        assert self.state.index >= 0
         item = self.config.active_inv.items[self.state.index]
+        self.validate_item_index()
 
         if not middle_click and len(item.paths) > 1:
             # items using multiple images, like bottles on OoT
@@ -298,9 +310,7 @@ class PixmapItem(QGraphicsPixmapItem):
             else:
                 item.counter.decr()
 
-            if self.effect is not None:
-                item.counter.update(self)
-
+            item.counter.update(self)
             item.enabled = item.counter.show
             self.state.infos.enabled = item.enabled
             self.state.infos.counter_show = item.counter.show
@@ -319,7 +329,7 @@ class PixmapItem(QGraphicsPixmapItem):
     def apply_state(self):
         """Updates the item based on the `State` values. Basically combines the different update functions without the increment stuff."""
 
-        if self.state.index >= 0 and "extra_img" not in self.state.name:
+        if self.is_gomode() or self.state.index >= 0 and "extra_img" not in self.state.name:
             item = self.config.active_inv.items[self.state.index]
 
             if item.is_reward:
@@ -334,7 +344,7 @@ class PixmapItem(QGraphicsPixmapItem):
                 if self.flag is not None:
                     self.flag.setVisible(self.state.infos.show_flag)
 
-            if self.state.is_gomode and self.effect is not None:
+            if self.state.is_gomode:
                 # go-mode image
                 gomode_settings = self.config.gomode_settings
 
@@ -344,9 +354,10 @@ class PixmapItem(QGraphicsPixmapItem):
                 else:
                     self.effect.setStrength(1.0)
                     self.setOpacity(0.001 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
-            elif self.state.is_gomode_light and self.config.label_gomode_light is not None:
+
                 # go-mode light
-                self.config.label_gomode_light.setVisible(self.state.infos.gomode_light_visibility)
+                if self.config.label_gomode_light is not None:
+                    self.config.label_gomode_light.setVisible(self.state.infos.gomode_light_visibility)
             elif len(item.paths) > 1:
                 # items using multiple images (like OoT bottles)
                 self.update_flag()
@@ -359,7 +370,7 @@ class PixmapItem(QGraphicsPixmapItem):
             elif self.extra is not None:
                 # item extras (like the checkmark on OoT songs)
                 self.extra.setVisible(self.state.infos.show_extra_img)
-            else:
+            elif not self.is_gomode():
                 # normal items
                 if self.state.infos.enabled:
                     self.effect.setStrength(0.0)
@@ -525,6 +536,12 @@ class Color:
         """Converts the provided color to a `QColor`."""
 
         return QColor(color.r, color.g, color.b)
+
+    @staticmethod
+    def to_css(color: "Color"):
+        """Converts the provided color to CSS stylesheet"""
+
+        return f"rgb({color.r}, {color.g}, {color.b})"
 
 
 @dataclass
