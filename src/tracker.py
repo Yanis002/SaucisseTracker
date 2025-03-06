@@ -136,6 +136,10 @@ class TrackerWindow(QMainWindow):
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
 
+        # load the state if existing
+        if self.config.state_path is not None:
+            self.file_open_triggered()
+
         self.show()
 
     def update_window_geometry(self, is_init: bool = False):
