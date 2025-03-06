@@ -224,9 +224,10 @@ class State:
             show_error("ERROR: import path not set")
 
         with self.path.open("r") as file:
-            filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
+            raw_data = file.read()
+            filedata = raw_data.removeprefix(WARNING_TEXT).split("\n")
 
-        if "State Format Version" not in filedata:
+        if "State Format Version" not in raw_data:
             self.version = (0, 0)
             return None
 
