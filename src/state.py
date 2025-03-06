@@ -127,7 +127,7 @@ class State:
     def __init__(self, config: Config, path: Optional[Path] = None):
         self.config = config
         self.items: list[LabelState] = []
-        self.version = (0, 0)
+        self.version = CURRENT_STATE_VERSION
 
         if path is not None:
             self.path = path
@@ -225,6 +225,10 @@ class State:
 
         with self.path.open("r") as file:
             filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
+
+        if "State Format Version" not in filedata:
+            self.version = (0, 0)
+            return None
 
         return self.get_states_from_file(filedata)
 

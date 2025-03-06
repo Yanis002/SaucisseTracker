@@ -139,6 +139,10 @@ class TrackerWindow(QMainWindow):
         # load the state if existing
         if self.config.state_path is not None:
             self.file_open_triggered()
+            self.config.state_saved = True
+
+        if self.config.show_timer:
+            self.timer.show()
 
         self.show()
 
@@ -523,11 +527,11 @@ class TrackerWindow(QMainWindow):
                 QFileDialog.getOpenFileName(None, "Open State File", str(Path.home()), "*.txt")[0]
             ).resolve()
 
-        if self.config.state_path.exists():
+        if self.state.version >= CURRENT_STATE_VERSION and self.config.state_path.exists():
             state_items = self.state.open()
             scene_states: list[PixmapItem] = []
 
-            if self.state.version < CURRENT_STATE_VERSION:
+            if state_items is None or self.state.version < CURRENT_STATE_VERSION:
                 show_error(self, "This state file cannot be loaded because it's outdated.")
             else:
                 for item in reversed(self.scene.items()):
