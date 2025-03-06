@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
             self.configs.pop(str(TEMP_CONFIG_DIR / "config.xml"))
 
         if self.tracker_window is not None:
-            self.tracker_window = None
+            self.tracker_window.deleteLater()
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         """Actions to do when the window is closing (not hiding)."""
@@ -187,7 +187,13 @@ class MainWindow(QMainWindow):
         # any file that is called "config." with a format extension (xml, yml, json, etc...)
         for path in sorted(dir.rglob("config.*")):
             absolute = path.resolve()
-            self.configs[str(absolute)] = Config(self, absolute)
+            new_config = Config(self, absolute)
+
+            if not self.is_debug and new_config.xml_version < CURRENT_XML_VERSION:
+                # previously the config's name was defined based on the first inventory name
+                show_info(self, f"Ignoring outdated config named '{new_config.active_inv.name}'.")
+            else:
+                self.configs[str(absolute)] = new_config
 
     def get_config(self):
         """Returns the `Config` for the selected element in the list."""
@@ -222,15 +228,11 @@ class MainWindow(QMainWindow):
 
             self.get_configs(self.config_dir)
             for config in self.configs.values():
-                if not self.is_debug and config.xml_version < CURRENT_XML_VERSION:
-                    # previously the config's name was defined based on the first inventory name
-                    show_info(self, f"Ignoring outdated config named '{config.active_inv.name}'.")
+                if config.icon_path is not None:
+                    icon = QPixmap(str(config.icon_path))
                 else:
-                    if config.icon_path is not None:
-                        icon = QPixmap(str(config.icon_path))
-                    else:
-                        icon = QPixmap(str(config.default_icon_path))
-                    model_items.append((True, config.name, icon.scaledToHeight(32)))
+                    icon = QPixmap(str(config.default_icon_path))
+                model_items.append((True, config.name, icon.scaledToHeight(32)))
 
             self.model_cache = [(elem[0], elem[1], elem[2]) for elem in model_items]
             self.list_configs.setModel(ListViewModel(self.model_cache))
@@ -255,8 +257,7 @@ class MainWindow(QMainWindow):
                 self.configs[str(xml_path)] = Config(self, xml_path)
 
             if len(self.configs) > 0:
-                # self.tracker_window = TrackerWindow(self, copy(self.configs), index.row())
-                self.tracker_window = TrackerWindow(self, copy(self.configs), 1)
+                self.tracker_window = TrackerWindow(self, copy(self.configs), index.row())
                 self.hide()
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")

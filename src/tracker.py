@@ -234,7 +234,7 @@ class TrackerWindow(QMainWindow):
 
         active_inv = self.config.active_inv
 
-        for i, item in enumerate(active_inv.items):
+        for item in active_inv.items:
             for j, item_pos in enumerate(item.positions):
                 obj_name = f"item{item.index}_pos_{j}"
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
@@ -276,17 +276,13 @@ class TrackerWindow(QMainWindow):
                         pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
                     )
 
-                    if item.reward_map.get(j) is not None:
-                        item.reward_map[j].pos(pos.x + reward_info.pos.x, pos.y + reward_info.pos.y)
-                        item.reward_map[j].setPlainText(reward_info.name)
-                    else:
-                        item.reward_map[j] = self.add_outline_text(
-                            f"{obj_name}_reward",
-                            geometry,
-                            reward_info.name,
-                            reward_info.text_settings_index,
-                        )
-                        item.reward_map[j].set_max_width(active_inv.rewards.get_longest_reward())
+                    item.reward_map[j] = self.add_outline_text(
+                        f"{obj_name}_reward",
+                        geometry,
+                        reward_info.name,
+                        reward_info.text_settings_index,
+                    )
+                    item.reward_map[j].set_max_width(active_inv.rewards.get_longest_reward())
 
                     if item.reward_map[j].item_pixmap is None:
                         item.reward_map[j].item_pixmap = pixmap
@@ -314,26 +310,24 @@ class TrackerWindow(QMainWindow):
 
         for item in active_inv.items:
             for static_text in item.static_texts:
-                if static_text.index not in active_inv.text_map:
-                    active_inv.text_map[static_text.index] = self.add_outline_text(
-                        f"item{item.index}_text_{static_text.index}",
-                        QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
-                        static_text.content,
-                        static_text.text_settings_index,
-                        static_text.rotation,
-                    )
-                    active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(True))
-
-        for static_text in active_inv.static_texts:
-            if static_text.index not in active_inv.text_map:
                 active_inv.text_map[static_text.index] = self.add_outline_text(
-                    f"inventory{active_inv.index}_text_{static_text.index}",
+                    f"item{item.index}_text_{static_text.index}",
                     QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
                     static_text.content,
                     static_text.text_settings_index,
                     static_text.rotation,
                 )
-                active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(False))
+                active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(True))
+
+        for static_text in active_inv.static_texts:
+            active_inv.text_map[static_text.index] = self.add_outline_text(
+                f"inventory{active_inv.index}_text_{static_text.index}",
+                QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                static_text.content,
+                static_text.text_settings_index,
+                static_text.rotation,
+            )
+            active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(False))
 
         if self.config.gomode_settings is not None:
             gomode_settings = self.config.gomode_settings
@@ -420,6 +414,19 @@ class TrackerWindow(QMainWindow):
         self.task_rotation.terminate()
         self.task_autosave = None
         self.task_rotation = None
+
+        # cleanup existing references
+        for item in self.config.active_inv.items:
+            for key, val in item.reward_map.items():
+                val.deleteLater()
+            item.reward_map.clear()
+
+        for key, val in self.config.active_inv.text_map.items():
+            val.deleteLater()
+        self.config.active_inv.text_map.clear()
+
+        self.scene.clear()
+        self.config.label_gomode_light = None
 
         if self.parent_ is not None:
             self.parent_.show()

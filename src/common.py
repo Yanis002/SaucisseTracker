@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal, QAbstractListModel, QObject, QRect, QSignalBlocker, QThread, Qt
-from PyQt6.QtGui import QColor, QFont, QPainterPath, QPen, QPixmap, QTextCharFormat, QTextCursor
+from PyQt6.QtGui import QColor, QGuiApplication, QFont, QPainterPath, QPen, QPixmap, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (
     QGraphicsColorizeEffect,
     QGraphicsItem,
@@ -106,13 +106,15 @@ class PixmapItem(QGraphicsPixmapItem):
     def mousePressEvent(self, event):
         """Actions to do when there's a click (left, right or middle). This is the entrypoint of updating items."""
 
-        super().mousePressEvent(event)
+        # we need to call the original function in order to get updates through go-mode light working
+        # but as a side-effect flags are harder to disable on rewards, so we simply ignore this call if it's a flag
+        if self.flag is None:
+            super().mousePressEvent(event)
 
         # do nothing if this is the go mode light
         if self.state.is_gomode_light:
             return
 
-        self.config.state_saved = False
         item = self.config.active_inv.items[self.state.index]
 
         if event is not None:
@@ -123,6 +125,7 @@ class PixmapItem(QGraphicsPixmapItem):
                         self.update_gomode()
                     else:
                         self.update_item(True)
+                    self.config.state_saved = False
                 case Qt.MouseButton.MiddleButton:
                     # middle clicks are used to enable flags on the rewards, it can also be used to update items but it will do
                     # special actions like incrementing by N a counter (if the feature is used, as set by the config file)
@@ -132,6 +135,7 @@ class PixmapItem(QGraphicsPixmapItem):
                             self.state.infos.show_flag = self.flag.isVisible()
                         else:
                             self.update_item(True, True)
+                        self.config.state_saved = False
                 case Qt.MouseButton.RightButton:
                     # right clicks can also show or hide the go-mode thing, it's also used to update rewards and the extra stuff
                     # used for the songs for OoT (for example), also it can updates other items like the other clicks
@@ -144,6 +148,7 @@ class PixmapItem(QGraphicsPixmapItem):
                         self.state.infos.show_extra_img = self.extra.isVisible()
                     else:
                         self.update_item(False)
+                    self.config.state_saved = False
 
     def mouseReleaseEvent(self, event):
         """
@@ -218,7 +223,6 @@ class PixmapItem(QGraphicsPixmapItem):
     def update_gomode(self, gomode_visibility: Optional[bool] = None):
         """Shows or hides the go-mode thing depending on the previous state."""
 
-        self.config.state_saved = False
         gomode_settings = self.config.gomode_settings
         cond = gomode_visibility if gomode_visibility is not None else self.effect.strength() > 0.0
 
@@ -564,6 +568,13 @@ def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str)
     message_box.setWindowTitle(title)
     message_box.setIcon(icon)
     message_box.setText(text)
+
+    # correct position
+    qtRectangle = message_box.frameGeometry()
+    centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
+    qtRectangle.moveCenter(centerPoint)
+    message_box.move(qtRectangle.topLeft())
+
     message_box.show()
 
 
