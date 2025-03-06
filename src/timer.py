@@ -6,7 +6,7 @@ import livesplit_core as LS
 from pathlib import Path
 
 from PyQt6.QtCore import QRect, QSize, Qt, QThread
-from PyQt6.QtGui import QAction, QIcon, QKeyEvent
+from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QGuiApplication
 from PyQt6.QtWidgets import QInputDialog, QLabel, QMainWindow, QMenu, QMenuBar, QWidget
 
 from common import Color, OS_MENU_OFFSET
@@ -106,6 +106,7 @@ class LiveSplit(QMainWindow):
         self.is_stopped = False
         self.use_gradient = self.text_settings.use_gradient
         self.offset = OS_MENU_OFFSET
+        self.is_separate = False
 
         # colors defined in the config file
         self.timer_color = self.text_settings.color
@@ -128,24 +129,24 @@ class LiveSplit(QMainWindow):
         self.menu.setObjectName("timer_menu")
 
         # Controls menu
-        self.menu_ctrls = QMenu(parent=self.menu)
+        self.menu_ctrls = QMenu()
         self.menu_ctrls.setObjectName("timer_menu_ctrls")
         self.menu_ctrls.setTitle("Controls")
 
         self.start_btn = QAction(self)
-        self.start_btn.setText("Start (Ctrl+S)")
+        self.start_btn.setText("Start (Space)")
         self.start_btn.triggered.connect(self.start_timer)
 
         self.pause_btn = QAction(self)
-        self.pause_btn.setText("Pause (Ctrl+P)")
+        self.pause_btn.setText("Pause (Ctrl + P)")
         self.pause_btn.triggered.connect(self.pause_timer)
 
         self.stop_btn = QAction(self)
-        self.stop_btn.setText("Stop (Ctrl+E)")
+        self.stop_btn.setText("Stop (Ctrl + E)")
         self.stop_btn.triggered.connect(self.stop_timer)
 
         self.set_btn = QAction(self)
-        self.set_btn.setText("Set Time (Ctrl+T)")
+        self.set_btn.setText("Set Time (Ctrl + T)")
         self.set_btn.triggered.connect(self.set_timer_offset)
 
         self.menu_ctrls.addAction(self.start_btn)
@@ -154,20 +155,20 @@ class LiveSplit(QMainWindow):
         self.menu_ctrls.addAction(self.set_btn)
 
         # Appearence menu
-        self.menu_cosmetic = QMenu(parent=self.menu)
+        self.menu_cosmetic = QMenu()
         self.menu_cosmetic.setObjectName("timer_menu_cosmetic")
         self.menu_cosmetic.setTitle("Appearence")
 
         self.time_style = QAction(self)
-        self.time_style.setText("Toggle Style (Ctrl+F)")
+        self.time_style.setText("Toggle Style (Ctrl + F)")
         self.time_style.triggered.connect(self.toggle_style)
 
         self.gradient_btn = QAction(self)
-        self.gradient_btn.setText("Toggle Gradient (Ctrl+G)")
+        self.gradient_btn.setText("Toggle Gradient (Ctrl + G)")
         self.gradient_btn.triggered.connect(self.toggle_gradient)
 
         self.hide_btn = QAction(self)
-        self.hide_btn.setText("Hide Menu (Ctrl+H)")
+        self.hide_btn.setText("Hide Menu (Ctrl + H)")
         self.hide_btn.triggered.connect(self.hide_menu)
 
         self.menu_cosmetic.addAction(self.time_style)
@@ -190,6 +191,9 @@ class LiveSplit(QMainWindow):
         self.ls_thread.start()
         self.ls_thread.set_time(0)
         self.ls_thread.full_format = not self.text_settings.is_minimal
+
+        if not self.is_separate:
+            self.menu.setHidden(True)
 
     def set_style(self):
         font = self.config.get_font(self.text_settings)
@@ -230,9 +234,17 @@ class LiveSplit(QMainWindow):
             )
 
     def update_menu_visibility(self, hide: bool):
-        offset = 0 if hide else self.offset
-        self.menu.setHidden(hide)
-        self.setFixedSize(QSize(300, 55 + offset))
+        if not self.is_separate:
+            offset = 0 if hide else self.offset
+            self.menu.setHidden(hide)
+            self.setFixedSize(QSize(300, 55 + offset))
+
+    def showEvent(self, a0):
+        super().showEvent(a0)
+        qtRectangle = self.frameGeometry()
+        centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
 
     def closeEvent(self, a0):
         super().closeEvent(a0)
@@ -243,11 +255,11 @@ class LiveSplit(QMainWindow):
 
         if event.key() == Qt.Key.Key_Escape:
             self.update_menu_visibility(False)
+        elif event.key() == Qt.Key.Key_Space:
+            self.start_timer()
         elif event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             # Ctrl + ...
             match event.key():
-                case Qt.Key.Key_S:
-                    self.start_timer()
                 case Qt.Key.Key_P:
                     self.pause_timer()
                 case Qt.Key.Key_E:

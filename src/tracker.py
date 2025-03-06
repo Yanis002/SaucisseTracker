@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QGraphicsScene,
     QGraphicsTextItem,
     QGraphicsView,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -127,6 +128,9 @@ class TrackerWindow(QMainWindow):
         icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
         self.setWindowIcon(QIcon(str(icon_path)))
 
+        self.timer_proxy = self.scene.addWidget(None)
+        self.update_timer_embed(False)
+
         # update geometry
         self.update_window_geometry(True)
 
@@ -146,9 +150,27 @@ class TrackerWindow(QMainWindow):
 
         self.show()
 
+    def update_timer_embed(self, update_geo: bool):
+        self.timer.is_separate = not self.action_timer_embed.isChecked()
+
+        if self.timer.is_separate:
+            self.timer_proxy.setWidget(self.timer)
+            self.timer_proxy.setPos(0, self.background.pixmap().size().height())
+            self.timer.menu.setHidden(True)
+        else:
+            self.timer_proxy.setWidget(None)
+            self.timer.menu.setHidden(False)
+            self.timer.hide()
+            self.timer.show()
+
+        if update_geo:
+            self.update_window_geometry()
+
     def update_window_geometry(self, is_init: bool = False):
         bg_size = self.background.pixmap().size()
         menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
+        timer_menu_height = self.timer.menu.sizeHint().height()
+        timer_height = self.timer.height() - timer_menu_height if self.timer.is_separate else 0
 
         # set background color and remove border
         self.view.setStyleSheet(
@@ -156,11 +178,11 @@ class TrackerWindow(QMainWindow):
         )
 
         # update scene geometry and ze layout's geometry
-        self.scene.setSceneRect(0, 0, bg_size.width(), bg_size.height())
-        self.ze_layout.setGeometry(QRect(0, 0, bg_size.width(), bg_size.height()))
+        self.scene.setSceneRect(0, 0, bg_size.width(), bg_size.height() + timer_height)
+        self.ze_layout.setGeometry(QRect(0, 0, bg_size.width(), bg_size.height() + timer_height))
 
         # update main window's geometry
-        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height)
+        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height)
 
     def update_window(self):
         # update the config
@@ -441,18 +463,22 @@ class TrackerWindow(QMainWindow):
             self.close()
 
     def create_menubar(self):
-        self.menu = QMenuBar(parent=self)
+        self.menu = QMenuBar()
         self.menu.setObjectName("menu")
 
-        self.menu_file = QMenu(parent=self.menu)
+        self.menu_file = QMenu()
         self.menu_file.setObjectName("menu_file")
         self.menu_file.setTitle("File")
 
-        self.menu_settings = QMenu(parent=self.menu)
+        self.menu_settings = QMenu()
         self.menu_settings.setObjectName("menu_settings")
         self.menu_settings.setTitle("Settings")
 
-        self.action_about = QAction(parent=self.menu)
+        self.menu_timer = QMenu()
+        self.menu_timer.setObjectName("menu_timer")
+        self.menu_timer.setTitle("LiveSplit")
+
+        self.action_about = QAction()
         self.action_about.setObjectName("action_about")
         self.action_about.setText("About")
         self.action_about.triggered.connect(self.about_triggered)
@@ -467,10 +493,17 @@ class TrackerWindow(QMainWindow):
         self.action_save.setText("Save State (Ctrl + S)")
         self.action_save.triggered.connect(self.file_save_triggered)
 
-        self.action_livesplit = QAction(parent=self.menu)
+        self.action_livesplit = QAction()
         self.action_livesplit.setObjectName("action_livesplit")
         self.action_livesplit.setText("Show Timer (Ctrl+T)")
         self.action_livesplit.triggered.connect(self.timer.show)
+
+        self.action_timer_embed = QAction(self.menu_file)
+        self.action_timer_embed.setCheckable(True)
+        self.action_timer_embed.setChecked(self.timer.is_separate)
+        self.action_timer_embed.setObjectName("action_timer_embed")
+        self.action_timer_embed.setText("Separate Window")
+        self.action_timer_embed.triggered.connect(self.update_timer_embed_callback)
 
         self.action_close = QAction(self.menu_file)
         self.action_close.setObjectName("action_close")
@@ -484,7 +517,6 @@ class TrackerWindow(QMainWindow):
 
         self.menu_file.addAction(self.action_open)
         self.menu_file.addAction(self.action_save)
-        self.menu_file.addAction(self.action_livesplit)
         self.menu_file.addAction(self.action_close)
         self.menu_file.addAction(self.action_exit)
 
@@ -510,8 +542,14 @@ class TrackerWindow(QMainWindow):
         self.menu_settings.addAction(self.action_autosave)
         self.menu_settings.addAction(self.action_autoreload)
 
+        self.menu_timer.addAction(self.action_timer_embed)
+        self.menu_timer.addAction(self.action_livesplit)
+        self.menu_timer.addAction(self.timer.menu_ctrls.menuAction())
+        self.menu_timer.addAction(self.timer.menu_cosmetic.menuAction())
+
         self.menu.addAction(self.menu_file.menuAction())
         self.menu.addAction(self.menu_settings.menuAction())
+        self.menu.addAction(self.menu_timer.menuAction())
         self.menu.addAction(self.action_about)
         self.setMenuBar(self.menu)
 
@@ -592,3 +630,6 @@ class TrackerWindow(QMainWindow):
         # only update the rotation when it's supposed to be shown
         if self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
             self.config.label_gomode_light.setRotation(pos)
+
+    def update_timer_embed_callback(self):
+        self.update_timer_embed(True)
