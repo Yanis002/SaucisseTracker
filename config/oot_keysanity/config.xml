@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
-    <Config DefaultInventory="0" StatePath="config/oot/state.txt" ShowTimer="True">
+    <Config XMLVersion="1.0" Name="Ocarina of Time - Keysanity" Icon="items/ocarina_of_time.png" DefaultInventory="0" StatePath="config/oot_keysanity/state.txt" ShowTimer="False">
         <Fonts>
             <Item Index="0" Name="LEMON MILK Bold" Source="fonts/LEMONMILK-Bold.otf"/>
             <Item Index="1" Name="Upheaval TT (BRK)" Source="fonts/upheavtt.ttf"/>
@@ -16,14 +16,15 @@
             <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="1.8"/>
             <!-- note: `ColorAlt` is used as the background's color -->
             <Item Index="5" Name="LiveSplit" FontIndex="4" Size="40" Bold="True" Color="0xA0A0A0" ColorAlt="0x000000" IsTimer="True" UseGradient="True" Minimal="True"/>
-            <Item Index="6" Name="Small Key Counters" FontIndex="2" Size="13.0" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="2"/>
+            <Item Index="6" Name="Small Key Counters" FontIndex="2" Size="15.0" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="2"/>
             <Item Index="7" Name="Small Key Labels" FontIndex="1" Size="9.0" Bold="True" Color="0xFFFFFF" ColorAlt="0x000000" OutlineThickness="2"/>
+            <Item Index="8" Name="Keysanity" FontIndex="0" Size="11.0" Bold="True" Color="0xFFFFFF" ColorAlt="0x000000" OutlineThickness="2"/>
         </TextSettings>
         <Flags>
             <!-- the flags' positions are relative to the item there are associate to -->
-            <Item Index="0" Pos="9;-3" Width="35" Height="15" Text="MQ" TextSettings="3"/>
-            <Item Index="1" Pos="9;21" Width="35" Height="15" Text=";H;L" TextSettings="4" Hidden="False"/>
-            <Item Index="2" Pos="-1;21" Width="35" Height="15" Text=";200;500;999" TextSettings="0" Hidden="False"/>
+            <Item Index="0" Pos="10;-7" Width="35" Height="15" Text="MQ" TextSettings="3"/>
+            <Item Index="1" Pos="17;16" Width="35" Height="15" Text=";H;L" TextSettings="4" Hidden="False"/>
+            <Item Index="2" Pos="-2;17" Width="35" Height="15" Text=";200;500;999" TextSettings="0" Hidden="False"/>
         </Flags>
         <GoMode Pos="129;178" HideIfDisabled="True" Source="gomode.png" LightPath="light.png" LightPos="69;112" LightRotSpeed="-70" LightRotRefresh="0.001"/>
         <Extras>
@@ -32,21 +33,21 @@
         <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time - Keysanity (N64)" Background="background.png" BackgroundColor="0x000000">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
-                <Counter TextSettings="0" Min="10" Max="30" Increment="10" Pos="-6;22" Width="32" Height="15"/>
+                <Counter TextSettings="0" Min="10" Max="30" Increment="10" Pos="-5;18" Width="32" Height="15"/>
             </Item>
             <Item Pos="48;9" Name="Deku Nuts" Source="items/deku_nut.png">
-                <Counter TextSettings="0" Min="20" Max="40" Increment="10" Pos="-6;22" Width="32" Height="15"/>
+                <Counter TextSettings="0" Min="20" Max="40" Increment="10" Pos="-5;18" Width="32" Height="15"/>
             </Item>
             <Item Pos="90;9" Name="Bombs" Source="items/bomb.png">
-                <Counter TextSettings="0" Min="20" Max="40" Increment="10" Pos="-6;22" Width="32" Height="15"/>
+                <Counter TextSettings="0" Min="20" Max="40" Increment="10" Pos="-5;18" Width="32" Height="15"/>
             </Item>
             <Item Pos="131;9" Name="Fairy Bow" Source="items/fairy_bow.png">
-                <Counter TextSettings="0" Min="30" Max="50" Increment="10" Pos="-6;22" Width="32" Height="15"/>
+                <Counter TextSettings="0" Min="30" Max="50" Increment="10" Pos="-5;18" Width="32" Height="15"/>
             </Item>
             <Item Pos="172;9" Name="Fire Arrow" Source="items/fire_arrow.png"/>
             <Item Pos="213;9" Name="Din's Fire" Source="items/dins_fire.png"/>
             <Item Pos="9;48" Name="Fairy Slingshot" Source="items/fairy_slingshot.png">
-                <Counter TextSettings="0" Min="30" Max="50" Increment="10" Pos="-6;22" Width="32" Height="15"/>
+                <Counter TextSettings="0" Min="30" Max="50" Increment="10" Pos="-5;18" Width="32" Height="15"/>
             </Item>
             <Item Pos="48;48" Name="Ocarina">
                 <Sources>
@@ -164,7 +165,7 @@
                 </Sources>
             </Item>
             <Item Pos="172;176" Name="Gold Skulltulas" Source="items/gold_skulltula.png" ScaleContent="True" UseWheel="True">
-                <Counter TextSettings="2" Min="1" Max="100" Increment="1" MiddleIncrement="10" Pos="35;9" Width="32" Height="15" UseWheel="True"/>
+                <Counter TextSettings="2" Min="1" Max="100" Increment="1" MiddleIncrement="10" Pos="32;4" Width="32" Height="15" UseWheel="True"/>
             </Item>
             <!-- Rewards -->
             <Item Reward="True" FlagIndex="0" Pos="131;300" Name="Kokiri Emerald" Source="items/rewards/kokiri_emerald.png"/>
@@ -177,16 +178,16 @@
             <Item Reward="True" FlagIndex="0" Pos="172;345" Name="Spirit Medallion" Source="items/rewards/spirit_medallion.png"/>
             <Item Reward="True" FlagIndex="0" Pos="213;345" Name="Light Medallion" Source="items/rewards/light_medallion.png"/>
             <Rewards UseWheel="True">
-                <Item Pos="-6;23" Width="45" Height="32" Name="????" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="FREE" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="DEKU" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="DC" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="JABU" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="FOREST" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="FIRE" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="WATER" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="SHADOW" TextSettings="1"/>
-                <Item Pos="-6;23" Width="45" Height="32" Name="SPIRIT" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="????" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="FREE" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="DEKU" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="DC" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="JABU" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="FOREST" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="FIRE" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="WATER" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="SHADOW" TextSettings="1"/>
+                <Item Pos="-6;29" Width="45" Height="32" Name="SPIRIT" TextSettings="1"/>
             </Rewards>
             <!-- Alternative way to handle rewards -->
                 <!-- <Item Name="Rewards" Reward="True" UseWheel="True">
@@ -228,53 +229,54 @@
             <Item ExtraIndex="0" Pos="258;352" Name="Prelude of Light" Source="items/songs/prelude.png"/>
 
             <!-- Keys -->
+            <Text Index="0" Pos="288;408" Width="72" Height="12" Rot="90" Content="Dungeons" TextSettings="8"/>
             <Item Pos="8;400" Name="Forest Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="25;395" Width="48" Height="12" Content="Forest" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="1" Pos="12;390" Width="48" Height="12" Rot="0" Content="Forest" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="49;400" Name="Forest Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="90;400" Name="Shadow Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="100;395" Width="54" Height="12" Content="Shadow" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="2" Pos="94;390" Width="54" Height="12" Rot="0" Content="Shadow" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="131;400" Name="Shadow Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="8;441" Name="Fire Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="25;435" Width="36" Height="12" Content="Fire" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="8" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="3" Pos="12;430" Width="36" Height="12" Rot="0" Content="Fire" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="8" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="49;440" Name="Fire Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="90;441" Name="Spirit Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="100;435" Width="48" Height="12" Content="Spirit" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="4" Pos="94;430" Width="48" Height="12" Rot="0" Content="Spirit" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="131;440" Name="Spirit Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="8;481" Name="Water Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="25;475" Width="45" Height="12" Content="Water" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="6" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="5" Pos="12;470" Width="45" Height="12" Rot="0" Content="Water" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="6" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="49;481" Name="Water Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="90;481" Name="Ganon Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="100;475" Width="45" Height="12" Content="Ganon" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="1" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="6" Pos="94;470" Width="45" Height="12" Rot="0" Content="Ganon" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="2" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="132;481" Name="Ganon Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="194;400" Name="BOTW Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="188;395" Width="45" Height="12" Content="BOTW" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="3" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="7" Pos="178;390" Width="45" Height="12" Rot="0" Content="BOTW" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="3" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="194;441" Name="GTG Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="188;435" Width="45" Height="12" Content="GTG" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="9" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="8" Pos="178;430" Width="45" Height="12" Rot="0" Content="GTG" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="9" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="194;481" Name="Fortress Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="0" Pos="175;475" Width="72" Height="12" Content="Fortress" TextSettings="7"/>
-                <Counter TextSettings="6" Min="1" Max="4" Increment="1" Pos="10;22" Width="32" Height="15"/>
+                <Text Index="9" Pos="178;470" Width="72" Height="12" Rot="0" Content="Fortress" TextSettings="7"/>
+                <Counter TextSettings="6" Min="1" Max="4" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
         </Inventory>
     </Config>

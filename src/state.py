@@ -2,10 +2,8 @@ from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
 
-from PyQt6.QtGui import QPixmap
-
-from config import Config
-from common import show_error, GLOBAL_HALF_OPACITY
+from config import Config, InventoryItem
+from common import show_error, CURRENT_STATE_VERSION
 
 
 WARNING_TEXT = "!" * 63 + "\n!!! WARNING: DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING !!!\n" + "!" * 63 + "\n\n"
@@ -22,130 +20,204 @@ class LabelStateInfos:
     flag_text_index: int
     show_flag: bool
     show_extra_img: bool
+    gomode_visibility: bool
+    gomode_light_visibility: bool
+
+    @staticmethod
+    def copy(src: "LabelStateInfos", dst: "LabelStateInfos"):
+        dst.img_index = src.img_index
+        dst.counter_value = src.counter_value
+        dst.counter_show = src.counter_show
+        dst.enabled = src.enabled
+        dst.reward_index = src.reward_index
+        dst.flag_index = src.flag_index
+        dst.flag_text_index = src.flag_text_index
+        dst.show_flag = src.show_flag
+        dst.show_extra_img = src.show_extra_img
+        dst.gomode_visibility = src.gomode_visibility
+        dst.gomode_light_visibility = src.gomode_light_visibility
 
 
 class LabelState:
-    def __init__(self, index: int, pos_index: int, name: str, infos: Optional[LabelStateInfos] = None):
+    def __init__(
+        self,
+        index: int,
+        pos_index: int,
+        name: str,
+        item: Optional[InventoryItem],
+        infos: Optional[LabelStateInfos] = None,
+        is_gomode: bool = False,
+        is_gomode_light: bool = False,
+    ):
         self.index = index
         self.pos_index = pos_index
         self.name = name
+        self.is_gomode = is_gomode
+        self.is_gomode_light = is_gomode_light
+        self.item = item
 
         if infos is not None:
             self.infos = infos
         else:
-            self.infos = LabelStateInfos(-1, int(), bool(), bool(), int(), None, int(), bool(), bool())
+            self.infos = LabelStateInfos(-1, int(), bool(), bool(), int(), None, int(), bool(), bool(), bool(), bool())
+
+    @staticmethod
+    def copy(src: "LabelState", dst: "LabelState"):
+        dst.index = src.index
+        dst.pos_index = src.pos_index
+        dst.name = src.name
+        dst.is_gomode = src.is_gomode
+        dst.is_gomode_light = src.is_gomode_light
+        dst.item = src.item
+        LabelStateInfos.copy(src.infos, dst.infos)
+
+    def export(self):
+        assert self.item is not None, "inventory item is required for exporting the state"
+
+        data = [
+            f"Label #{self.index:02}:",
+            f"pos_index = {self.pos_index}",
+            f"name = '{self.name}'",
+        ]
+
+        if self.is_gomode:
+            data.append(f"is_gomode = {self.is_gomode}")
+
+        if self.is_gomode_light:
+            data.append(f"is_gomode_light = {self.is_gomode_light}")
+
+        if self.infos.gomode_visibility:
+            data.append(f"gomode_visibility = {self.infos.gomode_visibility}")
+
+        if self.infos.gomode_light_visibility:
+            data.append(f"gomode_light_visibility = {self.infos.gomode_light_visibility}")
+
+        data.append(f"enabled = {self.infos.enabled}")
+
+        if len(self.item.paths) > 1:
+            data.append(f"img_index = {self.infos.img_index}")
+
+        if self.item.counter is not None:
+            data.extend(
+                [
+                    f"counter_value = {self.infos.counter_value}",
+                    f"counter_show = {self.infos.counter_show}",
+                ]
+            )
+
+        if self.item.is_reward:
+            data.append(f"reward_index = {self.infos.reward_index}")
+
+        if self.item.flag_index is not None:
+            data.extend(
+                [
+                    f"flag_index = {self.infos.flag_index}",
+                    f"flag_text_index = {self.infos.flag_text_index}",
+                    f"show_flag = {self.infos.show_flag}",
+                ]
+            )
+
+        if self.item.extra_index is not None:
+            data.append(f"show_extra_img = {self.infos.show_extra_img}")
+
+        return "\n\t".join(data) + "\n"
 
 
 class State:
     def __init__(self, config: Config, path: Optional[Path] = None):
         self.config = config
         self.items: list[LabelState] = []
-        self.gomode_visibility = False
-        self.gomode_light_visibility = False
+        self.version = (0, 0)
 
         if path is not None:
             self.path = path
-        else:
+        elif self.config.state_path is not None:
             self.path = self.config.state_path
+        else:
+            self.path = Path("./state.txt").resolve()
 
         if self.path.suffix != ".txt":
             self.path = self.path / ".txt"
 
-    def get_label_state_from_index(self, index: int):
-        for lbl_state in self.items:
-            if lbl_state.index == index:
-                return lbl_state
-
+    def find_gomode(self):
+        for item in self.items:
+            if item.is_gomode:
+                return item
         return None
 
-    def get_states_from_labels(self):
-        gomodefx = self.config.label_gomode.label_effect
-
-        if gomodefx is not None:
-            self.gomode_visibility = gomodefx.strength() == 0.0
-
-        if self.config.label_gomode_light is not None:
-            self.gomode_light_visibility = self.config.label_gomode_light.isVisible()
-        else:
-            self.gomode_light_visibility = False
-
-        for index, sub_map in self.config.active_inv.label_map.items():
-            for i, label in sub_map.items():
-                item = self.config.active_inv.items[index]
-                lbl_state = self.get_label_state_from_index(index)
-                # TODO: improve this (store the informations in LabelStateInfos directly instead of the label widget?)
-                self.items.append(
-                    LabelState(
-                        index,
-                        i,
-                        item.name,
-                        LabelStateInfos(
-                            lbl_state.infos.img_index,
-                            (item.counter.value if item.counter is not None else 0),
-                            (item.counter.show if item.counter is not None else False),
-                            label.label_effect.strength() == 0.0 if label.label_effect is not None else False,
-                            label.reward_index,
-                            item.flag_index,
-                            label.flag_text_index,
-                            label.label_flag.isVisible() if label.label_flag is not None else False,
-                            label.label_extra_img.isVisible() if label.label_extra_img is not None else False,
-                        ),
-                    )
-                )
+    def find_gomode_light(self):
+        for item in self.items:
+            if item.is_gomode_light:
+                return item
+        return None
 
     def get_states_from_file(self, filedata: str):
         new_state = None
-        found_global_settings = False
+        items: list[LabelState] = []
 
         for i, line in enumerate(filedata):
+            can_add_item = True
             line = line.strip()
 
+            if line.startswith("State Format Version"):
+                # version is always at the very end of the file so just break the loop
+                version = line.split(": ")[1].split(".")
+                self.version = (int(version[0]), int(version[1]))
+                break
+
             if line == "" or i == 0:
-                if found_global_settings:
-                    found_global_settings = False
-                else:
-                    if new_state is not None:
-                        self.items.append(new_state)
-                    new_state = LabelState(0, 0, "")
+                if new_state is not None and can_add_item:
+                    items.append(new_state)
+                new_state = LabelState(0, 0, "", None)
 
-                    if line == "":
-                        continue
+                if line == "":
+                    continue
 
-            if not found_global_settings and line.startswith("Global Settings"):
-                found_global_settings = True
-            else:
-                if line.startswith("gomode_visibility"):
-                    self.gomode_visibility = True if line.split(" = ")[1] == "True" else False
-                elif line.startswith("gomode_light_visibility"):
-                    self.gomode_light_visibility = True if line.split(" = ")[1] == "True" else False
-                elif new_state is not None:
-                    if line.startswith("Label #"):
-                        new_state.index = int(line.split("#")[1].removesuffix(":"))
-                    elif line != "":
-                        value = line.split(" = ")[1]
+            if new_state is not None:
+                if line.startswith("Label #"):
+                    new_state.index = int(line.split("#")[1].removesuffix(":"))
+                elif line != "":
+                    elem, value = line.split(" = ")
 
-                        if line.startswith("pos_index"):
+                    match elem:
+                        case "pos_index":
                             new_state.pos_index = int(value)
-                        elif line.startswith("name"):
+                        case "name":
                             new_state.name = value.removeprefix("'").removesuffix("'")
-                        elif line.startswith("enabled"):
+                        case "is_gomode":
+                            new_state.is_gomode = True if value == "True" else False
+                        case "is_gomode_light":
+                            new_state.is_gomode_light = True if value == "True" else False
+                        case "gomode_visibility":
+                            new_state.infos.gomode_visibility = True if value == "True" else False
+                        case "gomode_light_visibility":
+                            new_state.infos.gomode_light_visibility = True if value == "True" else False
+                        case "enabled":
                             new_state.infos.enabled = True if value == "True" else False
-                        elif line.startswith("img_index"):
+                        case "img_index":
                             new_state.infos.img_index = int(value)
-                        elif line.startswith("counter_value"):
+                        case "counter_value":
                             new_state.infos.counter_value = int(value)
-                        elif line.startswith("counter_show"):
+                        case "counter_show":
                             new_state.infos.counter_show = True if value == "True" else False
-                        elif line.startswith("reward_index"):
+                        case "reward_index":
                             new_state.infos.reward_index = int(value)
-                        elif line.startswith("flag_index"):
+                        case "flag_index":
                             new_state.infos.flag_index = int(value) if value != "None" else None
-                        elif line.startswith("flag_text_index"):
+                        case "flag_text_index":
                             new_state.infos.flag_text_index = int(value)
-                        elif line.startswith("show_flag"):
+                        case "show_flag":
                             new_state.infos.show_flag = True if value == "True" else False
-                        elif line.startswith("show_extra_img"):
+                        case "show_extra_img":
                             new_state.infos.show_extra_img = True if value == "True" else False
+                        case _:
+                            can_add_item = False
+                else:
+                    can_add_item = False
+            else:
+                can_add_item = False
+
+        return items
 
     def open(self):
         if self.path is None:
@@ -154,110 +226,17 @@ class State:
         with self.path.open("r") as file:
             filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
 
-        self.get_states_from_file(filedata)
-
-        self.config.label_gomode.update_gomode(self.gomode_visibility)
-
-        if self.config.label_gomode_light is not None:
-            self.config.label_gomode_light.setVisible(self.gomode_light_visibility)
-
-        for state in self.items:
-            item = self.config.active_inv.items[state.index]
-            label = None
-
-            for i, _ in enumerate(item.positions):
-                if i == state.pos_index:
-                    label = self.config.active_inv.label_map[state.index][i]
-                    break
-                else:
-                    label = None
-
-            if label is not None:
-                if label.name != state.name:
-                    print(f"WARNING: name mismatch! ignoring the current label... ('{label.name}', '{state.name}')")
-                    continue
-
-                if item.counter is not None:
-                    item.counter.value = state.infos.counter_value
-                    item.counter.show = state.infos.counter_show
-
-                    if item.counter.value % item.counter.increment:
-                        print("WARNING: the counter's value doesn't match how it's incremented")
-
-                    if item.counter.show:
-                        label.label_counter.setText(f"{item.counter.value}")
-                        label.label_counter.set_text_style(
-                            item.counter.text_settings_index, item.counter.value == item.counter.max
-                        )
-
-                if state.infos.img_index < 0:
-                    path_index = 0
-                else:
-                    path_index = state.infos.img_index
-
-                label.original_pixmap = QPixmap(str(item.paths[path_index]))
-                label.setPixmap(label.original_pixmap)
-                if not state.infos.enabled:
-                    label.set_pixmap_opacity(GLOBAL_HALF_OPACITY)
-
-                if item.is_reward:
-                    label.reward_index = state.infos.reward_index
-                    for i, _ in enumerate(item.positions):
-                        if label.objectName().endswith(f"_pos_{i}"):
-                            reward = item.reward_map[i]
-
-                            if reward is not None and reward.item_label is not None:
-                                item.update_reward(i, self.config.active_inv.rewards.items[label.reward_index])
-
-                if label.label_effect is not None:
-                    label.label_effect.setStrength(0.0 if state.infos.enabled else 1.0)
-
-                item.flag_index = state.infos.flag_index
-                label.flag_text_index = state.infos.flag_text_index
-
-                if item.flag_index is not None and label.label_flag is not None:
-                    flag = self.config.flags[item.flag_index]
-                    total = len(flag.texts) - 1
-                    is_max = False if item.is_reward else label.flag_text_index == total
-
-                    label.label_flag.setText(flag.texts[label.flag_text_index])
-                    label.label_flag.set_text_style(flag.text_settings_index, is_max)
-                    label.label_flag.setVisible(state.infos.show_flag)
-
-                if label.label_extra_img is not None:
-                    label.label_extra_img.setVisible(state.infos.show_extra_img)
-
-        self.config.state_saved = True
+        return self.get_states_from_file(filedata)
 
     def save(self):
         if self.path is None:
             show_error("ERROR: export path not set")
+            return
 
-        self.get_states_from_labels()
-
-        with self.path.open("w") as file:
-            file.write(
-                WARNING_TEXT
-                + (
-                    "Global Settings:\n\t"
-                    + f"gomode_visibility = {self.gomode_visibility}\n\t"
-                    + f"gomode_light_visibility = {self.gomode_light_visibility}\n\n"
-                )
-                + "\n".join(
-                    f"Label #{s.index:02}:\n\t"
-                    + f"pos_index = {s.pos_index}\n\t"
-                    + f"name = '{s.name}'\n\t"
-                    + f"enabled = {s.infos.enabled}\n\t"
-                    + f"img_index = {s.infos.img_index}\n\t"
-                    + f"counter_value = {s.infos.counter_value}\n\t"
-                    + f"counter_show = {s.infos.counter_show}\n\t"
-                    + f"reward_index = {s.infos.reward_index}\n\t"
-                    + f"flag_index = {s.infos.flag_index}\n\t"
-                    + f"flag_text_index = {s.infos.flag_text_index}\n\t"
-                    + f"show_flag = {s.infos.show_flag}\n\t"
-                    + f"show_extra_img = {s.infos.show_extra_img}\n"
-                    for s in self.items
-                )
-            )
+        self.path.write_text(
+            WARNING_TEXT
+            + "\n".join(s.export() for s in self.items)
+            + f"\nState Format Version: {CURRENT_STATE_VERSION[0]}.{CURRENT_STATE_VERSION[1]}\n"
+        )
 
         self.config.state_saved = True

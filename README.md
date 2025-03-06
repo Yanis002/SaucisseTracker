@@ -6,7 +6,6 @@ Work in progress item tracker for randomizers. Aims to be customizable easily wi
 
 - Python (3.10+)
 - PyQt6
-- Pillow
 
 ## Features
 
