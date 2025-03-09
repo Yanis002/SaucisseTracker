@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
     it handles reading and initializing configurations and going in the sub-modes (editor and tracker).
     """
 
-    def __init__(self, is_debug: bool):
+    def __init__(self, is_debug: bool, is_editor: bool):
         """Creates the widgets of the main menu and binds them to function callbacks when required."""
 
         super().__init__()
@@ -53,6 +53,7 @@ class MainWindow(QMainWindow):
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         self.tracker_window: Optional[TrackerWindow] = None
         self.is_debug = is_debug
+        self.is_editor = is_editor
 
         self.setWindowTitle("SaucisseTracker")
         self.setObjectName("MainWindow")
@@ -146,7 +147,10 @@ class MainWindow(QMainWindow):
         self.move(qtRectangle.topLeft())
 
         if is_debug:
-            self.btn_go_clicked()
+            if self.is_editor:
+                self.action_edit_triggered(index_override=1)
+            else:
+                self.btn_go_clicked()
 
     def showEvent(self, e: Optional[QShowEvent]):
         """Actions to do when the window is showing."""
@@ -267,14 +271,15 @@ class MainWindow(QMainWindow):
         """Not implemented yet. Supposed to be opening the future editor to create a new config from scratch."""
         pass
 
-    def action_edit_triggered(self):
+    def action_edit_triggered(self, arg: bool, index_override: int = -1):
         """Not implemented yet. Supposed to be opening the future editor to edit an existing config."""
 
         index = self.list_configs.currentIndex()
         item_name: str = list(self.list_configs.model().itemData(index).values())[0]
 
         if len(self.configs) > 0 and not item_name.endswith(".zip"):
-            self.tracker_editor = TrackerEditor(self, copy(self.configs), index.row())
+            i = index_override if index_override >= 0 else index.row()
+            self.tracker_editor = TrackerEditor(self, copy(self.configs), i)
             self.tracker_editor.show()
             self.hide()
 
@@ -316,6 +321,7 @@ def main():
     # argument used to display the tracker window directly, saves some time
     parser = argparse.ArgumentParser(description="Yet another randomizer item tracker.")
     parser.add_argument("--debug", "-d", dest="is_debug", action="store_true", help="debug mode")
+    parser.add_argument("--editor", "-e", dest="is_editor", action="store_true", help="editor mode")
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
@@ -337,7 +343,7 @@ def main():
     TEMP_CONFIG_DIR.mkdir()
 
     # create main menu window and show it if applicable
-    main_window = MainWindow(args.is_debug)
+    main_window = MainWindow(args.is_debug, args.is_editor)
     if not args.is_debug:
         main_window.show()
 

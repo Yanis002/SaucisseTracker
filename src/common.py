@@ -157,7 +157,13 @@ class PixmapItem(QGraphicsPixmapItem):
         """
 
         super().mouseReleaseEvent(event)
-        print("new pos:", self.pos())
+        if self.config.edit_menu is not None:
+            self.config.edit_menu.update_pos(self.pos().toPoint())
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        if self.config.edit_menu is not None:
+            self.config.edit_menu.update_pos(self.pos().toPoint())
 
     def wheelEvent(self, event):
         """Actions to do when the wheel is 'moved'. Used as a fast-cycle feature when enabled in the config."""

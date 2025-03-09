@@ -75,7 +75,9 @@ class AutosaveThread(QThread):
 class TrackerWindow(QMainWindow):
     keyPressed = pyqtSignal()
 
-    def __init__(self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False):
+    def __init__(
+        self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False
+    ):
         super().__init__()
 
         self.parent_ = parent
@@ -208,6 +210,10 @@ class TrackerWindow(QMainWindow):
         bg_img = QPixmap(str(self.config.active_inv.background))
         self.background = self.scene.addPixmap(bg_img)
 
+        self.timer = LiveSplit(self.config)
+        self.timer_proxy = self.scene.addWidget(None)
+        self.update_timer_embed(False)
+
         # create the new items
         self.create_items()
 
@@ -274,24 +280,25 @@ class TrackerWindow(QMainWindow):
                 obj_name = f"item{item.index}_pos_{j}"
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
-                pixmap = self.add_pixmap(
+                item.pixmap_item = self.add_pixmap(
                     QPixmap(str(item.paths[0])),
                     item.index,
                     obj_name,
                     0.0 if item.enabled else 1.0,
                     LabelState(item.index, j, item.name, item),
                 )
-                pixmap.setPos(pos.x, pos.y)
-                pixmap.state.infos.enabled = item.enabled
+                item.pixmap_item.setPos(pos.x, pos.y)
+                item.pixmap_item.setRotation(item.rotation)
+                item.pixmap_item.state.infos.enabled = item.enabled
 
                 # rescale to 32x32 if necessary
                 # TODO: allow custom values in config files?
                 if item.scale_content:
-                    p = pixmap.pixmap()
-                    pixmap.setScale(min(32 / p.width(), 32 / p.height()))
+                    p = item.pixmap_item.pixmap()
+                    item.pixmap_item.setScale(min(32 / p.width(), 32 / p.height()))
 
                 if item.counter is not None:
-                    pixmap.label_counter = self.add_outline_text(
+                    item.pixmap_item.label_counter = self.add_outline_text(
                         f"{obj_name}_counter",
                         QRect(
                             pos.x + item.counter.pos.x,
@@ -302,11 +309,11 @@ class TrackerWindow(QMainWindow):
                         "",
                         item.counter.text_settings_index,
                     )
-                    pixmap.label_counter.item_pixmap = pixmap
-                    pixmap.label_counter.set_max_width(f"{item.counter.max}")
+                    item.pixmap_item.label_counter.item_pixmap = item.pixmap_item
+                    item.pixmap_item.label_counter.set_max_width(f"{item.counter.max}")
 
                 if item.is_reward:
-                    reward_info = active_inv.rewards.items[pixmap.state.infos.reward_index]
+                    reward_info = active_inv.rewards.items[item.pixmap_item.state.infos.reward_index]
                     geometry = QRect(
                         pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
                     )
@@ -320,28 +327,28 @@ class TrackerWindow(QMainWindow):
                     item.reward_map[j].set_max_width(active_inv.rewards.get_longest_reward())
 
                     if item.reward_map[j].item_pixmap is None:
-                        item.reward_map[j].item_pixmap = pixmap
+                        item.reward_map[j].item_pixmap = item.pixmap_item
 
                 if item.extra_index is not None:
                     extra = self.config.extras.items[item.extra_index]
                     n = f"{obj_name}_extra_img"
-                    pixmap.extra = self.add_pixmap(
+                    item.pixmap_item.extra = self.add_pixmap(
                         QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, j, n, item)
                     )
-                    pixmap.extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
-                    pixmap.extra.setVisible(False)
+                    item.pixmap_item.extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
+                    item.pixmap_item.extra.setVisible(False)
 
                 if len(self.config.flags) > 0 and item.flag_index is not None:
                     flag = self.config.flags[item.flag_index]
-                    pixmap.flag = self.add_outline_text(
+                    item.pixmap_item.flag = self.add_outline_text(
                         f"{obj_name}_flag",
                         QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
-                        flag.texts[pixmap.state.infos.flag_text_index],
+                        flag.texts[item.pixmap_item.state.infos.flag_text_index],
                         flag.text_settings_index,
                     )
-                    pixmap.flag.setVisible(not flag.hidden)
-                    pixmap.flag.item_pixmap = pixmap
-                    pixmap.flag.set_max_width(flag.get_longest_flag())
+                    item.pixmap_item.flag.setVisible(not flag.hidden)
+                    item.pixmap_item.flag.item_pixmap = item.pixmap_item
+                    item.pixmap_item.flag.set_max_width(flag.get_longest_flag())
 
         for item in active_inv.items:
             for static_text in item.static_texts:

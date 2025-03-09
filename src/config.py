@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING
 from xml.etree import ElementTree as ET
 from xml.dom import minidom as MD
 
@@ -8,6 +8,9 @@ from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
 
 from common import Color, OutlinedGraphicsTextItem, PixmapItem, Pos, show_error, GLOBAL_HALF_OPACITY
+
+if TYPE_CHECKING:
+    from editor import TrackerEditorMenu
 
 active_config_dir: Optional[Path] = None
 
@@ -220,6 +223,7 @@ class InventoryItem:
     paths: list[Path]
     counter: Optional[Counter]
     positions: list[Pos]
+    rotation: int
     enabled: bool
     scale_content: bool
     is_reward: bool
@@ -228,6 +232,7 @@ class InventoryItem:
     extra_index: Optional[int]
     static_texts: list[TextItem]
     reward_map: dict[int, OutlinedGraphicsTextItem]
+    pixmap_item: Optional[PixmapItem] = None
 
     def update_reward(self, index: int, reward_info: RewardItem):
         pos = self.reward_map[index].item_pixmap.pos()
@@ -259,6 +264,8 @@ class InventoryItem:
 
                 for pos in self.positions:
                     _ = ET.SubElement(positions, "Item", {"X": f"{pos.x}", "Y": f"{pos.y}"})
+
+        attrib["Rot"] = f"{self.rotation}"
 
         if len(self.static_texts) > 0:
             for label in self.static_texts:
@@ -509,10 +516,10 @@ class GoModeSettings:
         }
 
         if self.light_path is not None and self.light_pos is not None:
-            attrib["LightPath"] = (f"{self.light_path.relative_to(active_config_dir)}",)
-            attrib["LightPos"] = (self.light_pos.to_str(),)
-            attrib["LightRotSpeed"] = (f"{self.rotation_speed}",)
-            attrib["LightRotRefresh"] = (f"{self.thread_refresh_rate}",)
+            attrib["LightPath"] = f"{self.light_path.relative_to(active_config_dir)}"
+            attrib["LightPos"] = self.light_pos.to_str()
+            attrib["LightRotSpeed"] = f"{self.rotation_speed}"
+            attrib["LightRotRefresh"] = f"{self.thread_refresh_rate}"
 
         return ET.SubElement(parent, "GoMode", attrib)
 
@@ -543,6 +550,7 @@ class Config:
 
         self.label_gomode: Optional[PixmapItem] = None
         self.label_gomode_light: Optional[PixmapItem] = None
+        self.edit_menu: Optional["TrackerEditorMenu"] = None
 
         match self.config_path.suffix:
             case ".xml":
@@ -640,15 +648,19 @@ class Config:
         active_config_dir = self.config_dir
         root = ET.Element("Root")
 
+        state_path = self.state_path
+        if not state_path.is_relative_to(active_config_dir):
+            state_path = self.state_path.relative_to(active_config_dir)
+
         config = ET.SubElement(
             root,
             "Config",
             {
-                "Version": f"{self.version[0]}.{self.version[1]}",
+                "XMLVersion": f"{self.xml_version[0]}.{self.xml_version[1]}",
                 "Name": self.name,
                 "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
                 "DefaultInventory": f"{self.default_inv}",
-                "StatePath": f"{self.state_path.relative_to(active_config_dir)}",
+                "StatePath": f"{state_path}",
                 "ShowTimer": f"{self.show_timer}",
             },
         )
@@ -866,6 +878,7 @@ class Config:
                                 paths,
                                 counter,
                                 positions,
+                                self.parse_int(item.get("Rot", "0")),
                                 self.parse_bool(item.get("Enabled", "False")),
                                 self.parse_bool(item.get("ScaleContent", "False")),
                                 self.parse_bool(item.get("Reward", "False")),
