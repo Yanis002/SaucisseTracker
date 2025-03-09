@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
 
         if is_debug:
             if self.is_editor:
-                self.action_edit_triggered(index_override=1)
+                self.action_edit_triggered(False, 1)
             else:
                 self.btn_go_clicked()
 

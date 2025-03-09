@@ -3,7 +3,7 @@ from typing import Optional
 
 from PyQt6.QtCore import QPoint
 from PyQt6.QtGui import QGuiApplication, QPixmap
-from PyQt6.QtWidgets import QWidget, QLabel, QListView, QPushButton, QSpinBox, QGraphicsItem
+from PyQt6.QtWidgets import QWidget, QLabel, QListView, QPushButton, QSpinBox, QGraphicsItem, QFrame
 
 from common import ListViewModel
 from config import Config, InventoryItem
@@ -27,8 +27,8 @@ class TrackerEditorMenu(QWidget):
             self.model_cache.append((True, item.name, item.pixmap_item.pixmap().scaled(32, 32)))
 
         self.list_selected.setModel(ListViewModel(self.model_cache))
-        model = self.list_selected.selectionModel()
-        model.currentChanged.connect(self.selection_changed)
+        self.model = self.list_selected.selectionModel()
+        self.model.currentChanged.connect(self.selection_changed)
 
         self.label_pos_x = QLabel("X", self)
         self.label_pos_x.setGeometry(280, 30, 16, 20)
@@ -54,8 +54,17 @@ class TrackerEditorMenu(QWidget):
         self.angle.setMaximum(360)
         self.angle.valueChanged.connect(self.update_angle)
 
+        self.btn_delete = QPushButton("Delete Item", self)
+        self.btn_delete.setGeometry(262, 340, 191, 34)
+        self.btn_delete.pressed.connect(self.remove_item)
+
+        self.separator_1 = QFrame(self)
+        self.separator_1.setGeometry(258, 370, 201, 20)
+        self.separator_1.setFrameShape(QFrame.Shape.HLine)
+        self.separator_1.setFrameShadow(QFrame.Shadow.Sunken)
+
         self.btn_save = QPushButton("Save Config", self)
-        self.btn_save.setGeometry(370, 388, 90, 35)
+        self.btn_save.setGeometry(370, 386, 90, 35)
         self.btn_save.pressed.connect(self.save_config)
 
         self.setGeometry(0, 0, 470, 430)
@@ -119,6 +128,20 @@ class TrackerEditorMenu(QWidget):
     def save_config(self):
         self.config.to_xml()
         print("Config saved successfully!")
+
+    def remove_item(self):
+        item = self.get_item()
+        scene = item.pixmap_item.scene()
+
+        if scene is not None:
+            self.model_cache.pop(item.index)
+            self.config.active_inv.remove_item(item.index)
+
+            if item.pixmap_item.label_counter is not None:
+                scene.removeItem(item.pixmap_item.label_counter)
+
+            scene.removeItem(item.pixmap_item)
+            self.list_selected.viewport().update()
 
 
 class TrackerEditor(TrackerWindow):

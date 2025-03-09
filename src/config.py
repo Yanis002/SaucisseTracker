@@ -497,6 +497,14 @@ class Inventory:
                     str_max = text.content
         return str_max
 
+    def remove_item(self, index: int):
+        self.items.pop(index)
+
+        for item in self.items:
+            if item.index > index:
+                item.index -= 1
+                item.pixmap_item.state.index = item.index
+
 
 @dataclass
 class GoModeSettings:
