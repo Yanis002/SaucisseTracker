@@ -48,7 +48,7 @@ class AutosaveThread(QThread):
         self.setParent(parent)
         self.setTerminationEnabled(True)
         self.config = config
-        self.run_ = False
+        self.run_ = self.config.autosave_enabled
 
     def run(self):
         while self.run_:
@@ -150,8 +150,12 @@ class TrackerWindow(QMainWindow):
 
         self.show()
 
-    def update_timer_embed(self, update_geo: bool):
-        self.timer.is_separate = not self.action_timer_embed.isChecked()
+    def update_timer_embed(self, update_geo: bool, force: bool = False):
+        if force:
+            self.timer.is_separate = not self.timer.is_separate
+            self.action_timer_embed.setChecked(self.timer.is_separate)
+        else:
+            self.timer.is_separate = not self.action_timer_embed.isChecked()
 
         if self.timer.is_separate:
             self.timer_proxy.setWidget(self.timer)
@@ -421,6 +425,8 @@ class TrackerWindow(QMainWindow):
                     self.timer.show()
                 case Qt.Key.Key_R:
                     self.update_window()
+                case Qt.Key.Key_P:
+                    self.update_timer_embed(True, True)
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         super(QMainWindow, self).closeEvent(e)
@@ -495,14 +501,14 @@ class TrackerWindow(QMainWindow):
 
         self.action_livesplit = QAction()
         self.action_livesplit.setObjectName("action_livesplit")
-        self.action_livesplit.setText("Show Timer (Ctrl+T)")
+        self.action_livesplit.setText("Show Timer (Ctrl + T)")
         self.action_livesplit.triggered.connect(self.timer.show)
 
         self.action_timer_embed = QAction(self.menu_file)
         self.action_timer_embed.setCheckable(True)
         self.action_timer_embed.setChecked(self.timer.is_separate)
         self.action_timer_embed.setObjectName("action_timer_embed")
-        self.action_timer_embed.setText("Separate Window")
+        self.action_timer_embed.setText("Embedded Window (Ctrl + P)")
         self.action_timer_embed.triggered.connect(self.update_timer_embed_callback)
 
         self.action_close = QAction(self.menu_file)
@@ -535,7 +541,7 @@ class TrackerWindow(QMainWindow):
 
         self.action_hide = QAction(self.menu_file)
         self.action_hide.setObjectName("action_hide")
-        self.action_hide.setText("Hide Menu (Ctrl+H)")
+        self.action_hide.setText("Hide Menu (Ctrl + H)")
         self.action_hide.triggered.connect(self.settings_hide_triggered)
 
         self.menu_settings.addAction(self.action_hide)

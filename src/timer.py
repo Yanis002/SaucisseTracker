@@ -5,7 +5,7 @@ import livesplit_core as LS
 
 from pathlib import Path
 
-from PyQt6.QtCore import QRect, QSize, Qt, QThread
+from PyQt6.QtCore import pyqtSignal, QRect, QSize, Qt, QThread
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QGuiApplication
 from PyQt6.QtWidgets import QInputDialog, QLabel, QMainWindow, QMenu, QMenuBar, QWidget
 
@@ -14,11 +14,10 @@ from config import Config
 
 
 class LiveSplitThread(QThread):
-    def __init__(self, main: "LiveSplit"):
+    timer = pyqtSignal(object)
+
+    def __init__(self):
         super().__init__()
-        self.run_ = True
-        self.main = main
-        self.full_format = False
         self.is_editor_opened = False
 
         self.ls_run = LS.Run.new()
@@ -29,28 +28,6 @@ class LiveSplitThread(QThread):
     def create_timer(self, run: LS.Run):
         self.ls_timer = LS.Timer.new(run)
         assert self.ls_timer is not None
-
-    def set_time(self, start_ms: int):
-        assert start_ms >= 0
-        temp_sec, ms = divmod(start_ms, 1000)
-        temp_min, sec = divmod(temp_sec, 60)
-        hour, min = divmod(temp_min, 60)
-
-        ms_str = f"{ms}"[:2]
-        if len(ms_str) < 2:
-            ms_str = f"{ms:02}"
-
-        if self.full_format:
-            text = f"{hour:02}:{min:02}:{sec:02}"
-        else:
-            if min > 0:
-                text = f"{min:02}:{sec:02}"
-            elif hour > 0:
-                text = f"{hour:02}:{min:02}:{sec:02}"
-            else:
-                text = f"{sec}"
-
-        self.main.time_lbl.setText(f"{text}.{ms_str}")
 
     def get_time(self):
         if not self.is_editor_opened:
@@ -86,12 +63,11 @@ class LiveSplitThread(QThread):
         self.is_editor_opened = False
 
     def run(self):
-        while self.run_:
+        while True:
             if not self.is_editor_opened:
-                self.set_time(self.get_time())
+                self.timer.emit(self.get_time())
 
     def stop(self):
-        self.run_ = False
         self.quit()
 
 
@@ -107,6 +83,7 @@ class LiveSplit(QMainWindow):
         self.use_gradient = self.text_settings.use_gradient
         self.offset = OS_MENU_OFFSET
         self.is_separate = False
+        self.full_format = False
 
         # colors defined in the config file
         self.timer_color = self.text_settings.color
@@ -187,10 +164,11 @@ class LiveSplit(QMainWindow):
         self.time_lbl.setWordWrap(False)
         self.set_style()
 
-        self.ls_thread = LiveSplitThread(self)
+        self.ls_thread = LiveSplitThread()
+        self.ls_thread.timer.connect(self.set_time)
         self.ls_thread.start()
-        self.ls_thread.set_time(0)
-        self.ls_thread.full_format = not self.text_settings.is_minimal
+        self.set_time(0)
+        self.full_format = not self.text_settings.is_minimal
 
         if not self.is_separate:
             self.menu.setHidden(True)
@@ -306,7 +284,7 @@ class LiveSplit(QMainWindow):
                 self.ls_thread.set_timer_offset(new_time)
 
     def toggle_style(self):
-        self.ls_thread.full_format = not self.ls_thread.full_format
+        self.full_format = not self.full_format
 
     def toggle_gradient(self):
         self.use_gradient = not self.use_gradient
@@ -314,3 +292,25 @@ class LiveSplit(QMainWindow):
 
     def hide_menu(self):
         self.update_menu_visibility(not self.menu.isHidden())
+
+    def set_time(self, start_ms: int):
+        assert start_ms >= 0
+        temp_sec, ms = divmod(start_ms, 1000)
+        temp_min, sec = divmod(temp_sec, 60)
+        hour, min = divmod(temp_min, 60)
+
+        ms_str = f"{ms}"[:2]
+        if len(ms_str) < 2:
+            ms_str = f"{ms:02}"
+
+        if self.full_format:
+            text = f"{hour:02}:{min:02}:{sec:02}"
+        else:
+            if min > 0:
+                text = f"{min:02}:{sec:02}"
+            elif hour > 0:
+                text = f"{hour:02}:{min:02}:{sec:02}"
+            else:
+                text = f"{sec}"
+
+        self.time_lbl.setText(f"{text}.{ms_str}")
