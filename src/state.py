@@ -68,11 +68,10 @@ class LabelState:
         dst.name = src.name
         dst.is_gomode = src.is_gomode
         dst.is_gomode_light = src.is_gomode_light
-        dst.item = src.item
         LabelStateInfos.copy(src.infos, dst.infos)
 
     def export(self):
-        assert self.item is not None, "inventory item is required for exporting the state"
+        assert self.item is not None, f"inventory item is required for exporting the state ({repr(self.name)})"
 
         data = [
             f"Label #{self.index:02}:",
@@ -224,9 +223,10 @@ class State:
             show_error("ERROR: import path not set")
 
         with self.path.open("r") as file:
-            filedata = file.read().removeprefix(WARNING_TEXT).split("\n")
+            raw_data = file.read()
+            filedata = raw_data.removeprefix(WARNING_TEXT).split("\n")
 
-        if "State Format Version" not in filedata:
+        if "State Format Version" not in raw_data:
             self.version = (0, 0)
             return None
 

@@ -11,6 +11,15 @@
             "justMyCode": true
         },
         {
+            "name": "Fast Debug",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/main.py",
+            "args": ["-d"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Debug Test",
             "type": "debugpy",
             "request": "launch",

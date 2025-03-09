@@ -15,7 +15,7 @@
             <Item Index="3" Name="Dungeon Flag" FontIndex="0" Size="9" Bold="True" Color="0x00FFFF" OutlineThickness="1.8"/>
             <Item Index="4" Name="Hookshot Flag" FontIndex="0" Size="10" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="1.8"/>
             <!-- note: `ColorAlt` is used as the background's color -->
-            <Item Index="5" Name="LiveSplit" FontIndex="4" Size="40" Bold="True" Color="0xA0A0A0" ColorAlt="0x000000" IsTimer="True" UseGradient="True" Minimal="True"/>
+            <Item Index="5" Name="LiveSplit" FontIndex="4" Size="40" Bold="True" Color="0xA0A0A0" ColorAlt="0x1E1E1E" IsTimer="True" UseGradient="True" Minimal="True"/>
             <Item Index="6" Name="Small Key Counters" FontIndex="2" Size="15.0" Bold="True" Color="0xFFFFFF" ColorAlt="0x00FF00" OutlineThickness="2"/>
             <Item Index="7" Name="Small Key Labels" FontIndex="1" Size="9.0" Bold="True" Color="0xFFFFFF" ColorAlt="0x000000" OutlineThickness="2"/>
             <Item Index="8" Name="Keysanity" FontIndex="0" Size="11.0" Bold="True" Color="0xFFFFFF" ColorAlt="0x000000" OutlineThickness="2"/>
@@ -30,7 +30,7 @@
         <Extras>
             <Item Index="0" Pos="18;-4" Path="check.png"/>
         </Extras>
-        <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time - Keysanity (N64)" Background="background.png" BackgroundColor="0x000000">
+        <Inventory Index="0" Icon="items/ocarina_of_time.png" Name="Ocarina of Time - Keysanity (N64)" Background="background.png" BackgroundColor="0x1E1E1E">
             <!-- Items -->
             <Item Pos="9;9" Name="Deku Sticks" Source="items/deku_stick.png">
                 <Counter TextSettings="0" Min="10" Max="30" Increment="10" Pos="-5;18" Width="32" Height="15"/>
