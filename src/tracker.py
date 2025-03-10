@@ -175,6 +175,7 @@ class TrackerWindow(QMainWindow):
         menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
         timer_menu_height = self.timer.menu.sizeHint().height()
         timer_height = self.timer.height() - timer_menu_height if self.timer.is_separate else 0
+        offset = 1 if os.name == "nt" else 0
 
         # set background color and remove border
         self.view.setStyleSheet(
@@ -186,7 +187,7 @@ class TrackerWindow(QMainWindow):
         self.ze_layout.setGeometry(QRect(0, 0, bg_size.width(), bg_size.height() + timer_height))
 
         # update main window's geometry
-        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height)
+        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height + offset)
 
     def update_window(self):
         # update the config
