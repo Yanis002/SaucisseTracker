@@ -306,10 +306,10 @@ class LiveSplit(QMainWindow):
         if self.full_format:
             text = f"{hour:02}:{min:02}:{sec:02}"
         else:
-            if min > 0:
-                text = f"{min:02}:{sec:02}"
-            elif hour > 0:
+            if hour > 0:
                 text = f"{hour:02}:{min:02}:{sec:02}"
+            elif min > 0:
+                text = f"{min:02}:{sec:02}"
             else:
                 text = f"{sec}"
 
