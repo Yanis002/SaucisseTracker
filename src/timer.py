@@ -82,7 +82,7 @@ class LiveSplit(QMainWindow):
         self.is_stopped = False
         self.use_gradient = self.text_settings.use_gradient
         self.offset = OS_MENU_OFFSET
-        self.is_separate = False
+        self.is_separate = not self.config.embed_timer
         self.full_format = False
 
         # colors defined in the config file

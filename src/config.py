@@ -525,6 +525,7 @@ class Config:
 
         self.default_inv = 0
         self.show_timer = False
+        self.embed_timer = False
         self.fonts: list[Font] = []
         self.text_settings: list[TextSettings] = []
         self.flags: list[FlagItem] = []
@@ -650,6 +651,7 @@ class Config:
                 "DefaultInventory": f"{self.default_inv}",
                 "StatePath": f"{self.state_path.relative_to(active_config_dir)}",
                 "ShowTimer": f"{self.show_timer}",
+                "EmbedTimer": f"{self.embed_timer}",
             },
         )
 
@@ -700,6 +702,7 @@ class Config:
         self.icon_path = self.parse_path(config.get("Icon", self.default_icon_path), "config icon path", False)
         self.default_inv = int(config.get("DefaultInventory", "0"))
         self.show_timer = self.parse_bool(config.get("ShowTimer", "False"))
+        self.embed_timer = self.parse_bool(config.get("EmbedTimer", "False"))
 
         p = config.get("StatePath")
         self.state_path = Path(p).resolve() if p is not None else None
