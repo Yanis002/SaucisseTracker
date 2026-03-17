@@ -60,9 +60,15 @@ class Rotation(QThread):
         self.position = position
         self.speed = self.config.gomode_settings.rotation_speed
         self.thread_refresh = self.config.gomode_settings.thread_refresh_rate
+        self.do_run = True
+
+    def stop(self):
+        self.do_run = False
+        self.wait()
+        self.quit()
 
     def run(self):
-        while True:
+        while self.do_run:
             diff = self.thread_refresh * self.speed
             self.position = round((self.position + diff) % 360, 2)
             self.positionChanged.emit(self.position)

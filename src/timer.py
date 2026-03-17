@@ -24,6 +24,7 @@ class LiveSplitThread(QThread):
         self.ls_run.set_category_name("Randomizer")
         self.ls_run.push_segment(LS.Segment.new("Seed Completed"))
         self.create_timer(self.ls_run)
+        self.do_run = True
 
     def create_timer(self, run: LS.Run):
         self.ls_timer = LS.Timer.new(run)
@@ -63,11 +64,13 @@ class LiveSplitThread(QThread):
         self.is_editor_opened = False
 
     def run(self):
-        while True:
+        while self.do_run:
             if not self.is_editor_opened:
                 self.timer.emit(self.get_time())
 
     def stop(self):
+        self.do_run = False
+        self.wait()
         self.quit()
 
 
@@ -82,7 +85,7 @@ class LiveSplit(QMainWindow):
         self.is_stopped = False
         self.use_gradient = self.text_settings.use_gradient
         self.offset = OS_MENU_OFFSET
-        self.is_separate = False
+        self.is_separate = not self.config.embed_timer
         self.full_format = False
 
         # colors defined in the config file
@@ -306,10 +309,10 @@ class LiveSplit(QMainWindow):
         if self.full_format:
             text = f"{hour:02}:{min:02}:{sec:02}"
         else:
-            if min > 0:
-                text = f"{min:02}:{sec:02}"
-            elif hour > 0:
+            if hour > 0:
                 text = f"{hour:02}:{min:02}:{sec:02}"
+            elif min > 0:
+                text = f"{min:02}:{sec:02}"
             else:
                 text = f"{sec}"
 

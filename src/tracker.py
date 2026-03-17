@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +18,6 @@ from PyQt6.QtWidgets import (
     QGraphicsScene,
     QGraphicsTextItem,
     QGraphicsView,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -48,13 +46,18 @@ class AutosaveThread(QThread):
         self.setParent(parent)
         self.setTerminationEnabled(True)
         self.config = config
-        self.run_ = self.config.autosave_enabled
+        self.do_run = True
+
+    def stop(self):
+        self.do_run = False
+        self.wait()
+        self.quit()
 
     def run(self):
-        while self.run_:
+        while self.do_run:
             # every 5 minutes
             # TODO: configurable time
-            time.sleep(5 * 60)
+            self.sleep(5 * 60)
 
             if self.config.autosave_enabled:
                 folder = Path("autosaves/").resolve()
@@ -178,6 +181,7 @@ class TrackerWindow(QMainWindow):
         menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
         timer_menu_height = self.timer.menu.sizeHint().height()
         timer_height = self.timer.height() - timer_menu_height if self.timer.is_separate else 0
+        offset = 1 if os.name == "nt" else 0
 
         # set background color and remove border
         self.view.setStyleSheet(
@@ -189,7 +193,7 @@ class TrackerWindow(QMainWindow):
         self.ze_layout.setGeometry(QRect(0, 0, bg_size.width(), bg_size.height() + timer_height))
 
         # update main window's geometry
-        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height)
+        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height + offset)
 
     def update_window(self):
         # update the config
@@ -454,8 +458,8 @@ class TrackerWindow(QMainWindow):
         self.timer.close()
 
         # terminate and remove the threads
-        self.task_autosave.terminate()
-        self.task_rotation.terminate()
+        self.task_autosave.stop()
+        self.task_rotation.stop()
         self.task_autosave = None
         self.task_rotation = None
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
-    <Config XMLVersion="1.0" Name="Ocarina of Time - Keysanity" Icon="items/boss_key.png" DefaultInventory="0" StatePath="config/oot_keysanity/state.txt" ShowTimer="True">
+    <Config XMLVersion="1.0" Name="Ocarina of Time - Keysanity" Icon="items/boss_key.png" DefaultInventory="0" StatePath="config/oot_keysanity/state.txt" ShowTimer="True" EmbedTimer="True">
         <Fonts>
             <Item Index="0" Name="LEMON MILK Bold" Source="fonts/LEMONMILK-Bold.otf"/>
             <Item Index="1" Name="Upheaval TT (BRK)" Source="fonts/upheavtt.ttf"/>

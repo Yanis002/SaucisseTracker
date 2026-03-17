@@ -54,10 +54,11 @@ class MainWindow(QMainWindow):
         self.tracker_window: Optional[TrackerWindow] = None
         self.is_debug = is_debug
         self.is_editor = is_editor
+        offset = 5 if os.name == "nt" else 0
 
         self.setWindowTitle("SaucisseTracker")
         self.setObjectName("MainWindow")
-        self.setFixedSize(QSize(275, 355))
+        self.setFixedSize(QSize(275, 355 + offset))
         icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
         self.setWindowIcon(QIcon(str(icon_path)))
 
@@ -67,33 +68,33 @@ class MainWindow(QMainWindow):
 
         self.btn_set_config_dir = QPushButton(self.centralwidget)
         self.btn_set_config_dir.setObjectName("btn_set_config_dir")
-        self.btn_set_config_dir.setGeometry(QRect(224, 44, 41, 23))
+        self.btn_set_config_dir.setGeometry(QRect(224, 44 + offset, 41, 23))
         self.btn_set_config_dir.setText("Set")
 
         self.line_edit_config_folder = QLineEdit(self.centralwidget)
         self.line_edit_config_folder.setObjectName("line_edit_config_folder")
-        self.line_edit_config_folder.setGeometry(QRect(10, 45, 211, 20))
+        self.line_edit_config_folder.setGeometry(QRect(10, 45 + offset, 211, 20))
         self.line_edit_config_folder.setReadOnly(True)
 
         self.label_found = QLabel(self.centralwidget)
         self.label_found.setObjectName("label_found")
-        self.label_found.setGeometry(QRect(10, 75, 130, 16))
+        self.label_found.setGeometry(QRect(10, 75 + offset, 130, 16))
         self.label_found.setText("Found configurations")
 
         self.label_config_folder = QLabel(self.centralwidget)
         self.label_config_folder.setObjectName("label_config_folder")
-        self.label_config_folder.setGeometry(QRect(10, 25, 120, 16))
+        self.label_config_folder.setGeometry(QRect(10, 25 + offset, 120, 16))
         self.label_config_folder.setText("Configuration folder")
 
         self.btn_go = QPushButton(self.centralwidget)
         self.btn_go.setObjectName("btn_go")
-        self.btn_go.setGeometry(QRect(10, 295, 256, 51))
+        self.btn_go.setGeometry(QRect(10, 295 + offset, 256, 51))
         self.btn_go.setStyleSheet('font: 75 15pt "MS Shell Dlg 2";')
         self.btn_go.setText("GO!")
 
         self.list_configs = QListView(self.centralwidget)
         self.list_configs.setObjectName("list_configs")
-        self.list_configs.setGeometry(QRect(11, 95, 253, 192))
+        self.list_configs.setGeometry(QRect(11, 95 + offset, 253, 192))
 
         # menu
         self.menu = QMenuBar(parent=self)
