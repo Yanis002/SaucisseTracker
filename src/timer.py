@@ -24,6 +24,7 @@ class LiveSplitThread(QThread):
         self.ls_run.set_category_name("Randomizer")
         self.ls_run.push_segment(LS.Segment.new("Seed Completed"))
         self.create_timer(self.ls_run)
+        self.do_run = True
 
     def create_timer(self, run: LS.Run):
         self.ls_timer = LS.Timer.new(run)
@@ -63,11 +64,13 @@ class LiveSplitThread(QThread):
         self.is_editor_opened = False
 
     def run(self):
-        while True:
+        while self.do_run:
             if not self.is_editor_opened:
                 self.timer.emit(self.get_time())
 
     def stop(self):
+        self.do_run = False
+        self.wait()
         self.quit()
 
 
