@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Any, TYPE_CHECKING
 from xml.etree import ElementTree as ET
@@ -238,7 +238,7 @@ class InventoryItem:
     extra_index: Optional[int]
     static_texts: list[TextItem]
     reward_map: dict[int, OutlinedGraphicsTextItem]
-    pixmap_item: Optional[PixmapItem] = None
+    pixmap_items: list[PixmapItem] = field(default_factory=list)
 
     def update_reward(self, index: int, reward_info: RewardItem):
         pos = self.reward_map[index].item_pixmap.pos()
@@ -509,7 +509,7 @@ class Inventory:
         for item in self.items:
             if item.index > index:
                 item.index -= 1
-                item.pixmap_item.state.index = item.index
+                item.pixmap_items[0].state.index = item.index
 
 
 @dataclass
