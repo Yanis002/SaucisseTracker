@@ -197,9 +197,10 @@ class TrackerWindow(QMainWindow):
         self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height + offset)
 
     def update_window(self):
-        # update the config
-        self.configs[str(self.config.config_path)] = Config(self.config.widget, self.config.config_path)
-        self.config = list(self.configs.values())[self.config_index]
+        if not self.is_editor:
+            # update the config
+            self.configs[str(self.config.config_path)] = Config(self.config.widget, self.config.config_path)
+            self.config = list(self.configs.values())[self.config_index]
 
         if not self.config.active_inv.background.exists():
             show_error(self, f"ERROR: the following background path does not exist: {repr(self.bg_path)}")
@@ -215,9 +216,10 @@ class TrackerWindow(QMainWindow):
         bg_img = QPixmap(str(self.config.active_inv.background))
         self.background = self.scene.addPixmap(bg_img)
 
-        self.timer = LiveSplit(self.config)
-        self.timer_proxy = self.scene.addWidget(None)
-        self.update_timer_embed(False)
+        if not self.is_editor:
+            self.timer = LiveSplit(self.config)
+            self.timer_proxy = self.scene.addWidget(None)
+            self.update_timer_embed(False)
 
         # create the new items
         self.create_items()
@@ -360,6 +362,8 @@ class TrackerWindow(QMainWindow):
         active_inv = self.config.active_inv
 
         for item in active_inv.items:
+            item.pixmap_items.clear()
+
             for j, item_pos in enumerate(item.positions):
                 self.create_item(item, j, item_pos)
 

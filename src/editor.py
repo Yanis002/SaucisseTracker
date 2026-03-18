@@ -15,10 +15,13 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QTableWidget,
     QTableWidgetItem,
+    QColorDialog,
+    QFileDialog,
 )
 
 from common import ListViewModel, Color, Pos
 from config import Config, InventoryItem, Counter
+from shutil import copyfile
 from tracker import TrackerWindow
 
 
@@ -222,11 +225,11 @@ class TrackerEditorMenu(QWidget):
         self.group_bg = QGroupBox("Background Settings", self)
         self.group_bg.setGeometry(740, 610, 301, 101)
 
-        self.bg_color = QLineEdit(self.group_bg)
-        self.bg_color.setGeometry(9, 27, 171, 32)
-        self.bg_color.setText(f"#{Color.pack(config.active_inv.background_color):06X}")
-        self.label_bg_color = QLabel("Background Color", self.group_bg)
-        self.label_bg_color.setGeometry(185, 33, 121, 18)
+        self.label_bg_color = QLabel(f"BG Color: #{Color.pack(config.active_inv.background_color):06X}", self.group_bg)
+        self.label_bg_color.setGeometry(10, 37, 161, 18)
+        self.btn_bg_color = QPushButton("Set BG Color", self.group_bg)
+        self.btn_bg_color.setGeometry(183, 30, 111, 32)
+        self.btn_bg_color.pressed.connect(self.update_bg_color)
 
         self.bg_path = QLineEdit(self.group_bg)
         self.bg_path.setReadOnly(True)
@@ -234,6 +237,7 @@ class TrackerEditorMenu(QWidget):
         self.bg_path.setText(f"{config.active_inv.background}")
         self.btn_bg_open_file = QPushButton("Open File", self.group_bg)
         self.btn_bg_open_file.setGeometry(183, 65, 111, 32)
+        self.btn_bg_open_file.pressed.connect(self.update_bg)
 
         self.btn_add_item = QPushButton("Add Item", self)
         self.btn_add_item.setGeometry(10, 605, 111, 34)
@@ -540,6 +544,39 @@ class TrackerEditorMenu(QWidget):
 
         if item.counter is not None:
             item.counter.show = enabled
+
+    def update_bg_color(self):
+        picked_qcolor = QColorDialog.getColor(
+            Color.convert(self.config.active_inv.background_color), self, "Tracker Background Color Picker"
+        )
+        self.config.active_inv.background_color.r = picked_qcolor.red()
+        self.config.active_inv.background_color.g = picked_qcolor.green()
+        self.config.active_inv.background_color.b = picked_qcolor.blue()
+        self.label_bg_color.setText(f"BG Color: #{Color.pack(self.config.active_inv.background_color):06X}")
+        self.tracker.view.setStyleSheet(
+            f"background-color: {Color.to_css(self.config.active_inv.background_color)}; border: 0px;"
+        )
+
+    def update_bg(self):
+        config_folder = self.config.config_path.parent
+        path_str = QFileDialog.getOpenFileName(self, "Open Background Image", str(config_folder), "*.png")[0]
+
+        if len(path_str) == 0:
+            print("operation was cancelled (bg img file open)")
+            return
+
+        # resolve path, make sure it exists and copy the file to the config folder if the path isn't relative to it
+        path = Path(path_str).resolve()
+        assert path.exists(), "background path doesn't exist?"
+        if not path.is_relative_to(config_folder):
+            dest = config_folder / f"{path.stem}{path.suffix}"
+            copyfile(path, dest)
+            path = dest
+
+        # update the config, the ui and the window
+        self.config.active_inv.background = path
+        self.bg_path.setText(str(path))
+        self.tracker.update_window()
 
 
 class TrackerEditor(TrackerWindow):
