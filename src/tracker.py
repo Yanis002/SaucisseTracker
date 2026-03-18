@@ -34,7 +34,7 @@ from common import (
     CURRENT_STATE_VERSION,
 )
 
-from config import Config
+from config import Config, InventoryItem
 from state import LabelState, State
 from timer import LiveSplit
 
@@ -270,9 +270,88 @@ class TrackerWindow(QMainWindow):
         self.scene.addItem(new_item)
         return new_item
 
-    def create_items(self):
+    def create_item(self, item: InventoryItem, index: int, item_pos: Pos):
         offset = -1 if os.name == "nt" else 0
+        active_inv = self.config.active_inv
+        pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
+        obj_name = f"item{item.index}_pos_{index}"
+        pos.x += offset
+        pos.y += offset
+
+        item.pixmap_items.append(
+            self.add_pixmap(
+                QPixmap(str(item.sources[0].path)),
+                item.index,
+                obj_name,
+                0.0 if item.enabled else 1.0,
+                LabelState(item.index, index, item.name, item),
+            )
+        )
+        item.pixmap_items[index].setPos(pos.x, pos.y)
+        item.pixmap_items[index].setRotation(item.rotation)
+        item.pixmap_items[index].state.infos.enabled = item.enabled
+
+        # rescale to 32x32 if necessary
+        # TODO: allow custom values in config files?
+        if item.scale_content:
+            p = item.pixmap_items[index].pixmap()
+            item.pixmap_items[index].setScale(min(32 / p.width(), 32 / p.height()))
+
+        if item.counter is not None:
+            item.pixmap_items[index].label_counter = self.add_outline_text(
+                f"{obj_name}_counter",
+                QRect(
+                    pos.x + item.counter.pos.x,
+                    pos.y + item.counter.pos.y,
+                    item.counter.width,
+                    item.counter.height,
+                ),
+                "",
+                item.counter.text_settings_index,
+            )
+            item.pixmap_items[index].label_counter.item_pixmap = item.pixmap_items[index]
+            item.pixmap_items[index].label_counter.set_max_width(f"{item.counter.max}")
+
+        if item.is_reward:
+            reward_info = active_inv.rewards.items[item.pixmap_items[index].state.infos.reward_index]
+            geometry = QRect(
+                pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
+            )
+
+            item.reward_map[index] = self.add_outline_text(
+                f"{obj_name}_reward",
+                geometry,
+                reward_info.name,
+                reward_info.text_settings_index,
+            )
+            item.reward_map[index].set_max_width(active_inv.rewards.get_longest_reward())
+
+            if item.reward_map[index].item_pixmap is None:
+                item.reward_map[index].item_pixmap = item.pixmap_items[index]
+
+        if item.extra_index is not None:
+            extra = self.config.extras.items[item.extra_index]
+            n = f"{obj_name}_extra_img"
+            item.pixmap_items[index].extra = self.add_pixmap(
+                QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, index, n, item)
+            )
+            item.pixmap_items[index].extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
+            item.pixmap_items[index].extra.setVisible(False)
+
+        if len(self.config.flags) > 0 and item.flag_index is not None:
+            flag = self.config.flags[item.flag_index]
+            item.pixmap_items[index].flag = self.add_outline_text(
+                f"{obj_name}_flag",
+                QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
+                flag.texts[item.pixmap_items[index].state.infos.flag_text_index],
+                flag.text_settings_index,
+            )
+            item.pixmap_items[index].flag.setVisible(not flag.hidden)
+            item.pixmap_items[index].flag.item_pixmap = item.pixmap_items[index]
+            item.pixmap_items[index].flag.set_max_width(flag.get_longest_flag())
+
+    def create_items(self):
         # the order the scene items are created defines the "priority",
         # this means older items will be more in the background while
         # recent items will show in the foreground, hence why the
@@ -282,80 +361,7 @@ class TrackerWindow(QMainWindow):
 
         for item in active_inv.items:
             for j, item_pos in enumerate(item.positions):
-                obj_name = f"item{item.index}_pos_{j}"
-                pos = Pos(item_pos.x + offset, item_pos.y + offset)
-
-                item.pixmap_items.append(
-                    self.add_pixmap(
-                        QPixmap(str(item.sources[0].path)),
-                        item.index,
-                        obj_name,
-                        0.0 if item.enabled else 1.0,
-                        LabelState(item.index, j, item.name, item),
-                    )
-                )
-                item.pixmap_items[j].setPos(pos.x, pos.y)
-                item.pixmap_items[j].setRotation(item.rotation)
-                item.pixmap_items[j].state.infos.enabled = item.enabled
-
-                # rescale to 32x32 if necessary
-                # TODO: allow custom values in config files?
-                if item.scale_content:
-                    p = item.pixmap_items[j].pixmap()
-                    item.pixmap_items[j].setScale(min(32 / p.width(), 32 / p.height()))
-
-                if item.counter is not None:
-                    item.pixmap_items[j].label_counter = self.add_outline_text(
-                        f"{obj_name}_counter",
-                        QRect(
-                            pos.x + item.counter.pos.x,
-                            pos.y + item.counter.pos.y,
-                            item.counter.width,
-                            item.counter.height,
-                        ),
-                        "",
-                        item.counter.text_settings_index,
-                    )
-                    item.pixmap_items[j].label_counter.item_pixmap = item.pixmap_items[j]
-                    item.pixmap_items[j].label_counter.set_max_width(f"{item.counter.max}")
-
-                if item.is_reward:
-                    reward_info = active_inv.rewards.items[item.pixmap_items[j].state.infos.reward_index]
-                    geometry = QRect(
-                        pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
-                    )
-
-                    item.reward_map[j] = self.add_outline_text(
-                        f"{obj_name}_reward",
-                        geometry,
-                        reward_info.name,
-                        reward_info.text_settings_index,
-                    )
-                    item.reward_map[j].set_max_width(active_inv.rewards.get_longest_reward())
-
-                    if item.reward_map[j].item_pixmap is None:
-                        item.reward_map[j].item_pixmap = item.pixmap_items[j]
-
-                if item.extra_index is not None:
-                    extra = self.config.extras.items[item.extra_index]
-                    n = f"{obj_name}_extra_img"
-                    item.pixmap_items[j].extra = self.add_pixmap(
-                        QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, j, n, item)
-                    )
-                    item.pixmap_items[j].extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
-                    item.pixmap_items[j].extra.setVisible(False)
-
-                if len(self.config.flags) > 0 and item.flag_index is not None:
-                    flag = self.config.flags[item.flag_index]
-                    item.pixmap_items[j].flag = self.add_outline_text(
-                        f"{obj_name}_flag",
-                        QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
-                        flag.texts[item.pixmap_items[j].state.infos.flag_text_index],
-                        flag.text_settings_index,
-                    )
-                    item.pixmap_items[j].flag.setVisible(not flag.hidden)
-                    item.pixmap_items[j].flag.item_pixmap = item.pixmap_items[j]
-                    item.pixmap_items[j].flag.set_max_width(flag.get_longest_flag())
+                self.create_item(item, j, item_pos)
 
         for item in active_inv.items:
             for static_text in item.static_texts:
