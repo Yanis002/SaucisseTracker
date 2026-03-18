@@ -93,7 +93,7 @@ class LabelState:
 
         data.append(f"enabled = {self.infos.enabled}")
 
-        if len(self.item.paths) > 1:
+        if len(self.item.sources) > 1:
             data.append(f"img_index = {self.infos.img_index}")
 
         if self.item.counter is not None:

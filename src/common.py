@@ -270,7 +270,7 @@ class PixmapItem(QGraphicsPixmapItem):
             item.enabled = True
 
         self.state.infos.enabled = item.enabled
-        self.setPixmap(QPixmap(str(item.paths[path_index])))
+        self.setPixmap(QPixmap(str(item.sources[path_index].path)))
 
     def update_flag(self):
         """
@@ -302,7 +302,7 @@ class PixmapItem(QGraphicsPixmapItem):
         item = self.config.active_inv.items[self.state.index]
         self.validate_item_index()
 
-        if not middle_click and len(item.paths) > 1:
+        if not middle_click and len(item.sources) > 1:
             # items using multiple images, like bottles on OoT
             if increase:
                 self.state.infos.img_index += 1
@@ -313,10 +313,10 @@ class PixmapItem(QGraphicsPixmapItem):
 
             self.update_flag()
 
-            if self.state.infos.img_index > len(item.paths) - 1:
+            if self.state.infos.img_index > len(item.sources) - 1:
                 self.state.infos.img_index = -1
             if self.state.infos.img_index < -1:
-                self.state.infos.img_index = len(item.paths) - 1
+                self.state.infos.img_index = len(item.sources) - 1
 
             self.update_item_visibility()
         elif self.label_counter is not None and item.counter is not None:
@@ -374,7 +374,7 @@ class PixmapItem(QGraphicsPixmapItem):
                 # go-mode light
                 if self.config.label_gomode_light is not None:
                     self.config.label_gomode_light.setVisible(self.state.infos.gomode_light_visibility)
-            elif len(item.paths) > 1:
+            elif len(item.sources) > 1:
                 # items using multiple images (like OoT bottles)
                 self.update_flag()
                 self.update_item_visibility()

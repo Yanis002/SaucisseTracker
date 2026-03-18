@@ -285,7 +285,7 @@ class TrackerWindow(QMainWindow):
                 pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
                 item.pixmap_item = self.add_pixmap(
-                    QPixmap(str(item.paths[0])),
+                    QPixmap(str(item.sources[0].path)),
                     item.index,
                     obj_name,
                     0.0 if item.enabled else 1.0,

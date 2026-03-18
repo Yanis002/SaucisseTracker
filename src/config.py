@@ -217,10 +217,16 @@ class TextItem:
 
 
 @dataclass
+class SourceItem:
+    name: str
+    path: Path
+
+
+@dataclass
 class InventoryItem:
     index: int
     name: str
-    paths: list[Path]
+    sources: list[SourceItem]
     counter: Optional[Counter]
     positions: list[Pos]
     rotation: int
@@ -247,14 +253,14 @@ class InventoryItem:
 
         attrib: dict[str, str] = {"Name": self.name}
 
-        if len(self.paths) > 0:
-            if len(self.paths) == 1:
-                attrib["Source"] = str(self.paths[0].relative_to(active_config_dir))
+        if len(self.sources) > 0:
+            if len(self.sources) == 1:
+                attrib["Source"] = str(self.sources[0].path.relative_to(active_config_dir))
             else:
                 sources = ET.SubElement(item, "Sources")
 
-                for path in self.paths:
-                    _ = ET.SubElement(sources, "Item", {"Path": f"{path.relative_to(active_config_dir)}"})
+                for src_item in self.sources:
+                    _ = ET.SubElement(sources, "Item", {"Path": f"{src_item.path.relative_to(active_config_dir)}"})
 
         if len(self.positions) > 0:
             if len(self.positions) == 1:
@@ -554,7 +560,7 @@ class Config:
         self.name = str()
         self.icon_path: Optional[Path] = None
         self.default_icon_path = (
-            Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/config_icon.png"
+            Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res" / "config_icon.png"
         )
 
         self.label_gomode: Optional[PixmapItem] = None
@@ -828,18 +834,19 @@ class Config:
 
                     for i, item in enumerate(elem.iterfind("Item")):
                         name = item.get("Name", "Unknown")
-                        paths: list[Path] = []
+                        src_list: list[SourceItem] = []
                         positions: list[Pos] = []
 
                         path = self.parse_path(item.get("Source"), f"item '{name}'", False)
                         if path is not None:
-                            paths.append(path)
+                            src_list.append(SourceItem(name, path))
                         else:
                             sources = item.find("Sources")
                             for sub_item in sources:
-                                paths.append(self.parse_path(sub_item.get("Path"), f"item '{name}'", True))
+                                path = self.parse_path(sub_item.get("Path"), f"item '{name}'", True)
+                                src_list.append(SourceItem(sub_item.get("Name", f"{path.stem}{path.suffix}"), path))
 
-                        if len(paths) == 0:
+                        if len(src_list) == 0:
                             show_error(self.widget, f"ERROR: Missing paths for item '{name}'")
 
                         pos = self.parse_pos(item.get("Pos"), "inventory item", False)
@@ -886,7 +893,7 @@ class Config:
                             InventoryItem(
                                 i,
                                 name,
-                                paths,
+                                src_list,
                                 counter,
                                 positions,
                                 self.parse_int(item.get("Rot", "0")),
