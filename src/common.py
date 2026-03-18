@@ -112,6 +112,11 @@ class PixmapItem(QGraphicsPixmapItem):
     def mousePressEvent(self, event):
         """Actions to do when there's a click (left, right or middle). This is the entrypoint of updating items."""
 
+        # editor only, avoid updating the item if it can be moved
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            super().mousePressEvent(event)
+            return
+
         # we need to call the original function in order to get updates through go-mode light working
         # but as a side-effect flags are harder to disable on rewards, so we simply ignore this call if it's a flag
         if self.flag is None:
