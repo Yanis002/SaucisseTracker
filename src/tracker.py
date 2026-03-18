@@ -157,21 +157,22 @@ class TrackerWindow(QMainWindow):
         self.show()
 
     def update_timer_embed(self, update_geo: bool, force: bool = False):
-        if force:
-            self.timer.is_separate = not self.timer.is_separate
-            self.action_timer_embed.setChecked(self.timer.is_separate)
-        else:
-            self.timer.is_separate = not self.action_timer_embed.isChecked()
+        if not self.is_editor:
+            if force:
+                self.timer.is_separate = not self.timer.is_separate
+                self.action_timer_embed.setChecked(self.timer.is_separate)
+            else:
+                self.timer.is_separate = not self.action_timer_embed.isChecked()
 
-        if self.timer.is_separate:
-            self.timer_proxy.setWidget(self.timer)
-            self.timer_proxy.setPos(0, self.background.pixmap().size().height())
-            self.timer.menu.setHidden(True)
-        else:
-            self.timer_proxy.setWidget(None)
-            self.timer.menu.setHidden(False)
-            self.timer.hide()
-            self.timer.show()
+            if self.timer.is_separate:
+                self.timer_proxy.setWidget(self.timer)
+                self.timer_proxy.setPos(0, self.background.pixmap().size().height())
+                self.timer.menu.setHidden(True)
+            else:
+                self.timer_proxy.setWidget(None)
+                self.timer.menu.setHidden(False)
+                self.timer.hide()
+                self.timer.show()
 
         if update_geo:
             self.update_window_geometry()
@@ -180,7 +181,7 @@ class TrackerWindow(QMainWindow):
         bg_size = self.background.pixmap().size()
         menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
         timer_menu_height = self.timer.menu.sizeHint().height()
-        timer_height = self.timer.height() - timer_menu_height if self.timer.is_separate else 0
+        timer_height = self.timer.height() - timer_menu_height if self.timer.is_separate and not self.is_editor else 0
         offset = 1 if os.name == "nt" else 0
 
         # set background color and remove border
@@ -436,7 +437,8 @@ class TrackerWindow(QMainWindow):
                 case Qt.Key.Key_O:
                     self.file_open_triggered()
                 case Qt.Key.Key_T:
-                    self.timer.show()
+                    if not self.is_editor:
+                        self.timer.show()
                 case Qt.Key.Key_R:
                     self.update_window()
                 case Qt.Key.Key_P:
