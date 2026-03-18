@@ -3,7 +3,19 @@ from typing import Optional
 
 from PyQt6.QtCore import QPoint
 from PyQt6.QtGui import QGuiApplication, QPixmap
-from PyQt6.QtWidgets import QWidget, QLabel, QListView, QPushButton, QSpinBox, QGraphicsItem, QFrame, QLineEdit, QGroupBox, QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import (
+    QWidget,
+    QLabel,
+    QListView,
+    QPushButton,
+    QSpinBox,
+    QGraphicsItem,
+    QFrame,
+    QLineEdit,
+    QGroupBox,
+    QTableWidget,
+    QTableWidgetItem,
+)
 
 from common import ListViewModel, Color
 from config import Config, InventoryItem
