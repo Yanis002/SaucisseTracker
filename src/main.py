@@ -242,6 +242,7 @@ class MainWindow(QMainWindow):
 
             self.model_cache = [(elem[0], elem[1], elem[2]) for elem in model_items]
             self.list_configs.setModel(ListViewModel(self.model_cache))
+            self.list_configs.setCurrentIndex(self.list_configs.model().index(0, 0))
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
