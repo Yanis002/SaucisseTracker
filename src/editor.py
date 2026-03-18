@@ -17,16 +17,18 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
 )
 
-from common import ListViewModel, Color
-from config import Config, InventoryItem
+from common import ListViewModel, Color, Pos
+from config import Config, InventoryItem, Counter
 from tracker import TrackerWindow
 
 
 class TrackerEditorMenu(QWidget):
-    def __init__(self, config: Config, parent: Optional[QWidget] = None):
-        super().__init__(parent)
+    def __init__(self, config: Config, tracker: "TrackerEditor"):
+        super().__init__()
         self.config = config
+        self.tracker = tracker
         self.prev_item: Optional[InventoryItem] = None
+        self.do_counter_value_changed = True  # TODO: find something better
 
         first_item = self.config.active_inv.items[0]
 
@@ -71,10 +73,12 @@ class TrackerEditorMenu(QWidget):
             self.table_pos.setItem(i, 1, QTableWidgetItem(f"{pos.y}"))
             self.table_pos.setItem(i, 2, QTableWidgetItem("0.0"))
 
-        self.btn_table_add = QPushButton("Add", self.group_pos)
-        self.btn_table_add.setGeometry(9, 340, 111, 21)
-        self.btn_table_del = QPushButton("Remove", self.group_pos)
-        self.btn_table_del.setGeometry(130, 340, 111, 21)
+        self.btn_table_pos_add = QPushButton("Add", self.group_pos)
+        self.btn_table_pos_add.setGeometry(9, 340, 111, 21)
+        self.btn_table_pos_add.pressed.connect(self.table_pos_add)
+        self.btn_table_pos_del = QPushButton("Remove", self.group_pos)
+        self.btn_table_pos_del.setGeometry(130, 340, 111, 21)
+        self.btn_table_pos_del.pressed.connect(self.table_pos_del)
 
         self.group_sources = QGroupBox("Icon Paths", self)
         self.group_sources.setGeometry(520, 30, 521, 301)
@@ -101,54 +105,64 @@ class TrackerEditorMenu(QWidget):
         self.group_counters.setGeometry(260, 450, 251, 151)
         self.group_counters.setCheckable(True)
         self.group_counters.setChecked(False)
+        self.group_counters.toggled.connect(self.update_counter_enabled)
 
         self.label_text_index = QLabel("Text Set.", self.group_counters)
         self.label_text_index.setGeometry(10, 30, 61, 18)
         self.counter_text_index = QSpinBox(self.group_counters)
         self.counter_text_index.setGeometry(8, 50, 55, 32)
         self.counter_text_index.setMinimum(0)
+        self.counter_text_index.setMaximum(len(self.config.text_settings) - 1)
+        self.counter_text_index.valueChanged.connect(self.update_counter_info)
 
         self.label_min = QLabel("Min.", self.group_counters)
         self.label_min.setGeometry(82, 30, 31, 18)
         self.counter_min = QSpinBox(self.group_counters)
         self.counter_min.setGeometry(68, 50, 55, 32)
         self.counter_min.setMinimum(0)
+        self.counter_min.valueChanged.connect(self.update_counter_info)
 
         self.label_max = QLabel("Max.", self.group_counters)
         self.label_max.setGeometry(139, 30, 41, 18)
         self.counter_max = QSpinBox(self.group_counters)
         self.counter_max.setGeometry(128, 50, 55, 32)
         self.counter_max.setMinimum(0)
+        self.counter_max.valueChanged.connect(self.update_counter_info)
 
         self.label_incr = QLabel("Incr.", self.group_counters)
         self.label_incr.setGeometry(202, 30, 31, 18)
         self.counter_incr = QSpinBox(self.group_counters)
         self.counter_incr.setGeometry(188, 50, 55, 32)
         self.counter_incr.setMinimum(0)
+        self.counter_incr.valueChanged.connect(self.update_counter_info)
 
         self.label_pos_x = QLabel("X", self.group_counters)
         self.label_pos_x.setGeometry(31, 90, 21, 18)
         self.counter_pos_x = QSpinBox(self.group_counters)
         self.counter_pos_x.setGeometry(8, 110, 55, 32)
         self.counter_pos_x.setMinimum(-1000)
+        self.counter_pos_x.valueChanged.connect(self.update_counter_info)
 
         self.label_pox_y = QLabel("Y", self.group_counters)
         self.label_pox_y.setGeometry(90, 90, 21, 18)
         self.counter_pox_y = QSpinBox(self.group_counters)
         self.counter_pox_y.setGeometry(68, 110, 55, 32)
         self.counter_pox_y.setMinimum(-1000)
+        self.counter_pox_y.valueChanged.connect(self.update_counter_info)
 
         self.label_width = QLabel("Width", self.group_counters)
         self.label_width.setGeometry(135, 90, 41, 18)
         self.counter_width = QSpinBox(self.group_counters)
         self.counter_width.setGeometry(128, 110, 55, 32)
         self.counter_width.setMinimum(0)
+        self.counter_width.valueChanged.connect(self.update_counter_info)
 
         self.label_height = QLabel("Height", self.group_counters)
         self.label_height.setGeometry(193, 90, 51, 18)
         self.counter_height = QSpinBox(self.group_counters)
         self.counter_height.setGeometry(188, 110, 55, 32)
         self.counter_height.setMinimum(0)
+        self.counter_height.valueChanged.connect(self.update_counter_info)
 
         self.btn_counters_add = QPushButton("Add", self.group_counters)
         self.btn_counters_add.setGeometry(9, 274, 111, 21)
@@ -339,6 +353,7 @@ class TrackerEditorMenu(QWidget):
         self.model_sources = self.list_sources.selectionModel()
 
         # update counters table
+        self.do_counter_value_changed = False
         self.group_counters.setChecked(item.counter is not None)
         if item.counter is not None:
             self.counter_text_index.setValue(item.counter.text_settings_index)
@@ -349,6 +364,10 @@ class TrackerEditorMenu(QWidget):
             self.counter_pox_y.setValue(item.counter.pos.y)
             self.counter_width.setValue(item.counter.width)
             self.counter_height.setValue(item.counter.height)
+
+            item.counter.show = True
+            for pixmap_item in item.pixmap_items:
+                pixmap_item.label_counter.setVisible(True)
         else:
             self.counter_text_index.setValue(0)
             self.counter_min.setValue(0)
@@ -358,6 +377,7 @@ class TrackerEditorMenu(QWidget):
             self.counter_pox_y.setValue(0)
             self.counter_width.setValue(0)
             self.counter_height.setValue(0)
+        self.do_counter_value_changed = True
 
         # update rewards
         self.group_rewards.setChecked(item.is_reward)
@@ -441,17 +461,98 @@ class TrackerEditorMenu(QWidget):
     def update_tracker_selection(self):
         self.change_item_flags(self.table_pos.currentIndex().row(), False)
 
+    def table_pos_add(self):
+        item = self.get_item()
+        index = len(item.positions)
+        self.table_pos.setRowCount(index + 1)
+        self.table_pos.setVerticalHeaderItem(index, QTableWidgetItem(f"Pos. {index + 1}"))
+        self.table_pos.setItem(index, 0, QTableWidgetItem("0"))
+        self.table_pos.setItem(index, 1, QTableWidgetItem("0"))
+        self.table_pos.setItem(index, 2, QTableWidgetItem("0.0"))
+
+        item.positions.append(Pos(0, 0))
+        self.tracker.create_item(item, index, item.positions[-1])
+
+    def table_pos_del(self):
+        cur_index = self.table_pos.currentIndex().row()
+
+        if cur_index > 0:
+            item = self.get_item()
+            self.table_pos.removeRow(cur_index)
+            self.tracker.scene.removeItem(item.pixmap_items[cur_index])
+            item.pixmap_items.pop(cur_index)
+            item.positions.pop(cur_index)
+            self.table_pos.selectRow(cur_index - 1)
+        else:
+            print("won't remove because index is 0")
+
+    def update_counter_info(self, new_value: int):
+        if not self.do_counter_value_changed:
+            return
+
+        item = self.get_item()
+
+        if item.counter is None:
+            item.counter = Counter(
+                self.counter_min.value(),
+                self.counter_max.value(),
+                self.counter_incr.value(),
+                0,  # TODO
+                self.counter_text_index.value(),
+                Pos(self.counter_pos_x.value(), self.counter_pox_y.value()),
+                self.counter_width.value(),
+                self.counter_height.value(),
+                False,  # TODO
+            )
+        else:
+            item.counter.min = self.counter_min.value()
+            item.counter.max = self.counter_max.value()
+            item.counter.increment = self.counter_incr.value()
+            item.counter.middle_click_increment = 0  # TODO
+            item.counter.text_settings_index = self.counter_text_index.value()
+            item.counter.pos.x = self.counter_pos_x.value()
+            item.counter.pos.y = self.counter_pox_y.value()
+            item.counter.width = self.counter_width.value()
+            item.counter.height = self.counter_height.value()
+            item.counter.use_wheel = False  # TODO
+
+        item.counter.value = item.counter.min
+
+        for pixmap_item in item.pixmap_items:
+            pos = pixmap_item.pos()
+            pixmap_item.label_counter.setPos(pos.x() + item.counter.pos.x, pos.y() + item.counter.pos.y)
+            pixmap_item.label_counter.set_text_style(item.counter.text_settings_index, False)
+            pixmap_item.label_counter.set_max_width(f"{item.counter.max}")
+
+    def update_counter_enabled(self, enabled: bool):
+        if not self.do_counter_value_changed:
+            return
+
+        item = self.get_item()
+
+        for pixmap_item in item.pixmap_items:
+            pixmap_item.label_counter.setVisible(enabled)
+
+        if enabled:
+            self.update_counter_info(0)
+        else:
+            item.counter = None
+
+        if item.counter is not None:
+            item.counter.show = enabled
+
 
 class TrackerEditor(TrackerWindow):
     def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
         super().__init__(parent, configs, config_index, True)
 
-        self.edit_menu = TrackerEditorMenu(self.config)
+        self.edit_menu = TrackerEditorMenu(self.config, self)
         self.config.edit_menu = self.edit_menu
         self.config.edit_menu.list_selected.clearSelection()
 
     def closeEvent(self, e):
         self.edit_menu.close()
+        self.config.edit_menu = None
         super().closeEvent(e)
 
     def update_window(self):
