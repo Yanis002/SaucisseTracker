@@ -157,6 +157,8 @@ class Counter:
 
     def update(self, pixmap: PixmapItem):
         if pixmap.label_counter is not None:
+            pixmap.label_counter.setVisible(self.show)
+
             if self.show:
                 pixmap.effect.setStrength(0.0)  # disable filter
                 pixmap.setOpacity(1.0)
@@ -165,7 +167,7 @@ class Counter:
             else:
                 pixmap.effect.setStrength(1.0)  # enable filter
                 pixmap.setOpacity(GLOBAL_HALF_OPACITY)
-                pixmap.label_counter.setPlainText("")
+                pixmap.label_counter.setPlainText(f"{self.min}")
 
 
 @dataclass
