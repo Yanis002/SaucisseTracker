@@ -176,6 +176,7 @@ class TrackerEditorMenu(QWidget):
         self.group_rewards.setGeometry(520, 340, 521, 261)
         self.group_rewards.setCheckable(True)
         self.group_rewards.setChecked(False)
+        self.group_rewards.toggled.connect(self.update_rewards_enabled)
 
         self.table_rewards = QTableWidget(self.group_rewards)
         self.table_rewards.setGeometry(10, 30, 501, 201)
@@ -204,23 +205,29 @@ class TrackerEditorMenu(QWidget):
         self.group_extras.setGeometry(520, 610, 101, 101)
         self.group_extras.setCheckable(True)
         self.group_extras.setChecked(False)
+        self.group_extras.toggled.connect(self.update_extras_enabled)
 
         self.label_extra_index = QLabel("Extra Index", self.group_extras)
         self.label_extra_index.setGeometry(10, 31, 81, 18)
         self.extra_index = QSpinBox(self.group_extras)
         self.extra_index.setGeometry(9, 57, 81, 32)
         self.extra_index.setMinimum(0)
+        self.extra_index.setMaximum(len(self.config.extras.items) - 1)
+        self.extra_index.valueChanged.connect(self.update_extra_info)
 
         self.group_flags = QGroupBox("Use Flags", self)
         self.group_flags.setGeometry(630, 610, 101, 101)
         self.group_flags.setCheckable(True)
         self.group_flags.setChecked(False)
+        self.group_flags.toggled.connect(self.update_flags_enabled)
 
         self.label_flag_index = QLabel("Flag Index", self.group_flags)
         self.label_flag_index.setGeometry(10, 31, 81, 18)
         self.flag_index = QSpinBox(self.group_flags)
         self.flag_index.setGeometry(9, 57, 81, 32)
         self.flag_index.setMinimum(0)
+        self.flag_index.setMaximum(len(self.config.flags) - 1)
+        self.flag_index.valueChanged.connect(self.update_flag_info)
 
         self.group_bg = QGroupBox("Background Settings", self)
         self.group_bg.setGeometry(740, 610, 301, 101)
@@ -577,6 +584,64 @@ class TrackerEditorMenu(QWidget):
         self.config.active_inv.background = path
         self.bg_path.setText(str(path))
         self.tracker.update_window()
+
+    def update_extra_info(self, new_value: int):
+        item = self.get_item()
+        item.extra_index = new_value
+        offset = self.tracker.get_item_os_offset()
+
+        for i, pixmap_item in enumerate(item.pixmap_items):
+            pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
+
+            if item.pixmap_items[i].extra is None:
+                self.tracker.create_extra(item, i, pixmap_item.obj_name, pos)
+
+    def update_extras_enabled(self, enabled: bool):
+        item = self.get_item()
+
+        if enabled:
+            item.extra_index = self.extra_index.value()
+        else:
+            item.extra_index = None
+
+        for pixmap_item in item.pixmap_items:
+            if pixmap_item.extra is not None:
+                pixmap_item.extra.setVisible(enabled)
+
+    def update_flag_info(self, new_value: int):
+        item = self.get_item()
+        item.flag_index = new_value
+        offset = self.tracker.get_item_os_offset()
+
+        for i, pixmap_item in enumerate(item.pixmap_items):
+            pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
+
+            if item.pixmap_items[i].flag is None:
+                self.tracker.create_flag(item, i, pixmap_item.obj_name, pos)
+
+            pixmap_item.update_flag()
+
+    def update_flags_enabled(self, enabled: bool):
+        item = self.get_item()
+
+        if enabled:
+            item.flag_index = self.flag_index.value()
+        else:
+            item.flag_index = None
+
+        if item.flag_index is not None:
+            for pixmap_item in item.pixmap_items:
+                pixmap_item.flag.setVisible(enabled)
+
+                if enabled:
+                    pixmap_item.update_flag()
+
+    def update_rewards_enabled(self, enabled: bool):
+        # rewards and extras can't co-exist
+        self.group_extras.setEnabled(not enabled)
+
+        if enabled:
+            self.group_extras.setChecked(False)
 
 
 class TrackerEditor(TrackerWindow):

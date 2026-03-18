@@ -90,6 +90,7 @@ class PixmapItem(QGraphicsPixmapItem):
         default_strength: float,
         state: "LabelState",
         parent: QGraphicsItem = None,
+        create_effect: bool = True,
     ):
         super().__init__(pixmap, parent)
 
@@ -103,11 +104,14 @@ class PixmapItem(QGraphicsPixmapItem):
         self.obj_name = obj_name
 
         # used for the black & white effect, enabled by default
-        self.effect = QGraphicsColorizeEffect()
-        self.effect.setStrength(default_strength)
-        self.effect.setColor(QColor("black"))
-        self.effect.setObjectName(f"{obj_name}_fx")
-        self.setGraphicsEffect(self.effect)
+        if create_effect:
+            self.effect = QGraphicsColorizeEffect()
+            self.effect.setStrength(default_strength)
+            self.effect.setColor(QColor("black"))
+            self.effect.setObjectName(f"{obj_name}_fx")
+            self.setGraphicsEffect(self.effect)
+        else:
+            self.effect = None
 
     def mousePressEvent(self, event):
         """Actions to do when there's a click (left, right or middle). This is the entrypoint of updating items."""
@@ -154,7 +158,7 @@ class PixmapItem(QGraphicsPixmapItem):
                         self.update_gomode()
                     elif item.is_reward:
                         self.next_reward(True)
-                    elif self.extra is not None:
+                    elif self.extra is not None and item.extra_index is not None:
                         self.extra.setVisible(not self.extra.isVisible())
                         self.state.infos.show_extra_img = self.extra.isVisible()
                     else:
@@ -240,6 +244,7 @@ class PixmapItem(QGraphicsPixmapItem):
     def update_gomode(self, gomode_visibility: Optional[bool] = None):
         """Shows or hides the go-mode thing depending on the previous state."""
 
+        assert self.effect is not None, "effect is unassigned"
         gomode_settings = self.config.gomode_settings
         cond = gomode_visibility if gomode_visibility is not None else self.effect.strength() > 0.0
 
@@ -264,12 +269,14 @@ class PixmapItem(QGraphicsPixmapItem):
         path_index = 0
 
         if self.state.infos.img_index < 0:
-            self.effect.setStrength(1.0)  # enable filter
+            if self.effect is not None:
+                self.effect.setStrength(1.0)  # enable filter
             self.setOpacity(GLOBAL_HALF_OPACITY)
             path_index = 0
             item.enabled = False
         else:
-            self.effect.setStrength(0.0)  # disable filter
+            if self.effect is not None:
+                self.effect.setStrength(0.0)  # disable filter
             self.setOpacity(1.0)
             path_index = self.state.infos.img_index
             item.enabled = True
@@ -336,7 +343,7 @@ class PixmapItem(QGraphicsPixmapItem):
             self.state.infos.enabled = item.enabled
             self.state.infos.counter_show = item.counter.show
             self.state.infos.counter_value = item.counter.value
-        else:
+        elif self.effect is not None:
             # normal items
             if self.effect.strength() > 0.0:
                 self.effect.setStrength(0.0)
@@ -368,6 +375,7 @@ class PixmapItem(QGraphicsPixmapItem):
             if self.state.is_gomode:
                 # go-mode image
                 gomode_settings = self.config.gomode_settings
+                assert self.effect is not None, "effect is unassigned"
 
                 if self.state.infos.gomode_visibility:
                     self.effect.setStrength(0.0)
@@ -394,10 +402,12 @@ class PixmapItem(QGraphicsPixmapItem):
             elif not self.is_gomode():
                 # normal items
                 if self.state.infos.enabled:
-                    self.effect.setStrength(0.0)
+                    if self.effect is not None:
+                        self.effect.setStrength(0.0)
                     self.setOpacity(1.0)
                 else:
-                    self.effect.setStrength(1.0)
+                    if self.effect is not None:
+                        self.effect.setStrength(1.0)
                     self.setOpacity(GLOBAL_HALF_OPACITY)
 
             item.enabled = self.state.infos.enabled

@@ -160,12 +160,14 @@ class Counter:
             pixmap.label_counter.setVisible(self.show)
 
             if self.show:
-                pixmap.effect.setStrength(0.0)  # disable filter
+                if pixmap.effect is not None:
+                    pixmap.effect.setStrength(0.0)  # disable filter
                 pixmap.setOpacity(1.0)
                 pixmap.label_counter.setPlainText(f"{self.value}")
                 pixmap.label_counter.set_text_style(self.text_settings_index, self.value == self.max)
             else:
-                pixmap.effect.setStrength(1.0)  # enable filter
+                if pixmap.effect is not None:
+                    pixmap.effect.setStrength(1.0)  # enable filter
                 pixmap.setOpacity(GLOBAL_HALF_OPACITY)
                 pixmap.label_counter.setPlainText(f"{self.min}")
 

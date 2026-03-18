@@ -247,8 +247,18 @@ class TrackerWindow(QMainWindow):
                 return scene_item
         return None
 
-    def add_pixmap(self, pixmap: QPixmap, item_index: int, obj_name: str, default_strength: float, state: LabelState):
-        new_item = PixmapItem(self.config, pixmap, item_index, obj_name, default_strength, state)
+    def add_pixmap(
+        self,
+        pixmap: QPixmap,
+        item_index: int,
+        obj_name: str,
+        default_strength: float,
+        state: LabelState,
+        create_effect: bool = True,
+    ):
+        new_item = PixmapItem(
+            self.config, pixmap, item_index, obj_name, default_strength, state, create_effect=create_effect
+        )
         self.scene.addItem(new_item)
         return new_item
 
@@ -272,8 +282,39 @@ class TrackerWindow(QMainWindow):
         self.scene.addItem(new_item)
         return new_item
 
+    def create_extra(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
+        if item.extra_index is not None:
+            extra = self.config.extras.items[item.extra_index]
+            n = f"{obj_name}_extra_img"
+            item.pixmap_items[index].extra = self.add_pixmap(
+                QPixmap(str(extra.path)),
+                item.index,
+                n,
+                0.0,
+                LabelState(item.index, index, n, item),
+                create_effect=False,
+            )
+            item.pixmap_items[index].extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
+            item.pixmap_items[index].extra.setVisible(False)
+
+    def create_flag(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
+        if item.flag_index is not None:
+            flag = self.config.flags[item.flag_index]
+            item.pixmap_items[index].flag = self.add_outline_text(
+                f"{obj_name}_flag",
+                QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
+                flag.texts[item.pixmap_items[index].state.infos.flag_text_index],
+                flag.text_settings_index,
+            )
+            item.pixmap_items[index].flag.setVisible(not flag.hidden)
+            item.pixmap_items[index].flag.item_pixmap = item.pixmap_items[index]
+            item.pixmap_items[index].flag.set_max_width(flag.get_longest_flag())
+
+    def get_item_os_offset(self):
+        return -1 if os.name == "nt" else 0
+
     def create_item(self, item: InventoryItem, index: int, item_pos: Pos):
-        offset = -1 if os.name == "nt" else 0
+        offset = self.get_item_os_offset()
         active_inv = self.config.active_inv
         pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
@@ -332,26 +373,10 @@ class TrackerWindow(QMainWindow):
             if item.reward_map[index].item_pixmap is None:
                 item.reward_map[index].item_pixmap = item.pixmap_items[index]
 
-        if item.extra_index is not None:
-            extra = self.config.extras.items[item.extra_index]
-            n = f"{obj_name}_extra_img"
-            item.pixmap_items[index].extra = self.add_pixmap(
-                QPixmap(str(extra.path)), item.index, n, 0.0, LabelState(item.index, index, n, item)
-            )
-            item.pixmap_items[index].extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
-            item.pixmap_items[index].extra.setVisible(False)
+        self.create_extra(item, index, obj_name, pos)
 
-        if len(self.config.flags) > 0 and item.flag_index is not None:
-            flag = self.config.flags[item.flag_index]
-            item.pixmap_items[index].flag = self.add_outline_text(
-                f"{obj_name}_flag",
-                QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
-                flag.texts[item.pixmap_items[index].state.infos.flag_text_index],
-                flag.text_settings_index,
-            )
-            item.pixmap_items[index].flag.setVisible(not flag.hidden)
-            item.pixmap_items[index].flag.item_pixmap = item.pixmap_items[index]
-            item.pixmap_items[index].flag.set_max_width(flag.get_longest_flag())
+        if len(self.config.flags) > 0:
+            self.create_flag(item, index, obj_name, pos)
 
     def create_items(self):
         # the order the scene items are created defines the "priority",
