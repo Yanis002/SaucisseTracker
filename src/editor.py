@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 from PyQt6.QtCore import QPoint
-from PyQt6.QtGui import QGuiApplication, QPixmap
+from PyQt6.QtGui import QGuiApplication, QPixmap, QIcon
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 )
 
 from common import ListViewModel, Color, Pos
-from config import Config, InventoryItem, Counter
+from config import Config, InventoryItem, Counter, SourceItem
 from shutil import copyfile
 from tracker import TrackerWindow
 
@@ -95,14 +95,27 @@ class TrackerEditorMenu(QWidget):
         self.list_sources.setModel(ListViewModel(self.model_cache_sources))
         self.list_sources.setCurrentIndex(self.list_sources.model().index(0, 0))
         self.model_sources = self.list_sources.selectionModel()
-        # self.model_sources.currentChanged.connect(self.selection_changed)
+        self.model_sources.currentChanged.connect(self.sources_selection_update)
 
         self.btn_sources_add = QPushButton("Add", self.group_sources)
         self.btn_sources_add.setGeometry(9, 275, 71, 21)
+        self.btn_sources_add.pressed.connect(self.sources_add)
+
         self.btn_sources_del = QPushButton("Remove", self.group_sources)
         self.btn_sources_del.setGeometry(89, 275, 71, 21)
+        self.btn_sources_del.pressed.connect(self.sources_del)
+
         self.btn_sources_open = QPushButton("Open File", self.group_sources)
         self.btn_sources_open.setGeometry(170, 275, 71, 21)
+        self.btn_sources_open.pressed.connect(self.sources_open)
+
+        self.btn_sources_up = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.GoUp), "", self.group_sources)
+        self.btn_sources_up.setGeometry(440, 275, 31, 21)
+        self.btn_sources_up.pressed.connect(self.sources_move_up)
+
+        self.btn_sources_down = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.GoDown), "", self.group_sources)
+        self.btn_sources_down.setGeometry(480, 275, 31, 21)
+        self.btn_sources_down.pressed.connect(self.sources_move_down)
 
         self.group_counters = QGroupBox("Use Counters", self)
         self.group_counters.setGeometry(260, 450, 251, 151)
@@ -274,7 +287,7 @@ class TrackerEditorMenu(QWidget):
 
         # ---
 
-        # self.selection_changed()
+        self.selection_changed()
         self.setGeometry(0, 0, 1050, 720)
         self.setFixedSize(1050, 720)
         self.setWindowTitle("Tracker Editor")
@@ -324,6 +337,17 @@ class TrackerEditorMenu(QWidget):
             item.pixmap_items[index].update_flag()
         item.pixmap_items[index].update_item_visibility()
 
+    def move_file_to_config(self, path: Path):
+        config_folder = self.config.config_path.parent
+
+        if not path.is_relative_to(config_folder):
+            dest = config_folder / f"{path.stem}{path.suffix}"
+            copyfile(path, dest)
+            assert dest.exists(), "unknown file copy failure"
+            path = dest
+
+        return path
+
     def selection_changed(self):
         item = self.get_item()
 
@@ -362,6 +386,8 @@ class TrackerEditorMenu(QWidget):
         self.list_sources.setModel(ListViewModel(self.model_cache_sources))
         self.list_sources.setCurrentIndex(self.list_sources.model().index(0, 0))
         self.model_sources = self.list_sources.selectionModel()
+        self.model_sources.currentChanged.connect(self.sources_selection_update) # TODO: figure out if this is necessary
+        self.sources_selection_update()
 
         # update counters table
         self.do_counter_value_changed = False
@@ -453,7 +479,7 @@ class TrackerEditorMenu(QWidget):
         model_item = self.model_cache[index]
         model_item = (model_item[0], item.name, model_item[2])
         self.model_cache[index] = model_item
-        self.list_selected.update(self.list_selected.currentIndex())
+        self.list_selected.viewport().update()
 
     def update_tracker_pos(self, widget: QWidget, hint):
         cur_index = self.table_pos.currentIndex().row()
@@ -575,10 +601,7 @@ class TrackerEditorMenu(QWidget):
         # resolve path, make sure it exists and copy the file to the config folder if the path isn't relative to it
         path = Path(path_str).resolve()
         assert path.exists(), "background path doesn't exist?"
-        if not path.is_relative_to(config_folder):
-            dest = config_folder / f"{path.stem}{path.suffix}"
-            copyfile(path, dest)
-            path = dest
+        path = self.move_file_to_config(path)
 
         # update the config, the ui and the window
         self.config.active_inv.background = path
@@ -642,6 +665,119 @@ class TrackerEditorMenu(QWidget):
 
         if enabled:
             self.group_extras.setChecked(False)
+
+    def sources_add(self):
+        item = self.get_item()
+        src_dir = item.sources[0].path.parent
+
+        paths_str = QFileDialog.getOpenFileNames(self, "Open Item Icon", str(src_dir), "*.png")[0]
+
+        if len(paths_str) == 0:
+            print("operation cancelled (source files open)")
+            return
+        
+        for path_str in paths_str:
+            path = Path(path_str).resolve()
+            assert path.exists(), "path doesn't exist?"
+            path = self.move_file_to_config(path)
+
+            item.sources.append(SourceItem(path.stem, path))
+            self.model_cache_sources.append((True, str(path), QPixmap(str(path))))
+        self.list_sources.viewport().update()
+
+        for pixmap_item in item.pixmap_items:
+            pixmap_item.update_item_visibility()
+
+    def sources_del(self):
+        item = self.get_item()
+        index = self.list_sources.currentIndex().row()
+
+        # TODO: figure this out
+        if index + 1 == len(item.sources):
+            print("TODO: unknown issue with last entry, aborting")
+            return
+
+        if index >= 0:
+            item.sources.pop(index)
+            self.model_cache_sources.pop(index)
+            self.list_sources.setCurrentIndex(self.list_sources.model().index(index - 1, 0))
+            self.list_sources.viewport().update()
+
+            for pixmap_item in item.pixmap_items:
+                pixmap_item.update_item_visibility()
+
+    def sources_open(self):
+        item = self.get_item()
+        index = self.list_sources.currentIndex().row()
+        src_dir = item.sources[index].path.parent
+
+        if index < 0:
+            return
+
+        path_str = QFileDialog.getOpenFileName(self, "Open Item Icon", str(src_dir), "*.png")[0]
+
+        if len(path_str) == 0:
+            print("operation cancelled (source file open)")
+            return
+        
+        path = Path(path_str).resolve()
+        assert path.exists(), "path doesn't exist?"
+        path = self.move_file_to_config(path)
+
+        item.sources[index].name = path.stem
+        item.sources[index].path = path
+        self.model_cache_sources[index] = (True, str(path), QPixmap(str(path)))
+        self.list_sources.viewport().update()
+
+    def sources_move_up(self):
+        item = self.get_item()
+        index = self.list_sources.currentIndex().row()
+
+        if index - 1 >= 0:
+            prev_elem = self.model_cache_sources[index - 1]
+            cur_elem = self.model_cache_sources[index]
+            self.model_cache_sources[index] = prev_elem
+            self.model_cache_sources[index - 1] = cur_elem
+            self.list_sources.viewport().update()
+
+        if index - 1 >= 0:
+            prev_elem = item.sources[index - 1]
+            cur_elem = item.sources[index]
+            item.sources[index] = prev_elem
+            item.sources[index - 1] = cur_elem
+
+        for pixmap_item in item.pixmap_items:
+            pixmap_item.update_item_visibility()
+
+        self.sources_selection_update()
+
+    def sources_move_down(self):
+        item = self.get_item()
+        index = self.list_sources.currentIndex().row()
+
+        if index + 1 < len(self.model_cache_sources):
+            cur_elem = self.model_cache_sources[index]
+            next_elem = self.model_cache_sources[index + 1]
+            self.model_cache_sources[index] = next_elem
+            self.model_cache_sources[index + 1] = cur_elem
+            self.list_sources.viewport().update()
+
+        if index + 1 < len(item.sources):
+            cur_elem = item.sources[index]
+            next_elem = item.sources[index + 1]
+            item.sources[index] = next_elem
+            item.sources[index + 1] = cur_elem
+
+        for pixmap_item in item.pixmap_items:
+            pixmap_item.update_item_visibility()
+
+        self.sources_selection_update()
+
+    def sources_selection_update(self):
+        index = self.list_sources.currentIndex().row()
+        self.btn_sources_del.setEnabled(len(self.model_cache_sources) > 1)
+        self.btn_sources_up.setEnabled(index - 1 >= 0)
+        self.btn_sources_down.setEnabled(index + 1 < len(self.model_cache_sources))
 
 
 class TrackerEditor(TrackerWindow):
