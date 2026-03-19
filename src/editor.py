@@ -386,7 +386,9 @@ class TrackerEditorMenu(QWidget):
         self.list_sources.setModel(ListViewModel(self.model_cache_sources))
         self.list_sources.setCurrentIndex(self.list_sources.model().index(0, 0))
         self.model_sources = self.list_sources.selectionModel()
-        self.model_sources.currentChanged.connect(self.sources_selection_update) # TODO: figure out if this is necessary
+        self.model_sources.currentChanged.connect(
+            self.sources_selection_update
+        )  # TODO: figure out if this is necessary
         self.sources_selection_update()
 
         # update counters table
@@ -415,6 +417,10 @@ class TrackerEditorMenu(QWidget):
             self.counter_width.setValue(0)
             self.counter_height.setValue(0)
         self.do_counter_value_changed = True
+
+        if self.prev_item is not None and self.prev_item.counter is not None:
+            for pixmap_item in self.prev_item.pixmap_items:
+                pixmap_item.label_counter.setVisible(False)
 
         # update rewards
         self.group_rewards.setChecked(item.is_reward)
@@ -648,7 +654,8 @@ class TrackerEditorMenu(QWidget):
         item = self.get_item()
 
         if enabled:
-            item.flag_index = self.flag_index.value()
+            if item.flag_index is None:
+                item.flag_index = self.flag_index.value()
         else:
             item.flag_index = None
 
@@ -675,7 +682,7 @@ class TrackerEditorMenu(QWidget):
         if len(paths_str) == 0:
             print("operation cancelled (source files open)")
             return
-        
+
         for path_str in paths_str:
             path = Path(path_str).resolve()
             assert path.exists(), "path doesn't exist?"
@@ -719,7 +726,7 @@ class TrackerEditorMenu(QWidget):
         if len(path_str) == 0:
             print("operation cancelled (source file open)")
             return
-        
+
         path = Path(path_str).resolve()
         assert path.exists(), "path doesn't exist?"
         path = self.move_file_to_config(path)
