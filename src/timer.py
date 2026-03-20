@@ -20,6 +20,9 @@ class LiveSplitThread(QThread):
         super().__init__()
         self.is_editor_opened = False
 
+        self.is_running = False
+        self.is_paused = False
+        self.is_stopped = False
         self.ls_run = LS.Run.new()
         self.ls_run.set_category_name("Randomizer")
         self.ls_run.push_segment(LS.Segment.new("Seed Completed"))
@@ -64,9 +67,11 @@ class LiveSplitThread(QThread):
         self.is_editor_opened = False
 
     def run(self):
+        # TODO: this can cause performance issues for unknown reasons
         while self.do_run:
-            if not self.is_editor_opened:
+            if not self.is_editor_opened and self.is_running and not self.is_paused and not self.is_stopped:
                 self.timer.emit(self.get_time())
+            self.usleep(int((1 / 60) * 1000000))  # 60fps refresh
 
     def stop(self):
         self.do_run = False
@@ -75,7 +80,7 @@ class LiveSplitThread(QThread):
 
 
 class LiveSplit(QMainWindow):
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, is_editor: bool):
         super().__init__()
 
         self.config = config
@@ -169,7 +174,9 @@ class LiveSplit(QMainWindow):
 
         self.ls_thread = LiveSplitThread()
         self.ls_thread.timer.connect(self.set_time)
-        self.ls_thread.start()
+        if not is_editor:
+            self.ls_thread.start()
+
         self.set_time(0)
         self.full_format = not self.text_settings.is_minimal
 
@@ -268,16 +275,28 @@ class LiveSplit(QMainWindow):
             self.ls_thread.toggle_pause()
             self.is_paused = not self.is_paused
 
+        self.ls_thread.is_running = self.is_running
+        self.ls_thread.is_paused = self.is_paused
+        self.ls_thread.is_stopped = self.is_stopped
+
     def pause_timer(self):
         if self.is_running:
             self.ls_thread.toggle_pause()
             self.is_paused = not self.is_paused
+
+        self.ls_thread.is_running = self.is_running
+        self.ls_thread.is_paused = self.is_paused
+        self.ls_thread.is_stopped = self.is_stopped
 
     def stop_timer(self):
         if self.is_running:
             self.ls_thread.split()
             self.is_paused = False
             self.is_stopped = True
+
+        self.ls_thread.is_running = self.is_running
+        self.ls_thread.is_paused = self.is_paused
+        self.ls_thread.is_stopped = self.is_stopped
 
     def set_timer_offset(self):
         if not self.is_running and not self.is_paused:

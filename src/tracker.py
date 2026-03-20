@@ -92,7 +92,7 @@ class TrackerWindow(QMainWindow):
         self.bg_path = self.config.active_inv.background
         self.state = State(self.config)
         self.autoreload_enabled = True
-        self.timer = LiveSplit(self.config)
+        self.timer = LiveSplit(self.config, self.is_editor)
 
         self.task_autosave = AutosaveThread(self, self.config)
         self.task_autosave.start()
