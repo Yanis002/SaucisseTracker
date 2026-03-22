@@ -302,7 +302,7 @@ class TrackerWindow(QMainWindow):
             flag = self.config.flags[item.flag_index]
             item.pixmap_items[index].flag = self.add_outline_text(
                 f"{obj_name}_flag",
-                QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, flag.width, flag.height),
+                QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, 0, 0),
                 flag.texts[item.pixmap_items[index].state.infos.flag_text_index],
                 flag.text_settings_index,
             )
@@ -310,12 +310,28 @@ class TrackerWindow(QMainWindow):
             item.pixmap_items[index].flag.item_pixmap = item.pixmap_items[index]
             item.pixmap_items[index].flag.set_max_width(flag.get_longest_flag())
 
+    def create_reward(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
+        active_inv = self.config.active_inv
+
+        if item.is_reward:
+            reward_info = active_inv.rewards.items[item.pixmap_items[index].state.infos.reward_index]
+
+            item.reward_map[index] = self.add_outline_text(
+                f"{obj_name}_reward",
+                QRect(pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, 0, 0),
+                reward_info.name,
+                reward_info.text_settings_index,
+            )
+            item.reward_map[index].set_max_width(active_inv.rewards.get_longest_reward())
+
+            if item.reward_map[index].item_pixmap is None:
+                item.reward_map[index].item_pixmap = item.pixmap_items[index]
+
     def get_item_os_offset(self):
         return -1 if os.name == "nt" else 0
 
     def create_item(self, item: InventoryItem, index: int, item_pos: Pos):
         offset = self.get_item_os_offset()
-        active_inv = self.config.active_inv
         pos = Pos(item_pos.x + offset, item_pos.y + offset)
 
         obj_name = f"item{item.index}_pos_{index}"
@@ -344,35 +360,14 @@ class TrackerWindow(QMainWindow):
         if item.counter is not None:
             item.pixmap_items[index].label_counter = self.add_outline_text(
                 f"{obj_name}_counter",
-                QRect(
-                    pos.x + item.counter.pos.x,
-                    pos.y + item.counter.pos.y,
-                    item.counter.width,
-                    item.counter.height,
-                ),
+                QRect(pos.x + item.counter.pos.x, pos.y + item.counter.pos.y, 0, 0),
                 "",
                 item.counter.text_settings_index,
             )
             item.pixmap_items[index].label_counter.item_pixmap = item.pixmap_items[index]
             item.pixmap_items[index].label_counter.set_max_width(f"{item.counter.max}")
 
-        if item.is_reward:
-            reward_info = active_inv.rewards.items[item.pixmap_items[index].state.infos.reward_index]
-            geometry = QRect(
-                pos.x + reward_info.pos.x, pos.y + reward_info.pos.y, reward_info.width, reward_info.height
-            )
-
-            item.reward_map[index] = self.add_outline_text(
-                f"{obj_name}_reward",
-                geometry,
-                reward_info.name,
-                reward_info.text_settings_index,
-            )
-            item.reward_map[index].set_max_width(active_inv.rewards.get_longest_reward())
-
-            if item.reward_map[index].item_pixmap is None:
-                item.reward_map[index].item_pixmap = item.pixmap_items[index]
-
+        self.create_reward(item, index, obj_name, pos)
         self.create_extra(item, index, obj_name, pos)
 
         if len(self.config.flags) > 0:
@@ -396,7 +391,7 @@ class TrackerWindow(QMainWindow):
             for static_text in item.static_texts:
                 active_inv.text_map[static_text.index] = self.add_outline_text(
                     f"item{item.index}_text_{static_text.index}",
-                    QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                    QRect(static_text.pos.x, static_text.pos.y, 0, 0),
                     static_text.content,
                     static_text.text_settings_index,
                     static_text.rotation,
@@ -406,7 +401,7 @@ class TrackerWindow(QMainWindow):
         for static_text in active_inv.static_texts:
             active_inv.text_map[static_text.index] = self.add_outline_text(
                 f"inventory{active_inv.index}_text_{static_text.index}",
-                QRect(static_text.pos.x, static_text.pos.y, static_text.width, static_text.height),
+                QRect(static_text.pos.x, static_text.pos.y, 0, 0),
                 static_text.content,
                 static_text.text_settings_index,
                 static_text.rotation,

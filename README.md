@@ -119,8 +119,6 @@ The save state file is a plain text file containing informations about how to re
     - `Pos`: can be used set the flag's position (relative to the reward icon)
     - `TextSettings`: the index of the text setting to use for the flag
     - `Hidden`: optional, used to set the default visibility
-    - `Width`: the width of the label
-    - `Height`: the height of the label
 * `<GoMode>`: optional, configurable image to set the "go mode"
 * `<Extras>`: optional, configurable extra image to display on an item, for instance a checkmark on songs for OoT, the image will set the width and height of the label
     - `Index`: the index of the extra image
@@ -145,8 +143,6 @@ The save state file is a plain text file containing informations about how to re
             - `Max`: the highest amount the counter can take
             - `Increment`: how much it's adding/substracting when the item gets updated
             - `Pos`: position of the counter (relative to the item)
-            - `Width`: the width of the counter label
-            - `Height`: the height of the counter label
             - `MiddleIncrement`: optional, secondary increment with the middle click
         * `<Sources>`: optional if using `Source`, list of texture paths
             - `<Item>`: an element of the list
@@ -161,8 +157,6 @@ The save state file is a plain text file containing informations about how to re
             - `Name`: the display name of the dungeon
             - `TextSettings`: the index of the text setting to use for the name
             - `Pos`: position of the reward name (relative to the item)
-            - `Width`: the width of the label
-            - `Height`: the height of the label
 
 ## Creating a configuration
 

@@ -130,8 +130,6 @@ class Counter:
     middle_click_increment: int
     text_settings_index: int
     pos: Pos
-    width: int
-    height: int
     use_wheel: bool
 
     def __post_init__(self):
@@ -178,8 +176,6 @@ class Counter:
 @dataclass
 class RewardItem:
     pos: Pos
-    width: int
-    height: int
     name: str
     text_settings_index: int
 
@@ -189,8 +185,6 @@ class RewardItem:
             "Item",
             {
                 "Pos": self.pos.to_str(),
-                "Width": f"{self.width}",
-                "Height": f"{self.height}",
                 "Name": f"{self.name}",
                 "TextSettings": f"{self.text_settings_index}",
             },
@@ -201,8 +195,6 @@ class RewardItem:
 class TextItem:
     index: int
     pos: Pos
-    width: int
-    height: int
     rotation: int
     content: str
     text_settings_index: int
@@ -214,8 +206,6 @@ class TextItem:
             {
                 "Index": f"{self.index}",
                 "Pos": self.pos.to_str(),
-                "Width": f"{self.width}",
-                "Height": f"{self.height}",
                 "Rot": f"{self.rotation}",
                 "Content": self.content,
                 "TextSettings": f"{self.text_settings_index}",
@@ -288,8 +278,6 @@ class InventoryItem:
                     {
                         "Index": f"{label.index}",
                         "Pos": label.pos.to_str(),
-                        "Width": f"{label.width}",
-                        "Height": f"{label.height}",
                         "Content": label.content,
                         "TextSettings": f"{label.text_settings_index}",
                     },
@@ -306,8 +294,6 @@ class InventoryItem:
                     "MiddleIncrement": f"{self.counter.middle_click_increment}",
                     "TextSettings": f"{self.counter.text_settings_index}",
                     "Pos": self.counter.pos.to_str(),
-                    "Width": f"{self.counter.width}",
-                    "Height": f"{self.counter.height}",
                     "UseWheel": f"{self.counter.use_wheel}",
                 },
             )
@@ -342,8 +328,6 @@ class FlagItem:
     pos: Pos
     text_settings_index: int
     hidden: bool
-    width: int
-    height: int
 
     def to_xml(self, parent: ET.Element, index: int):
         return ET.SubElement(
@@ -352,8 +336,6 @@ class FlagItem:
             {
                 "Index": f"{self.index}",
                 "Pos": self.pos.to_str(),
-                "Width": f"{self.width}",
-                "Height": f"{self.height}",
                 "Text": f"{';'.join(self.texts)}",
                 "TextSettings": f"{self.text_settings_index}",
                 "Hidden": f"{self.hidden}",
@@ -785,8 +767,6 @@ class Config:
                                 self.parse_pos(item.get("Pos"), "flag item", True),
                                 int(item.get("TextSettings", "0")),
                                 self.parse_bool(item.get("Hidden", "True")),
-                                int(item.get("Width", "0")),
-                                int(item.get("Height", "0")),
                             )
                         )
                 case "GoMode":
@@ -822,8 +802,6 @@ class Config:
                             TextItem(
                                 j,
                                 self.parse_pos(static_label.get("Pos"), "inventory item label", False),
-                                self.parse_int(static_label.get("Width"), True),
-                                self.parse_int(static_label.get("Height"), True),
                                 self.parse_int(static_label.get("Rot", "0")),
                                 static_label.get("Content", "Unset"),
                                 self.parse_int(static_label.get("TextSettings", "0")),
@@ -878,8 +856,6 @@ class Config:
                                 int(c.get("MiddleIncrement", "0")),
                                 int(c.get("TextSettings", "0")),
                                 self.parse_pos(c.get("Pos"), "counter", True),
-                                int(c.get("Width")),
-                                int(c.get("Height")),
                                 self.parse_bool(c.get("UseWheel", "False")),
                             )
 
@@ -889,8 +865,6 @@ class Config:
                                 TextItem(
                                     self.parse_int(static_label.get("Index"), True),
                                     self.parse_pos(static_label.get("Pos"), "inventory item label", False),
-                                    self.parse_int(static_label.get("Width"), True),
-                                    self.parse_int(static_label.get("Height"), True),
                                     self.parse_int(static_label.get("Rot", "0")),
                                     static_label.get("Content", "Unset"),
                                     self.parse_int(static_label.get("TextSettings", "0")),
@@ -922,8 +896,6 @@ class Config:
                             inventory.rewards.items.append(
                                 RewardItem(
                                     self.parse_pos(item.get("Pos"), "reward", True),
-                                    int(item.get("Width", "0")),
-                                    int(item.get("Height", "0")),
                                     item.get("Name", "Unk"),
                                     int(item.get("TextSettings", "0")),
                                 )
