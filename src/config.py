@@ -31,6 +31,9 @@ class Font:
     path: Path
 
     def __post_init__(self):
+        self.font_id = -1
+        self.is_system = False
+
         if self.name is None:
             show_error(self.widget, "ERROR: the font's name is none")
 
@@ -582,7 +585,8 @@ class Config:
         # register external fonts
         for font in self.fonts:
             if font.path.exists():
-                QFontDatabase.addApplicationFont(str(font.path))
+                font.font_id = QFontDatabase.addApplicationFont(str(font.path))
+                assert font.font_id != -1, "font cannot be added"
             else:
                 show_error(self.widget, f"ERROR: this font doesn't exist '{font.path}'")
 
