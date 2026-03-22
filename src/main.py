@@ -58,8 +58,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("SaucisseTracker")
         self.setObjectName("MainWindow")
-        self.setFixedSize(QSize(275, 355 + offset))
-        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
+        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res" / "icon.png"
         self.setWindowIcon(QIcon(str(icon_path)))
 
         self.centralwidget = QWidget(self)
@@ -68,65 +67,62 @@ class MainWindow(QMainWindow):
 
         self.btn_set_config_dir = QPushButton(self.centralwidget)
         self.btn_set_config_dir.setObjectName("btn_set_config_dir")
-        self.btn_set_config_dir.setGeometry(QRect(224, 44 + offset, 41, 23))
+        self.btn_set_config_dir.setGeometry(224, 29 + offset, 41, 23)
         self.btn_set_config_dir.setText("Set")
 
         self.line_edit_config_folder = QLineEdit(self.centralwidget)
         self.line_edit_config_folder.setObjectName("line_edit_config_folder")
-        self.line_edit_config_folder.setGeometry(QRect(10, 45 + offset, 211, 20))
+        self.line_edit_config_folder.setGeometry(10, 30 + offset, 211, 20)
         self.line_edit_config_folder.setReadOnly(True)
 
         self.label_found = QLabel(self.centralwidget)
         self.label_found.setObjectName("label_found")
-        self.label_found.setGeometry(QRect(10, 75 + offset, 130, 16))
+        self.label_found.setGeometry(10, 60 + offset, 251, 16)
         self.label_found.setText("Found configurations")
 
         self.label_config_folder = QLabel(self.centralwidget)
         self.label_config_folder.setObjectName("label_config_folder")
-        self.label_config_folder.setGeometry(QRect(10, 25 + offset, 120, 16))
+        self.label_config_folder.setGeometry(10, 10 + offset, 211, 16)
         self.label_config_folder.setText("Configuration folder")
 
         self.btn_go = QPushButton(self.centralwidget)
         self.btn_go.setObjectName("btn_go")
-        self.btn_go.setGeometry(QRect(10, 295 + offset, 256, 51))
+        self.btn_go.setGeometry(10, 280 + offset, 256, 51)
         self.btn_go.setStyleSheet('font: 75 15pt "MS Shell Dlg 2";')
         self.btn_go.setText("GO!")
 
         self.list_configs = QListView(self.centralwidget)
         self.list_configs.setObjectName("list_configs")
-        self.list_configs.setGeometry(QRect(11, 95 + offset, 253, 192))
+        self.list_configs.setGeometry(11, 80 + offset, 253, 192)
 
         # menu
         self.menu = QMenuBar(parent=self)
         self.menu.setObjectName("menu")
-        self.menu.setGeometry(QRect(0, 0, 275, OS_MENU_OFFSET))
+        self.menu.setGeometry(0, 0, 275, OS_MENU_OFFSET)
 
-        self.menu_file = QMenu(parent=self.menu)
-        self.menu_file.setObjectName("main_menu_file")
-        self.menu_file.setTitle("File")
-
-        self.action_new = QAction(parent=self.menu_file)
+        self.action_new = QAction(parent=self.menu)
         self.action_new.setObjectName("action_new")
         self.action_new.setText("New")
 
-        self.action_edit = QAction(parent=self.menu_file)
+        self.action_edit = QAction(parent=self.menu)
         self.action_edit.setObjectName("action_edit")
         self.action_edit.setText("Edit")
 
-        self.action_duplicate = QAction(parent=self.menu_file)
+        self.action_duplicate = QAction(parent=self.menu)
         self.action_duplicate.setObjectName("action_duplicate")
         self.action_duplicate.setText("Duplicate")
 
-        self.action_delete = QAction(parent=self.menu_file)
+        self.action_delete = QAction(parent=self.menu)
         self.action_delete.setObjectName("action_delete")
         self.action_delete.setText("Delete")
 
-        self.menu_file.addAction(self.action_new)
-        self.menu_file.addAction(self.action_edit)
-        self.menu_file.addAction(self.action_duplicate)
-        self.menu_file.addAction(self.action_delete)
+        self.menu.addAction(self.action_new)
+        self.menu.addAction(self.action_edit)
+        self.menu.addAction(self.action_duplicate)
+        self.menu.addAction(self.action_delete)
 
-        self.menu.addAction(self.menu_file.menuAction())
+        self.setMenuBar(self.menu)
+        self.setFixedSize(275, 350 + offset + self.menu.height())
 
         # connections
         self.btn_set_config_dir.clicked.connect(self.btn_set_config_dir_clicked)
@@ -234,7 +230,7 @@ class MainWindow(QMainWindow):
 
             self.get_configs(self.config_dir)
             for config in self.configs.values():
-                if config.icon_path is not None:
+                if config.icon_path is not None and config.icon_path.exists():
                     icon = QPixmap(str(config.icon_path))
                 else:
                     icon = QPixmap(str(config.default_icon_path))
