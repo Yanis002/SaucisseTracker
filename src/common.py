@@ -2,6 +2,7 @@ import os
 
 from dataclasses import dataclass
 from pathlib import Path
+from shutil import copyfile
 from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal, QAbstractListModel, QObject, QRect, QSignalBlocker, QThread, Qt
@@ -615,3 +616,15 @@ def show_info(parent: QWidget, text: str):
     """Shows a normal message with an information."""
 
     show_message(parent, "Info", QMessageBox.Icon.Information, text)
+
+
+def move_file_to_config(config: "Config", path: Path):
+    config_folder = config.config_path.parent
+
+    if not path.is_relative_to(config_folder):
+        dest = config_folder / "auto_copied" / f"{path.stem}{path.suffix}"
+        copyfile(path, dest)
+        assert dest.exists(), "unknown file copy failure"
+        path = dest
+
+    return path

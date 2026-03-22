@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>302</width>
-    <height>429</height>
+    <width>212</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>390</y>
-     <width>281</width>
+     <width>191</width>
      <height>31</height>
     </rect>
    </property>
@@ -26,7 +26,7 @@
     <enum>Qt::Orientation::Horizontal</enum>
    </property>
    <property name="standardButtons">
-    <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+    <set>QDialogButtonBox::StandardButton::Ok</set>
    </property>
   </widget>
   <widget class="QSpinBox" name="spinBox_16">
@@ -89,7 +89,7 @@
     <rect>
      <x>10</x>
      <y>70</y>
-     <width>281</width>
+     <width>191</width>
      <height>311</height>
     </rect>
    </property>
@@ -226,19 +226,6 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label_16">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>31</y>
-      <width>51</width>
-      <height>18</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Height</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_15">
     <property name="geometry">
      <rect>
@@ -252,26 +239,6 @@
      <string>X</string>
     </property>
    </widget>
-   <widget class="QSpinBox" name="spinBox_13">
-    <property name="geometry">
-     <rect>
-      <x>132</x>
-      <y>50</y>
-      <width>55</width>
-      <height>32</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="spinBox_14">
-    <property name="geometry">
-     <rect>
-      <x>192</x>
-      <y>50</y>
-      <width>55</width>
-      <height>32</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QSpinBox" name="spinBox_15">
     <property name="geometry">
      <rect>
@@ -280,19 +247,6 @@
       <width>55</width>
       <height>32</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_18">
-    <property name="geometry">
-     <rect>
-      <x>142</x>
-      <y>31</y>
-      <width>41</width>
-      <height>18</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Width</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_17">

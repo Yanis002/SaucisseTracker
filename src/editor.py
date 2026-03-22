@@ -19,10 +19,18 @@ from PyQt6.QtWidgets import (
     QFileDialog,
 )
 
-from common import ListViewModel, Color, Pos
+from common import ListViewModel, Color, Pos, move_file_to_config
 from config import Config, InventoryItem, Counter, SourceItem
-from shutil import copyfile
 from tracker import TrackerWindow
+
+from editor_dialogs import (
+    TextSettingsDialog,
+    GoModeSettingsDialog,
+    RewardSettingsDialog,
+    ExtraSettingsDialog,
+    FlagSettingsDialog,
+    FontSettingsDialog,
+)
 
 
 class TrackerEditorMenu(QWidget):
@@ -39,7 +47,7 @@ class TrackerEditorMenu(QWidget):
         self.label_selected_items = QLabel("Items", self)
         self.label_selected_items.setGeometry(10, 10, 70, 20)
         self.list_selected = QListView(self)
-        self.list_selected.setGeometry(10, 30, 240, 570)
+        self.list_selected.setGeometry(10, 30, 240, 531)
 
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         for item in self.config.active_inv.items:
@@ -84,10 +92,10 @@ class TrackerEditorMenu(QWidget):
         self.btn_table_pos_del.pressed.connect(self.table_pos_del)
 
         self.group_sources = QGroupBox("Icon Paths", self)
-        self.group_sources.setGeometry(520, 30, 521, 301)
+        self.group_sources.setGeometry(520, 30, 311, 301)
 
         self.list_sources = QListView(self.group_sources)
-        self.list_sources.setGeometry(10, 30, 501, 241)
+        self.list_sources.setGeometry(10, 30, 291, 241)
 
         self.model_cache_sources: list[tuple[bool, str, QPixmap]] = []
         for src_item in first_item.sources:
@@ -102,19 +110,19 @@ class TrackerEditorMenu(QWidget):
         self.btn_sources_add.pressed.connect(self.sources_add)
 
         self.btn_sources_del = QPushButton("Remove", self.group_sources)
-        self.btn_sources_del.setGeometry(89, 275, 71, 21)
+        self.btn_sources_del.setGeometry(82, 275, 71, 21)
         self.btn_sources_del.pressed.connect(self.sources_del)
 
         self.btn_sources_open = QPushButton("Open File", self.group_sources)
-        self.btn_sources_open.setGeometry(170, 275, 71, 21)
+        self.btn_sources_open.setGeometry(155, 275, 71, 21)
         self.btn_sources_open.pressed.connect(self.sources_open)
 
         self.btn_sources_up = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.GoUp), "", self.group_sources)
-        self.btn_sources_up.setGeometry(440, 275, 31, 21)
+        self.btn_sources_up.setGeometry(238, 275, 31, 21)
         self.btn_sources_up.pressed.connect(self.sources_move_up)
 
         self.btn_sources_down = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.GoDown), "", self.group_sources)
-        self.btn_sources_down.setGeometry(480, 275, 31, 21)
+        self.btn_sources_down.setGeometry(270, 275, 31, 21)
         self.btn_sources_down.pressed.connect(self.sources_move_down)
 
         self.group_counters = QGroupBox("Use Counters", self)
@@ -180,42 +188,8 @@ class TrackerEditorMenu(QWidget):
         self.counter_height.setMinimum(0)
         self.counter_height.valueChanged.connect(self.update_counter_info)
 
-        self.btn_counters_add = QPushButton("Add", self.group_counters)
-        self.btn_counters_add.setGeometry(9, 274, 111, 21)
-        self.btn_counters_del = QPushButton("Remove", self.group_counters)
-        self.btn_counters_del.setGeometry(130, 274, 111, 21)
-
-        self.group_rewards = QGroupBox("Use Rewards", self)
-        self.group_rewards.setGeometry(520, 340, 521, 261)
-        self.group_rewards.setCheckable(True)
-        self.group_rewards.setChecked(False)
-        self.group_rewards.toggled.connect(self.update_rewards_enabled)
-
-        self.table_rewards = QTableWidget(self.group_rewards)
-        self.table_rewards.setGeometry(10, 30, 501, 201)
-        self.table_rewards.setColumnCount(len(config.active_inv.rewards.items))
-        self.table_rewards.setHorizontalHeaderItem(0, QTableWidgetItem("Reward 1"))
-        self.table_rewards.setRowCount(5)
-        self.table_rewards.setVerticalHeaderItem(0, QTableWidgetItem("Text Settings Index"))
-        self.table_rewards.setVerticalHeaderItem(1, QTableWidgetItem("Name"))
-        self.table_rewards.setVerticalHeaderItem(2, QTableWidgetItem("Position (rel.)"))
-        self.table_rewards.setVerticalHeaderItem(3, QTableWidgetItem("Width"))
-        self.table_rewards.setVerticalHeaderItem(4, QTableWidgetItem("Height"))
-
-        for i, reward_item in enumerate(config.active_inv.rewards.items):
-            self.table_rewards.setItem(0, i, QTableWidgetItem(f"{reward_item.text_settings_index}"))
-            self.table_rewards.setItem(1, i, QTableWidgetItem(f"{reward_item.name}"))
-            self.table_rewards.setItem(2, i, QTableWidgetItem(f"{reward_item.pos.x};{reward_item.pos.y}"))
-            self.table_rewards.setItem(3, i, QTableWidgetItem(f"{reward_item.width}"))
-            self.table_rewards.setItem(4, i, QTableWidgetItem(f"{reward_item.height}"))
-
-        self.btn_rewards_add = QPushButton("Add", self.group_rewards)
-        self.btn_rewards_add.setGeometry(9, 233, 111, 21)
-        self.btn_rewards_del = QPushButton("Remove", self.group_rewards)
-        self.btn_rewards_del.setGeometry(130, 233, 111, 21)
-
         self.group_extras = QGroupBox("Use Extras", self)
-        self.group_extras.setGeometry(520, 610, 101, 101)
+        self.group_extras.setGeometry(625, 450, 101, 101)
         self.group_extras.setCheckable(True)
         self.group_extras.setChecked(False)
         self.group_extras.toggled.connect(self.update_extras_enabled)
@@ -229,7 +203,7 @@ class TrackerEditorMenu(QWidget):
         self.extra_index.valueChanged.connect(self.update_extra_info)
 
         self.group_flags = QGroupBox("Use Flags", self)
-        self.group_flags.setGeometry(630, 610, 101, 101)
+        self.group_flags.setGeometry(520, 450, 101, 101)
         self.group_flags.setCheckable(True)
         self.group_flags.setChecked(False)
         self.group_flags.toggled.connect(self.update_flags_enabled)
@@ -243,29 +217,53 @@ class TrackerEditorMenu(QWidget):
         self.flag_index.valueChanged.connect(self.update_flag_info)
 
         self.group_bg = QGroupBox("Background Settings", self)
-        self.group_bg.setGeometry(740, 610, 301, 101)
+        self.group_bg.setGeometry(520, 340, 311, 101)
 
         self.label_bg_color = QLabel(f"BG Color: #{Color.pack(config.active_inv.background_color):06X}", self.group_bg)
         self.label_bg_color.setGeometry(10, 37, 161, 18)
         self.btn_bg_color = QPushButton("Set BG Color", self.group_bg)
-        self.btn_bg_color.setGeometry(183, 30, 111, 32)
+        self.btn_bg_color.setGeometry(193, 30, 111, 32)
         self.btn_bg_color.pressed.connect(self.update_bg_color)
 
         self.bg_path = QLineEdit(self.group_bg)
         self.bg_path.setReadOnly(True)
-        self.bg_path.setGeometry(9, 65, 171, 32)
+        self.bg_path.setGeometry(9, 65, 181, 32)
         self.bg_path.setText(f"{config.active_inv.background}")
         self.btn_bg_open_file = QPushButton("Open File", self.group_bg)
-        self.btn_bg_open_file.setGeometry(183, 65, 111, 32)
+        self.btn_bg_open_file.setGeometry(193, 65, 111, 32)
         self.btn_bg_open_file.pressed.connect(self.update_bg)
 
         self.btn_add_item = QPushButton("Add Item", self)
-        self.btn_add_item.setGeometry(10, 605, 111, 34)
+        self.btn_add_item.setGeometry(10, 568, 111, 34)
         self.btn_add_item.pressed.connect(self.add_item)
 
         self.btn_delete_item = QPushButton("Delete Item", self)
-        self.btn_delete_item.setGeometry(140, 605, 111, 34)
+        self.btn_delete_item.setGeometry(140, 568, 111, 34)
         self.btn_delete_item.pressed.connect(self.remove_item)
+
+        self.btn_open_flags_settings = QPushButton("Flags Settings", self)
+        self.btn_open_flags_settings.setGeometry(520, 560, 101, 41)
+        self.btn_open_flags_settings.pressed.connect(self.open_flags_settings)
+
+        self.btn_open_gomode_settings = QPushButton("Go Mode", self)
+        self.btn_open_gomode_settings.setGeometry(730, 450, 101, 31)
+        self.btn_open_gomode_settings.pressed.connect(self.open_gomode_settings)
+
+        self.btn_open_rewards_settings = QPushButton("Rewards", self)
+        self.btn_open_rewards_settings.setGeometry(730, 560, 101, 41)
+        self.btn_open_rewards_settings.pressed.connect(self.open_rewards_settings)
+
+        self.btn_open_font_settings = QPushButton("Font Settings", self)
+        self.btn_open_font_settings.setGeometry(730, 520, 101, 31)
+        self.btn_open_font_settings.pressed.connect(self.open_font_settings)
+
+        self.btn_open_text_settings = QPushButton("Text Settings", self)
+        self.btn_open_text_settings.setGeometry(730, 485, 101, 31)
+        self.btn_open_text_settings.pressed.connect(self.open_text_settings)
+
+        self.btn_open_extra_settings = QPushButton("Extra Settings", self)
+        self.btn_open_extra_settings.setGeometry(624, 560, 103, 41)
+        self.btn_open_extra_settings.pressed.connect(self.open_extra_settings)
 
         self.separator_1 = QFrame(self)
         self.separator_1.setGeometry(10, 660, 500, 20)
@@ -273,7 +271,7 @@ class TrackerEditorMenu(QWidget):
         self.separator_1.setFrameShadow(QFrame.Shadow.Sunken)
 
         self.btn_save_cfg = QPushButton("Save Config", self)
-        self.btn_save_cfg.setGeometry(10, 678, 111, 34)
+        self.btn_save_cfg.setGeometry(730, 620, 101, 34)
         self.btn_save_cfg.pressed.connect(self.save_config)
 
         # ---
@@ -288,8 +286,8 @@ class TrackerEditorMenu(QWidget):
         # ---
 
         self.selection_changed()
-        self.setGeometry(0, 0, 1050, 720)
-        self.setFixedSize(1050, 720)
+        self.setGeometry(0, 0, 840, 660)
+        self.setFixedSize(840, 660)
         self.setWindowTitle("Tracker Editor")
 
         # start centered
@@ -336,17 +334,6 @@ class TrackerEditorMenu(QWidget):
             item.pixmap_items[index].state.infos.flag_text_index = 1
             item.pixmap_items[index].update_flag()
         item.pixmap_items[index].update_item_visibility()
-
-    def move_file_to_config(self, path: Path):
-        config_folder = self.config.config_path.parent
-
-        if not path.is_relative_to(config_folder):
-            dest = config_folder / f"{path.stem}{path.suffix}"
-            copyfile(path, dest)
-            assert dest.exists(), "unknown file copy failure"
-            path = dest
-
-        return path
 
     def selection_changed(self):
         item = self.get_item()
@@ -418,13 +405,6 @@ class TrackerEditorMenu(QWidget):
             self.counter_height.setValue(0)
         self.do_counter_value_changed = True
 
-        if self.prev_item is not None and self.prev_item.counter is not None:
-            for pixmap_item in self.prev_item.pixmap_items:
-                pixmap_item.label_counter.setVisible(False)
-
-        # update rewards
-        self.group_rewards.setChecked(item.is_reward)
-
         # update extras group
         self.group_extras.setChecked(item.extra_index is not None)
         if item.extra_index is not None:
@@ -434,6 +414,21 @@ class TrackerEditorMenu(QWidget):
         self.group_flags.setChecked(item.flag_index is not None)
         if item.flag_index is not None:
             self.flag_index.setValue(item.flag_index)
+
+        def toggle_all(target_item: InventoryItem, enabled: bool):
+            for pixmap_item in target_item.pixmap_items:
+                if target_item.counter is not None:
+                    pixmap_item.label_counter.setVisible(enabled)
+
+                if pixmap_item.extra is not None:
+                    pixmap_item.extra.setVisible(enabled)
+
+                if pixmap_item.flag is not None:
+                    pixmap_item.flag.setVisible(enabled)
+
+        toggle_all(item, True)
+        if self.prev_item is not None:
+            toggle_all(self.prev_item, False)
 
         self.change_item_flags(0, True)
         self.prev_item = item
@@ -607,7 +602,7 @@ class TrackerEditorMenu(QWidget):
         # resolve path, make sure it exists and copy the file to the config folder if the path isn't relative to it
         path = Path(path_str).resolve()
         assert path.exists(), "background path doesn't exist?"
-        path = self.move_file_to_config(path)
+        path = move_file_to_config(self.config, path)
 
         # update the config, the ui and the window
         self.config.active_inv.background = path
@@ -622,8 +617,11 @@ class TrackerEditorMenu(QWidget):
         for i, pixmap_item in enumerate(item.pixmap_items):
             pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
 
-            if item.pixmap_items[i].extra is None:
-                self.tracker.create_extra(item, i, pixmap_item.obj_name, pos)
+            if item.pixmap_items[i].extra is not None:
+                self.tracker.scene.removeItem(item.pixmap_items[i].extra)
+
+            self.tracker.create_extra(item, i, pixmap_item.obj_name, pos)
+            item.pixmap_items[i].extra.setVisible(True)
 
     def update_extras_enabled(self, enabled: bool):
         item = self.get_item()
@@ -661,7 +659,8 @@ class TrackerEditorMenu(QWidget):
 
         if item.flag_index is not None:
             for pixmap_item in item.pixmap_items:
-                pixmap_item.flag.setVisible(enabled)
+                if pixmap_item.flag is not None:
+                    pixmap_item.flag.setVisible(enabled)
 
                 if enabled:
                     pixmap_item.update_flag()
@@ -686,7 +685,7 @@ class TrackerEditorMenu(QWidget):
         for path_str in paths_str:
             path = Path(path_str).resolve()
             assert path.exists(), "path doesn't exist?"
-            path = self.move_file_to_config(path)
+            path = move_file_to_config(self.config, path)
 
             item.sources.append(SourceItem(path.stem, path))
             self.model_cache_sources.append((True, str(path), QPixmap(str(path))))
@@ -729,7 +728,7 @@ class TrackerEditorMenu(QWidget):
 
         path = Path(path_str).resolve()
         assert path.exists(), "path doesn't exist?"
-        path = self.move_file_to_config(path)
+        path = move_file_to_config(self.config, path)
 
         item.sources[index].name = path.stem
         item.sources[index].path = path
@@ -785,6 +784,30 @@ class TrackerEditorMenu(QWidget):
         self.btn_sources_del.setEnabled(len(self.model_cache_sources) > 1)
         self.btn_sources_up.setEnabled(index - 1 >= 0)
         self.btn_sources_down.setEnabled(index + 1 < len(self.model_cache_sources))
+
+    def open_text_settings(self):
+        dialog = TextSettingsDialog(self.config, self)
+        dialog.open()
+
+    def open_gomode_settings(self):
+        dialog = GoModeSettingsDialog(self.config, self)
+        dialog.open()
+
+    def open_rewards_settings(self):
+        dialog = RewardSettingsDialog(self.config, self)
+        dialog.open()
+
+    def open_extra_settings(self):
+        dialog = ExtraSettingsDialog(self.config, self)
+        dialog.open()
+
+    def open_flags_settings(self):
+        dialog = FlagSettingsDialog(self.config, self)
+        dialog.open()
+
+    def open_font_settings(self):
+        dialog = FontSettingsDialog(self.config, self)
+        dialog.open()
 
 
 class TrackerEditor(TrackerWindow):
