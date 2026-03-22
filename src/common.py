@@ -228,7 +228,7 @@ class PixmapItem(QGraphicsPixmapItem):
             if self.obj_name.endswith(f"_pos_{i}"):
                 reward = item.reward_map.get(i)
 
-                if reward is not None and reward.item_pixmap is not None:
+                if reward is not None and reward.item_pixmap is not None and reward.isVisible():
                     if increase:
                         self.state.infos.reward_index += 1
 
