@@ -70,9 +70,10 @@ class Rotation(QThread):
 
     def run(self):
         while self.do_run:
-            diff = self.thread_refresh * self.speed
-            self.position = round((self.position + diff) % 360, 2)
-            self.positionChanged.emit(self.position)
+            if self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
+                diff = self.thread_refresh * self.speed
+                self.position = round((self.position + diff) % 360, 2)
+                self.positionChanged.emit(self.position)
             self.msleep(int(self.thread_refresh * 1000))
 
 

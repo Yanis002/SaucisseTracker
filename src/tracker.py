@@ -373,6 +373,44 @@ class TrackerWindow(QMainWindow):
         if len(self.config.flags) > 0:
             self.create_flag(item, index, obj_name, pos)
 
+    def create_gomode(self, is_visible: bool):
+        if self.config.gomode_settings is not None:
+            gomode_settings = self.config.gomode_settings
+
+            if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
+                if self.config.label_gomode_light is None:
+                    pixmap = QPixmap(str(gomode_settings.light_path))
+                    self.config.label_gomode_light = self.add_pixmap(
+                        pixmap,
+                        0,
+                        "label_gomode_light",
+                        0.0,
+                        LabelState(-1, -1, "label_gomode_light", None, is_gomode_light=True),
+                    )
+
+                    self.config.label_gomode_light.setVisible(is_visible)
+                    self.config.label_gomode_light.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+                    self.config.label_gomode_light.setTransformOriginPoint(pixmap.rect().center().toPointF())
+                    self.config.label_gomode_light.state.is_gomode_light = True
+
+                self.config.label_gomode_light.setPos(gomode_settings.light_pos.x, gomode_settings.light_pos.y)
+
+            if self.config.label_gomode is None:
+                self.config.label_gomode = self.add_pixmap(
+                    QPixmap(str(gomode_settings.path)),
+                    0,
+                    "label_gomode",
+                    1.0,
+                    LabelState(-1, -1, "label_gomode", None, is_gomode=True),
+                )
+                # extremely low opacity to workaround an issue where invisible pixmaps aren't clickable
+                self.config.label_gomode.setOpacity(1.0 if is_visible else 0.001)
+
+                self.config.label_gomode.setShapeMode(QGraphicsPixmapItem.ShapeMode.BoundingRectShape)
+                self.config.label_gomode.state.is_gomode = True
+
+            self.config.label_gomode.setPos(gomode_settings.pos.x, gomode_settings.pos.y)
+
     def create_items(self):
         # the order the scene items are created defines the "priority",
         # this means older items will be more in the background while
@@ -408,38 +446,7 @@ class TrackerWindow(QMainWindow):
             )
             active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(False))
 
-        if self.config.gomode_settings is not None:
-            gomode_settings = self.config.gomode_settings
-
-            if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
-                pixmap = QPixmap(str(gomode_settings.light_path))
-                self.config.label_gomode_light = self.add_pixmap(
-                    pixmap,
-                    0,
-                    "label_gomode_light",
-                    0.0,
-                    LabelState(-1, -1, "label_gomode_light", item, is_gomode_light=True),
-                )
-                self.config.label_gomode_light.setPos(gomode_settings.light_pos.x, gomode_settings.light_pos.y)
-                self.config.label_gomode_light.setVisible(False)
-                self.config.label_gomode_light.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
-                self.config.label_gomode_light.setTransformOriginPoint(pixmap.rect().center().toPointF())
-                self.config.label_gomode_light.state.is_gomode_light = True
-
-            self.config.label_gomode = self.add_pixmap(
-                QPixmap(str(gomode_settings.path)),
-                0,
-                "label_gomode",
-                1.0,
-                LabelState(-1, -1, "label_gomode", item, is_gomode=True),
-            )
-            self.config.label_gomode.setPos(gomode_settings.pos.x, gomode_settings.pos.y)
-
-            # extremely low opacity to workaround an issue where invisible pixmaps aren't clickable
-            self.config.label_gomode.setOpacity(0.001)
-
-            self.config.label_gomode.setShapeMode(QGraphicsPixmapItem.ShapeMode.BoundingRectShape)
-            self.config.label_gomode.state.is_gomode = True
+        self.create_gomode(False)
 
     def monitor_execute(self, raw_path: str):
         path = Path(raw_path).resolve()

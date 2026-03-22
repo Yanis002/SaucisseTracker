@@ -76,29 +76,181 @@ class TextSettingsDialog(QDialog):
     def accept(self):
         super().accept()
 
-    def reject(self):
-        super().reject()
-
 
 class GoModeSettingsDialog(QDialog):
-    def __init__(self, config: Config, parent: Optional[QObject] = None):
+    def __init__(self, config: Config, parent: "TrackerEditorMenu"):
         super().__init__(parent)
 
         self.config = config
+        self.editor = parent
+        self.pause_update = True
+
+        self.group_text = QGroupBox("Text", self)
+        self.group_text.setGeometry(10, 10, 315, 108)
+
+        self.label_pos_x = QLabel("X", self.group_text)
+        self.label_pos_x.setGeometry(33, 26, 21, 18)
+        self.icon_pos_x = QSpinBox(self.group_text)
+        self.icon_pos_x.setGeometry(8, 46, 55, 32)
+        self.icon_pos_x.setMinimum(-999)
+        self.icon_pos_x.setMaximum(999)
+        self.icon_pos_x.valueChanged.connect(self.update_icon_pos)
+
+        self.label_pos_y = QLabel("Y", self.group_text)
+        self.label_pos_y.setGeometry(92, 26, 21, 18)
+        self.icon_pos_y = QSpinBox(self.group_text)
+        self.icon_pos_y.setGeometry(68, 46, 55, 32)
+        self.icon_pos_y.setMinimum(-999)
+        self.icon_pos_y.setMaximum(999)
+        self.icon_pos_y.valueChanged.connect(self.update_icon_pos)
+
+        self.label_path = QLabel("Icon Path", self.group_text)
+        self.label_path.setGeometry(160, 26, 81, 18)
+        self.icon_path = QLineEdit(self.group_text)
+        self.icon_path.setGeometry(128, 46, 115, 32)
+        self.icon_path.setReadOnly(True)
+        self.btn_set_path = QPushButton("Set Path", self.group_text)
+        self.btn_set_path.setGeometry(247, 45, 61, 34)
+        self.btn_set_path.pressed.connect(self.open_icon_path)
+
+        self.hide_if_disabled = QCheckBox("Hide if disabled", self.group_text)
+        self.hide_if_disabled.setGeometry(6, 80, 121, 22)
+
+        self.group_light = QGroupBox("Use Light", self)
+        self.group_light.setGeometry(10, 130, 315, 173)
+        self.group_light.setCheckable(True)
+
+        self.label_light_pos_x = QLabel("X", self.group_light)
+        self.label_light_pos_x.setGeometry(33, 30, 21, 18)
+        self.light_pos_x = QSpinBox(self.group_light)
+        self.light_pos_x.setGeometry(8, 50, 55, 32)
+        self.light_pos_x.setMinimum(-999)
+        self.light_pos_x.setMaximum(999)
+        self.light_pos_x.valueChanged.connect(self.update_light_pos)
+
+        self.label_light_pos_y = QLabel("Y", self.group_light)
+        self.label_light_pos_y.setGeometry(92, 30, 21, 18)
+        self.light_pos_y = QSpinBox(self.group_light)
+        self.light_pos_y.setGeometry(68, 50, 55, 32)
+        self.light_pos_y.setMinimum(-999)
+        self.light_pos_y.setMaximum(999)
+        self.light_pos_y.valueChanged.connect(self.update_light_pos)
+
+        self.label_light_path = QLabel("Image Path", self.group_light)
+        self.label_light_path.setGeometry(150, 30, 81, 18)
+        self.light_path = QLineEdit(self.group_light)
+        self.light_path.setGeometry(128, 50, 115, 32)
+        self.light_path.setReadOnly(True)
+        self.btn_set_light_path = QPushButton("Set Path", self.group_light)
+        self.btn_set_light_path.setGeometry(247, 49, 61, 34)
+        self.btn_set_light_path.pressed.connect(self.open_light_img_path)
+
+        self.label_rot_speed = QLabel("Rotation Speed", self.group_light)
+        self.label_rot_speed.setGeometry(10, 97, 101, 18)
+        self.rot_speed = QSpinBox(self.group_light)
+        self.rot_speed.setGeometry(154, 90, 55, 32)
+        self.rot_speed.setMinimum(-999)
+        self.rot_speed.setMaximum(999)
+        self.rot_speed.valueChanged.connect(self.update_rotation)
+
+        self.label_rot_refresh = QLabel("Rotation Refresh Value", self.group_light)
+        self.label_rot_refresh.setGeometry(10, 136, 141, 18)
+        self.rot_refresh = QDoubleSpinBox(self.group_light)
+        self.rot_refresh.setGeometry(154, 130, 71, 32)
+        self.rot_refresh.setDecimals(3)
+        self.rot_refresh.setSingleStep(0.001)
+        self.rot_refresh.setMaximum(1.0)
+        self.rot_refresh.valueChanged.connect(self.update_rotation)
 
         self.btn_ok_cancel = QDialogButtonBox(self)
-        self.btn_ok_cancel.setGeometry(10, 310, 251, 31)
+        self.btn_ok_cancel.setGeometry(10, 310, 315, 31)
         self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
-        self.btn_ok_cancel.setStandardButtons(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
 
-    def accept(self):
-        super().accept()
+        self.icon_pos_x.setValue(self.config.gomode_settings.pos.x)
+        self.icon_pos_y.setValue(self.config.gomode_settings.pos.y)
+        self.icon_path.setText(str(self.config.gomode_settings.path))
 
-    def reject(self):
-        super().reject()
+        self.light_pos_x.setValue(self.config.gomode_settings.light_pos.x)
+        self.light_pos_y.setValue(self.config.gomode_settings.light_pos.y)
+        self.light_path.setText(str(self.config.gomode_settings.light_path))
+
+        self.rot_speed.setValue(self.config.gomode_settings.rotation_speed)
+        self.rot_refresh.setValue(self.config.gomode_settings.thread_refresh_rate)
+
+        self.pause_update = False
+        self.setFixedSize(334, 347)
+        self.setWindowTitle("Go Mode Settings")
+
+    def update_scene(self):
+        self.editor.tracker.task_rotation.position = 0
+        self.editor.tracker.task_rotation.speed = self.config.gomode_settings.rotation_speed
+        self.editor.tracker.task_rotation.thread_refresh = self.config.gomode_settings.thread_refresh_rate
+
+        if self.config.label_gomode is not None:
+            self.editor.tracker.scene.removeItem(self.config.label_gomode)
+            self.config.label_gomode = None
+
+        if self.config.label_gomode_light is not None:
+            self.editor.tracker.scene.removeItem(self.config.label_gomode_light)
+            self.config.label_gomode_light = None
+
+        self.editor.tracker.create_gomode(self.hide_if_disabled.isChecked())
+
+    def update_icon_pos(self, value: int):
+        if self.pause_update:
+            return
+
+        self.config.gomode_settings.pos.x = self.icon_pos_x.value()
+        self.config.gomode_settings.pos.y = self.icon_pos_y.value()
+        self.update_scene()
+
+    def open_icon_path(self):
+        path_str = QFileDialog.getOpenFileName(
+            self, "Open Go Mode Icon", str(self.config.gomode_settings.path.parent), "*.png"
+        )[0]
+
+        if len(path_str) == 0:
+            return
+
+        path = Path(path_str).resolve()
+        assert path.exists(), "path doesn't exist!"
+        path = move_file_to_config(self.config, path)
+
+        self.config.gomode_settings.path = path
+        self.update_scene()
+
+    def update_light_pos(self, value: int):
+        if self.pause_update:
+            return
+
+        self.config.gomode_settings.light_pos.x = self.light_pos_x.value()
+        self.config.gomode_settings.light_pos.y = self.light_pos_y.value()
+        self.update_scene()
+
+    def open_light_img_path(self):
+        path_str = QFileDialog.getOpenFileName(
+            self, "Open Go Mode Light Image", str(self.config.gomode_settings.light_path.parent), "*.png"
+        )[0]
+
+        if len(path_str) == 0:
+            return
+
+        path = Path(path_str).resolve()
+        assert path.exists(), "path doesn't exist!"
+        path = move_file_to_config(self.config, path)
+
+        self.config.gomode_settings.light_path = path
+        self.update_scene()
+
+    def update_rotation(self, value: int):
+        if self.pause_update:
+            return
+
+        self.config.gomode_settings.rotation_speed = self.rot_speed.value()
+        self.config.gomode_settings.thread_refresh_rate = self.rot_refresh.value()
+        self.update_scene()
 
 
 class RewardSettingsDialog(QDialog):
