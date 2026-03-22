@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QPixmap, QIcon, QFont, QFontDatabase
 
-from config import Config, Font, FlagItem, ExtraItem
+from config import Config, Font, FlagItem, ExtraItem, RewardItem
 from common import Pos, move_file_to_config
 
 if TYPE_CHECKING:
@@ -106,20 +106,138 @@ class RewardSettingsDialog(QDialog):
         super().__init__(parent)
 
         self.config = config
+        self.pause_update = False
+
+        self.label_item_index = QLabel("Item Index", self)
+        self.label_item_index.setGeometry(9, 10, 71, 18)
+
+        self.item_index = QSpinBox(self)
+        self.item_index.setGeometry(10, 30, 61, 32)
+        self.item_index.setMinimum(1)
+        self.item_index.setMaximum(len(self.config.active_inv.rewards.items))
+        self.item_index.valueChanged.connect(self.item_value_changed)
+
+        self.btn_item_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self)
+        self.btn_item_add.setGeometry(80, 30, 41, 33)
+        self.btn_item_add.pressed.connect(self.item_add)
+
+        self.btn_item_del = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListRemove), "", self)
+        self.btn_item_del.setGeometry(130, 30, 41, 33)
+        self.btn_item_del.pressed.connect(self.item_del)
+
+        self.group_item_settings = QGroupBox(
+            f"Item Settings ({self.item_index.value()} / {len(self.config.active_inv.rewards.items)})", self
+        )
+        self.group_item_settings.setGeometry(10, 70, 261, 145)
+
+        self.label_name = QLabel("Name", self.group_item_settings)
+        self.label_name.setGeometry(50, 30, 51, 18)
+        self.name = QLineEdit(self.group_item_settings)
+        self.name.setGeometry(10, 50, 115, 32)
+        self.name.textChanged.connect(self.name_update)
+
+        self.label_text_settings_index = QLabel("Text Settings Index", self.group_item_settings)
+        self.label_text_settings_index.setGeometry(133, 30, 121, 18)
+        self.text_settings_index = QSpinBox(self.group_item_settings)
+        self.text_settings_index.setGeometry(130, 50, 115, 32)
+        self.text_settings_index.valueChanged.connect(self.text_index_update)
+
+        self.label_pos_x = QLabel("X", self.group_item_settings)
+        self.label_pos_x.setGeometry(95, 83, 21, 18)
+        self.item_pos_x = QSpinBox(self.group_item_settings)
+        self.item_pos_x.setGeometry(70, 103, 55, 32)
+        self.item_pos_x.setMinimum(-999)
+        self.item_pos_x.setMaximum(999)
+        self.item_pos_x.valueChanged.connect(self.update_reward)
+
+        self.label_pos_y = QLabel("Y", self.group_item_settings)
+        self.label_pos_y.setGeometry(154, 83, 21, 18)
+        self.item_pos_y = QSpinBox(self.group_item_settings)
+        self.item_pos_y.setGeometry(130, 103, 55, 32)
+        self.item_pos_y.setMinimum(-999)
+        self.item_pos_y.setMaximum(999)
+        self.item_pos_y.valueChanged.connect(self.update_reward)
 
         self.btn_ok_cancel = QDialogButtonBox(self)
-        self.btn_ok_cancel.setGeometry(10, 260, 281, 32)
+        self.btn_ok_cancel.setGeometry(10, 220, 261, 32)
         self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
-        self.btn_ok_cancel.setStandardButtons(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
 
-    def accept(self):
-        super().accept()
+        self.item_value_changed(1)
+        self.setFixedSize(282, 260)
+        self.setWindowTitle("Reward Settings")
 
-    def reject(self):
-        super().reject()
+    def update_scene(self):
+        offset = -1 if os.name == "nt" else 0
+        active_inv = self.config.active_inv
+
+        for item in active_inv.items:
+            for i, pixmap_item in enumerate(item.pixmap_items):
+                if i in item.reward_map:
+                    reward_info = active_inv.rewards.items[item.pixmap_items[i].state.infos.reward_index]
+
+                    pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
+                    pos.x += reward_info.pos.x
+                    pos.y += reward_info.pos.y
+
+                    item.reward_map[i].setPlainText(reward_info.name)
+                    item.reward_map[i].set_text_style(reward_info.text_settings_index, False)
+                    item.reward_map[i].setPos(float(pos.x), float(pos.y))
+                    item.reward_map[i].set_max_width(active_inv.rewards.get_longest_reward())
+
+    def item_value_changed(self, value: int):
+        index = self.item_index.value()
+
+        self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.active_inv.rewards.items)})")
+
+        self.pause_update = True
+        reward_info = self.config.active_inv.rewards.items[index - 1]
+        self.name.setText(reward_info.name)
+        self.text_settings_index.setValue(reward_info.text_settings_index)
+        self.item_pos_x.setValue(reward_info.pos.x)
+        self.item_pos_y.setValue(reward_info.pos.y)
+        self.pause_update = False
+
+    def item_add(self):
+        index = len(self.config.active_inv.rewards.items)
+        self.config.active_inv.rewards.items.append(RewardItem(index - 1, Pos(0, 0), Path()))
+        self.item_index.setMaximum(len(self.config.active_inv.rewards.items))
+        self.item_index.setValue(index + 1)
+
+    def item_del(self):
+        index = self.item_index.value()
+        self.config.active_inv.rewards.items.pop(index - 1)
+        self.item_index.setMaximum(len(self.config.active_inv.rewards.items))
+        self.item_index.setValue(index - 1)
+
+    def name_update(self, text):
+        index = self.item_index.value()
+
+        if self.pause_update:
+            return
+
+        self.config.active_inv.rewards.items[index - 1].name = self.name.text()
+        self.update_scene()
+
+    def text_index_update(self, value: int):
+        index = self.item_index.value()
+
+        if self.pause_update:
+            return
+
+        self.config.active_inv.rewards.items[index - 1].text_settings_index = self.text_settings_index.value()
+        self.update_scene()
+
+    def update_reward(self):
+        index = self.item_index.value()
+
+        if self.pause_update:
+            return
+
+        self.config.active_inv.rewards.items[index - 1].pos.x = self.item_pos_x.value()
+        self.config.active_inv.rewards.items[index - 1].pos.y = self.item_pos_y.value()
+        self.update_scene()
 
 
 class ExtraSettingsDialog(QDialog):

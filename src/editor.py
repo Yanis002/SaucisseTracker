@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QColorDialog,
     QFileDialog,
+    QCheckBox,
 )
 
 from common import ListViewModel, Color, Pos, move_file_to_config
@@ -39,7 +40,7 @@ class TrackerEditorMenu(QWidget):
         self.config = config
         self.tracker = tracker
         self.prev_item: Optional[InventoryItem] = None
-        self.do_counter_value_changed = True  # TODO: find something better
+        self.pause_update = False  # TODO: find something better
 
         first_item = self.config.active_inv.items[0]
 
@@ -131,62 +132,48 @@ class TrackerEditorMenu(QWidget):
         self.group_counters.setChecked(False)
         self.group_counters.toggled.connect(self.update_counter_enabled)
 
-        self.label_text_index = QLabel("Text Set.", self.group_counters)
-        self.label_text_index.setGeometry(10, 30, 61, 18)
+        self.label_text_index = QLabel("Text Settings Index", self.group_counters)
+        self.label_text_index.setGeometry(8, 30, 121, 18)
         self.counter_text_index = QSpinBox(self.group_counters)
-        self.counter_text_index.setGeometry(8, 50, 55, 32)
+        self.counter_text_index.setGeometry(8, 50, 115, 32)
         self.counter_text_index.setMinimum(0)
         self.counter_text_index.setMaximum(len(self.config.text_settings) - 1)
         self.counter_text_index.valueChanged.connect(self.update_counter_info)
 
         self.label_min = QLabel("Min.", self.group_counters)
-        self.label_min.setGeometry(82, 30, 31, 18)
+        self.label_min.setGeometry(22, 90, 31, 18)
         self.counter_min = QSpinBox(self.group_counters)
-        self.counter_min.setGeometry(68, 50, 55, 32)
+        self.counter_min.setGeometry(8, 110, 55, 32)
         self.counter_min.setMinimum(0)
         self.counter_min.valueChanged.connect(self.update_counter_info)
 
         self.label_max = QLabel("Max.", self.group_counters)
-        self.label_max.setGeometry(139, 30, 41, 18)
+        self.label_max.setGeometry(79, 90, 41, 18)
         self.counter_max = QSpinBox(self.group_counters)
-        self.counter_max.setGeometry(128, 50, 55, 32)
+        self.counter_max.setGeometry(68, 110, 55, 32)
         self.counter_max.setMinimum(0)
         self.counter_max.valueChanged.connect(self.update_counter_info)
 
-        self.label_incr = QLabel("Incr.", self.group_counters)
-        self.label_incr.setGeometry(202, 30, 31, 18)
+        self.label_incr = QLabel("Increment", self.group_counters)
+        self.label_incr.setGeometry(152, 30, 71, 20)
         self.counter_incr = QSpinBox(self.group_counters)
-        self.counter_incr.setGeometry(188, 50, 55, 32)
+        self.counter_incr.setGeometry(128, 50, 115, 32)
         self.counter_incr.setMinimum(0)
         self.counter_incr.valueChanged.connect(self.update_counter_info)
 
         self.label_pos_x = QLabel("X", self.group_counters)
-        self.label_pos_x.setGeometry(31, 90, 21, 18)
+        self.label_pos_x.setGeometry(151, 90, 21, 18)
         self.counter_pos_x = QSpinBox(self.group_counters)
-        self.counter_pos_x.setGeometry(8, 110, 55, 32)
+        self.counter_pos_x.setGeometry(128, 110, 55, 32)
         self.counter_pos_x.setMinimum(-1000)
         self.counter_pos_x.valueChanged.connect(self.update_counter_info)
 
         self.label_pox_y = QLabel("Y", self.group_counters)
-        self.label_pox_y.setGeometry(90, 90, 21, 18)
+        self.label_pox_y.setGeometry(210, 90, 21, 18)
         self.counter_pox_y = QSpinBox(self.group_counters)
-        self.counter_pox_y.setGeometry(68, 110, 55, 32)
+        self.counter_pox_y.setGeometry(188, 110, 55, 32)
         self.counter_pox_y.setMinimum(-1000)
         self.counter_pox_y.valueChanged.connect(self.update_counter_info)
-
-        self.label_width = QLabel("Width", self.group_counters)
-        self.label_width.setGeometry(135, 90, 41, 18)
-        self.counter_width = QSpinBox(self.group_counters)
-        self.counter_width.setGeometry(128, 110, 55, 32)
-        self.counter_width.setMinimum(0)
-        self.counter_width.valueChanged.connect(self.update_counter_info)
-
-        self.label_height = QLabel("Height", self.group_counters)
-        self.label_height.setGeometry(193, 90, 51, 18)
-        self.counter_height = QSpinBox(self.group_counters)
-        self.counter_height.setGeometry(188, 110, 55, 32)
-        self.counter_height.setMinimum(0)
-        self.counter_height.valueChanged.connect(self.update_counter_info)
 
         self.group_extras = QGroupBox("Use Extras", self)
         self.group_extras.setGeometry(625, 450, 101, 101)
@@ -249,8 +236,11 @@ class TrackerEditorMenu(QWidget):
         self.btn_open_gomode_settings.setGeometry(730, 450, 101, 31)
         self.btn_open_gomode_settings.pressed.connect(self.open_gomode_settings)
 
+        self.is_reward = QCheckBox("Is Reward", self)
+        self.is_reward.setGeometry(730, 560, 101, 22)
+        self.is_reward.checkStateChanged.connect(self.update_rewards_enabled)
         self.btn_open_rewards_settings = QPushButton("Rewards", self)
-        self.btn_open_rewards_settings.setGeometry(730, 560, 101, 41)
+        self.btn_open_rewards_settings.setGeometry(730, 580, 101, 21)
         self.btn_open_rewards_settings.pressed.connect(self.open_rewards_settings)
 
         self.btn_open_font_settings = QPushButton("Font Settings", self)
@@ -266,7 +256,7 @@ class TrackerEditorMenu(QWidget):
         self.btn_open_extra_settings.pressed.connect(self.open_extra_settings)
 
         self.separator_1 = QFrame(self)
-        self.separator_1.setGeometry(10, 660, 500, 20)
+        self.separator_1.setGeometry(10, 600, 820, 20)
         self.separator_1.setFrameShape(QFrame.Shape.HLine)
         self.separator_1.setFrameShadow(QFrame.Shadow.Sunken)
 
@@ -379,7 +369,7 @@ class TrackerEditorMenu(QWidget):
         self.sources_selection_update()
 
         # update counters table
-        self.do_counter_value_changed = False
+        self.pause_update = True
         self.group_counters.setChecked(item.counter is not None)
         if item.counter is not None:
             self.counter_text_index.setValue(item.counter.text_settings_index)
@@ -388,8 +378,6 @@ class TrackerEditorMenu(QWidget):
             self.counter_incr.setValue(item.counter.increment)
             self.counter_pos_x.setValue(item.counter.pos.x)
             self.counter_pox_y.setValue(item.counter.pos.y)
-            self.counter_width.setValue(item.counter.width)
-            self.counter_height.setValue(item.counter.height)
 
             item.counter.show = True
             for pixmap_item in item.pixmap_items:
@@ -401,9 +389,6 @@ class TrackerEditorMenu(QWidget):
             self.counter_incr.setValue(0)
             self.counter_pos_x.setValue(0)
             self.counter_pox_y.setValue(0)
-            self.counter_width.setValue(0)
-            self.counter_height.setValue(0)
-        self.do_counter_value_changed = True
 
         # update extras group
         self.group_extras.setChecked(item.extra_index is not None)
@@ -414,6 +399,9 @@ class TrackerEditorMenu(QWidget):
         self.group_flags.setChecked(item.flag_index is not None)
         if item.flag_index is not None:
             self.flag_index.setValue(item.flag_index)
+
+        # update rewards
+        self.is_reward.setChecked(item.is_reward)
 
         def toggle_all(target_item: InventoryItem, enabled: bool):
             for pixmap_item in target_item.pixmap_items:
@@ -432,6 +420,7 @@ class TrackerEditorMenu(QWidget):
 
         self.change_item_flags(0, True)
         self.prev_item = item
+        self.pause_update = False
 
     def update_pos(self, new_pos: QPoint):
         cur_index = self.table_pos.currentIndex().row()
@@ -525,7 +514,7 @@ class TrackerEditorMenu(QWidget):
             print("won't remove because index is 0")
 
     def update_counter_info(self, new_value: int):
-        if not self.do_counter_value_changed:
+        if self.pause_update:
             return
 
         item = self.get_item()
@@ -538,8 +527,6 @@ class TrackerEditorMenu(QWidget):
                 0,  # TODO
                 self.counter_text_index.value(),
                 Pos(self.counter_pos_x.value(), self.counter_pox_y.value()),
-                self.counter_width.value(),
-                self.counter_height.value(),
                 False,  # TODO
             )
         else:
@@ -550,8 +537,6 @@ class TrackerEditorMenu(QWidget):
             item.counter.text_settings_index = self.counter_text_index.value()
             item.counter.pos.x = self.counter_pos_x.value()
             item.counter.pos.y = self.counter_pox_y.value()
-            item.counter.width = self.counter_width.value()
-            item.counter.height = self.counter_height.value()
             item.counter.use_wheel = False  # TODO
 
         item.counter.value = item.counter.min
@@ -563,7 +548,7 @@ class TrackerEditorMenu(QWidget):
             pixmap_item.label_counter.set_max_width(f"{item.counter.max}")
 
     def update_counter_enabled(self, enabled: bool):
-        if not self.do_counter_value_changed:
+        if self.pause_update:
             return
 
         item = self.get_item()
@@ -665,10 +650,25 @@ class TrackerEditorMenu(QWidget):
                 if enabled:
                     pixmap_item.update_flag()
 
-    def update_rewards_enabled(self, enabled: bool):
+    def update_rewards_enabled(self, state):
+        item = self.get_item()
+
+        if self.pause_update:
+            return
+
+        offset = self.tracker.get_item_os_offset()
+        enabled = self.is_reward.isChecked()
+
+        item.is_reward = enabled
+        for i, pixmap_item in enumerate(item.pixmap_items):
+            if i not in item.reward_map:
+                pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
+                self.tracker.create_reward(item, i, pixmap_item.obj_name, pos)
+
+            item.reward_map[i].setVisible(enabled)
+
         # rewards and extras can't co-exist
         self.group_extras.setEnabled(not enabled)
-
         if enabled:
             self.group_extras.setChecked(False)
 
