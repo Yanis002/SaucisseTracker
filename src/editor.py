@@ -292,6 +292,7 @@ class TrackerEditorMenu(QWidget):
         self.selection_changed()
         self.setFixedSize(1012, 610)
         self.setWindowTitle("Tracker Editor")
+        self.setWindowIcon(self.tracker.windowIcon())
 
         # start centered
         qtRectangle = self.frameGeometry()

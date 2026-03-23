@@ -84,10 +84,11 @@ def update_scene(config: Config):
 
 
 class TextSettingsDialog(QDialog):
-    def __init__(self, config: Config, parent: Optional[QObject] = None):
+    def __init__(self, config: Config, parent: "TrackerEditorMenu"):
         super().__init__(parent)
 
         self.config = config
+        self.editor = parent
         self.pause_update = True
 
         self.label_item_index = QLabel("Item Index", self)
@@ -175,6 +176,7 @@ class TextSettingsDialog(QDialog):
         self.item_value_changed(1)
         self.setFixedSize(262, 440)
         self.setWindowTitle("Text Settings")
+        self.setWindowIcon(self.editor.windowIcon())
 
     def item_value_changed(self, value: int):
         index = self.item_index.value()
@@ -388,6 +390,7 @@ class GoModeSettingsDialog(QDialog):
         self.pause_update = False
         self.setFixedSize(334, 347)
         self.setWindowTitle("Go Mode Settings")
+        self.setWindowIcon(self.editor.windowIcon())
 
     def update_scene(self):
         self.editor.tracker.task_rotation.position = 0
@@ -460,10 +463,11 @@ class GoModeSettingsDialog(QDialog):
 
 
 class RewardSettingsDialog(QDialog):
-    def __init__(self, config: Config, parent: Optional[QObject] = None):
+    def __init__(self, config: Config, parent: "TrackerEditorMenu"):
         super().__init__(parent)
 
         self.config = config
+        self.editor = parent
         self.pause_update = False
 
         self.label_item_index = QLabel("Item Index", self)
@@ -525,6 +529,7 @@ class RewardSettingsDialog(QDialog):
         self.item_value_changed(1)
         self.setFixedSize(282, 260)
         self.setWindowTitle("Reward Settings")
+        self.setWindowIcon(self.editor.windowIcon())
 
     def item_value_changed(self, value: int):
         index = self.item_index.value()
@@ -645,6 +650,7 @@ class ExtraSettingsDialog(QDialog):
         self.item_value_changed(1)
         self.setFixedSize(201, 260)
         self.setWindowTitle("Extra Settings")
+        self.setWindowIcon(self.editor.windowIcon())
 
     def accept(self):
         self.editor.extra_index.setMaximum(len(self.config.extras.items) - 1)
@@ -808,6 +814,7 @@ class FlagSettingsDialog(QDialog):
         self.item_value_changed(1)
         self.setFixedSize(212, 430)
         self.setWindowTitle("Flag Settings")
+        self.setWindowIcon(self.editor.windowIcon())
 
     def accept(self):
         self.editor.flag_index.setMaximum(len(self.config.flags) - 1)
@@ -891,10 +898,11 @@ class FlagSettingsDialog(QDialog):
 
 
 class FontSettingsDialog(QDialog):
-    def __init__(self, config: Config, parent: Optional[QObject] = None):
+    def __init__(self, config: Config, parent: "TrackerEditorMenu"):
         super().__init__(parent)
 
         self.config = config
+        self.editor = parent
 
         self.label_item_index = QLabel("Item Index", self)
         self.label_item_index.setGeometry(9, 10, 71, 18)
@@ -942,6 +950,7 @@ class FontSettingsDialog(QDialog):
         self.is_custom.setChecked(True)
         self.setFixedSize(270, 260)
         self.setWindowTitle("Font Settings")
+        self.setWindowIcon(self.editor.windowIcon())
 
     def set_font_path(self):
         index = self.item_index.value() - 1
