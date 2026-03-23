@@ -313,7 +313,7 @@ class TrackerEditorMenu(QWidget):
             pixmap_item.state.infos.img_index = -1
             if pixmap_item.flag is not None and item.flag_index is not None:
                 pixmap_item.state.infos.flag_text_index = 0
-                pixmap_item.update_flag()
+                pixmap_item.update_flag(True)
             pixmap_item.update_item_visibility()
 
     def clear_prev_item_flags(self):
@@ -336,7 +336,7 @@ class TrackerEditorMenu(QWidget):
         item.pixmap_items[index].state.infos.img_index = 0
         if item.pixmap_items[index].flag is not None and item.flag_index is not None:
             item.pixmap_items[index].state.infos.flag_text_index = 1
-            item.pixmap_items[index].update_flag()
+            item.pixmap_items[index].update_flag(True)
         item.pixmap_items[index].update_item_visibility()
 
     def selection_changed(self):
@@ -474,6 +474,13 @@ class TrackerEditorMenu(QWidget):
             pos.x += extra.pos.x
             pos.y += extra.pos.y
             item.pixmap_items[index].extra.setPos(float(pos.x), float(pos.y))
+
+        if item.is_reward and index in item.reward_map:
+            reward_info = self.config.active_inv.rewards.items[item.pixmap_items[index].state.infos.reward_index]
+            pos = Pos(item.positions[index].x + offset, item.positions[index].y + offset)
+            pos.x += reward_info.pos.x
+            pos.y += reward_info.pos.y
+            item.reward_map[index].setPos(float(pos.x), float(pos.y))
 
     def update_pos_x(self, value: int):
         if self.pause_update:

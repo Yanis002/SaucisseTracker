@@ -168,19 +168,22 @@ class PixmapItem(QGraphicsPixmapItem):
                     self.config.state_saved = False
 
     def mouseReleaseEvent(self, event):
-        """
-        Completely useless for the end users currently, it prints the position of the item.
-        It's useful when items are set to be moveable.
-        """
+        """Actions to do when the mouse is released, updates the position on the editor"""
 
         super().mouseReleaseEvent(event)
-        if self.config.edit_menu is not None:
-            self.config.edit_menu.update_pos(self.pos().toPoint())
+
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            if self.config.edit_menu is not None:
+                self.config.edit_menu.update_pos(self.pos().toPoint())
 
     def mouseMoveEvent(self, event):
+        """Actions to do when the mouse is moving, updates the position on the editor"""
+
         super().mouseMoveEvent(event)
-        if self.config.edit_menu is not None:
-            self.config.edit_menu.update_pos(self.pos().toPoint())
+
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            if self.config.edit_menu is not None:
+                self.config.edit_menu.update_pos(self.pos().toPoint())
 
     def wheelEvent(self, event):
         """Actions to do when the wheel is 'moved'. Used as a fast-cycle feature when enabled in the config."""
@@ -286,7 +289,7 @@ class PixmapItem(QGraphicsPixmapItem):
         self.state.infos.enabled = item.enabled
         self.setPixmap(QPixmap(str(item.sources[path_index].path)))
 
-    def update_flag(self):
+    def update_flag(self, force_is_max: bool = False):
         """
         Updates the flag, flags are special text used (for OoT) to display the H/L on the hookshot or the MQ texts.
         Note: this is just an example of usage, it can be used for other purposes probably.
@@ -305,7 +308,8 @@ class PixmapItem(QGraphicsPixmapItem):
                 self.state.infos.flag_text_index = total
 
             self.flag.setPlainText(flag.texts[self.state.infos.flag_text_index])
-            self.flag.set_text_style(flag.text_settings_index, self.state.infos.flag_text_index == total)
+            is_max = self.state.infos.flag_text_index == total if not force_is_max else False
+            self.flag.set_text_style(flag.text_settings_index, is_max)
 
     def update_item(self, increase: bool, middle_click: bool = False):
         """
