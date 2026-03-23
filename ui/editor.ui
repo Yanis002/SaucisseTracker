@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1012</width>
-    <height>690</height>
+    <height>610</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -483,7 +483,7 @@
    <property name="geometry">
     <rect>
      <x>900</x>
-     <y>650</y>
+     <y>568</y>
      <width>101</width>
      <height>34</height>
     </rect>
@@ -639,8 +639,8 @@
     <rect>
      <x>280</x>
      <y>530</y>
-     <width>121</width>
-     <height>151</height>
+     <width>381</width>
+     <height>71</height>
     </rect>
    </property>
    <property name="title">
@@ -662,8 +662,8 @@
    <widget class="QPushButton" name="pushButton_16">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>110</y>
+      <x>270</x>
+      <y>30</y>
       <width>103</width>
       <height>31</height>
      </rect>
@@ -675,8 +675,8 @@
    <widget class="QPushButton" name="pushButton_7">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>70</y>
+      <x>140</x>
+      <y>30</y>
       <width>103</width>
       <height>31</height>
      </rect>
@@ -692,7 +692,7 @@
      <x>10</x>
      <y>10</y>
      <width>261</width>
-     <height>671</height>
+     <height>591</height>
     </rect>
    </property>
    <property name="title">
@@ -702,7 +702,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>580</y>
+      <y>500</y>
       <width>111</width>
       <height>34</height>
      </rect>
@@ -717,7 +717,7 @@
       <x>10</x>
       <y>32</y>
       <width>240</width>
-      <height>541</height>
+      <height>461</height>
      </rect>
     </property>
    </widget>
@@ -725,7 +725,7 @@
     <property name="geometry">
      <rect>
       <x>9</x>
-      <y>631</y>
+      <y>551</y>
       <width>241</width>
       <height>32</height>
      </rect>
@@ -735,7 +735,7 @@
     <property name="geometry">
      <rect>
       <x>140</x>
-      <y>580</y>
+      <y>500</y>
       <width>111</width>
       <height>34</height>
      </rect>
@@ -748,7 +748,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>611</y>
+      <y>531</y>
       <width>70</width>
       <height>20</height>
      </rect>

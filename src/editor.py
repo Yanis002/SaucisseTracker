@@ -46,9 +46,9 @@ class TrackerEditorMenu(QWidget):
 
         # items section
         self.group_items = QGroupBox("Items", self)
-        self.group_items.setGeometry(10, 10, 261, 671)
+        self.group_items.setGeometry(10, 10, 261, 591)
         self.list_selected = QListView(self.group_items)
-        self.list_selected.setGeometry(10, 30, 240, 531)
+        self.list_selected.setGeometry(10, 32, 240, 461)
 
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         for item in self.config.active_inv.items:
@@ -60,17 +60,17 @@ class TrackerEditorMenu(QWidget):
 
         # item name, paths and sources section
         self.label_item_name = QLabel("Item Name", self.group_items)
-        self.label_item_name.setGeometry(10, 611, 70, 20)
+        self.label_item_name.setGeometry(10, 531, 70, 20)
         self.item_name = QLineEdit(self.group_items)
-        self.item_name.setGeometry(9, 631, 241, 32)
+        self.item_name.setGeometry(9, 551, 241, 32)
         self.item_name.textChanged.connect(self.update_item_name)
 
-        self.btn_add_item = QPushButton("Add Item", self)
-        self.btn_add_item.setGeometry(10, 580, 111, 34)
+        self.btn_add_item = QPushButton("Add Item", self.group_items)
+        self.btn_add_item.setGeometry(10, 500, 111, 34)
         self.btn_add_item.pressed.connect(self.add_item)
 
-        self.btn_delete_item = QPushButton("Delete Item", self)
-        self.btn_delete_item.setGeometry(140, 580, 111, 34)
+        self.btn_delete_item = QPushButton("Delete Item", self.group_items)
+        self.btn_delete_item.setGeometry(140, 500, 111, 34)
         self.btn_delete_item.pressed.connect(self.remove_item)
 
         self.group_pos = QGroupBox("Positions", self)
@@ -272,25 +272,25 @@ class TrackerEditorMenu(QWidget):
         self.btn_open_rewards_settings.pressed.connect(self.open_rewards_settings)
 
         self.group_misc = QGroupBox("Misc", self)
-        self.group_misc.setGeometry(280, 530, 121, 151)
+        self.group_misc.setGeometry(280, 530, 381, 71)
         self.btn_open_gomode_settings = QPushButton("Go Mode", self.group_misc)
         self.btn_open_gomode_settings.setGeometry(9, 30, 103, 31)
         self.btn_open_gomode_settings.pressed.connect(self.open_gomode_settings)
 
-        self.btn_open_font_settings = QPushButton("Font Settings", self.group_misc)
-        self.btn_open_font_settings.setGeometry(9, 110, 103, 31)
-        self.btn_open_font_settings.pressed.connect(self.open_font_settings)
-
         self.btn_open_text_settings = QPushButton("Text Settings", self.group_misc)
-        self.btn_open_text_settings.setGeometry(9, 70, 103, 31)
+        self.btn_open_text_settings.setGeometry(140, 30, 103, 31)
         self.btn_open_text_settings.pressed.connect(self.open_text_settings)
 
+        self.btn_open_font_settings = QPushButton("Font Settings", self.group_misc)
+        self.btn_open_font_settings.setGeometry(270, 30, 103, 31)
+        self.btn_open_font_settings.pressed.connect(self.open_font_settings)
+
         self.btn_save_cfg = QPushButton("Save Config", self)
-        self.btn_save_cfg.setGeometry(900, 650, 101, 34)
+        self.btn_save_cfg.setGeometry(900, 568, 101, 34)
         self.btn_save_cfg.pressed.connect(self.save_config)
 
         self.selection_changed()
-        self.setFixedSize(1012, 690)
+        self.setFixedSize(1012, 610)
         self.setWindowTitle("Tracker Editor")
 
         # start centered
