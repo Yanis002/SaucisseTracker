@@ -333,10 +333,7 @@ class TrackerWindow(QMainWindow):
     def create_item(self, item: InventoryItem, index: int, item_pos: Pos):
         offset = self.get_item_os_offset()
         pos = Pos(item_pos.x + offset, item_pos.y + offset)
-
         obj_name = f"item{item.index}_pos_{index}"
-        pos.x += offset
-        pos.y += offset
 
         item.pixmap_items.append(
             self.add_pixmap(
