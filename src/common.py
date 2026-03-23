@@ -217,7 +217,9 @@ class PixmapItem(QGraphicsPixmapItem):
         return path
 
     def validate_item_index(self):
-        assert self.state.index >= 0, f"Assert triggered on {repr(self.obj_name)}"
+        assert self.state.index >= 0 and self.state.index < len(
+            self.config.active_inv.items
+        ), f"Assert triggered on {repr(self.obj_name)}"
 
     def is_gomode(self):
         return self.state.is_gomode or self.state.is_gomode_light

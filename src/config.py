@@ -498,7 +498,9 @@ class Inventory:
         for item in self.items:
             if item.index > index:
                 item.index -= 1
-                item.pixmap_items[0].state.index = item.index
+
+                for pixmap_item in item.pixmap_items:
+                    pixmap_item.state.index = item.index
 
 
 @dataclass

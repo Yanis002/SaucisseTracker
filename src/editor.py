@@ -40,7 +40,7 @@ class TrackerEditorMenu(QWidget):
         self.config = config
         self.tracker = tracker
         self.prev_item: Optional[InventoryItem] = None
-        self.pause_update = False  # TODO: find something better
+        self.pause_update = True
 
         first_item = self.config.active_inv.items[0]
 
@@ -53,10 +53,8 @@ class TrackerEditorMenu(QWidget):
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         for item in self.config.active_inv.items:
             self.model_cache.append((True, item.name, item.pixmap_items[0].pixmap().scaled(32, 32)))
-        self.list_selected.setModel(ListViewModel(self.model_cache))
-        self.list_selected.setCurrentIndex(self.list_selected.model().index(0, 0))
-        self.model = self.list_selected.selectionModel()
-        self.model.currentChanged.connect(self.selection_changed)
+        self.reset_model_cache()
+        self.select_item(0)
 
         # item name, paths and sources section
         self.label_item_name = QLabel("Item Name", self.group_items)
@@ -290,6 +288,8 @@ class TrackerEditorMenu(QWidget):
         self.btn_save_cfg.pressed.connect(self.save_config)
 
         self.selection_changed()
+        self.pause_update = False
+
         self.setFixedSize(1012, 610)
         self.setWindowTitle("Tracker Editor")
         self.setWindowIcon(self.tracker.windowIcon())
@@ -301,6 +301,20 @@ class TrackerEditorMenu(QWidget):
         self.move(qtRectangle.topLeft())
 
         self.show()
+
+    def reset_model_cache(self):
+        self.list_selected.setModel(ListViewModel(self.model_cache))
+        self.model = self.list_selected.selectionModel()
+        self.model.currentChanged.connect(self.selection_changed)
+        self.list_selected.update()
+        self.list_selected.viewport().update()
+
+    def select_item(self, item_index: int):
+        self.list_selected.setCurrentIndex(self.list_selected.model().index(item_index, 0))
+        print(f"item index ({self.list_selected.currentIndex().row()} vs {item_index})")
+        assert (
+            self.list_selected.currentIndex().row() == item_index
+        ), f"wrong item index ({self.list_selected.currentIndex().row()} vs {item_index})"
 
     def get_item(self):
         return self.config.active_inv.items[self.list_selected.currentIndex().row()]
@@ -341,6 +355,9 @@ class TrackerEditorMenu(QWidget):
 
     def selection_changed(self):
         item = self.get_item()
+
+        if self.pause_update:
+            return
 
         # update item name line edit
         self.item_name.setText(item.name)
@@ -527,21 +544,73 @@ class TrackerEditorMenu(QWidget):
         print("Config saved successfully!")
 
     def add_item(self):
-        pass
+        scene = self.tracker.scene
+        index = len(self.config.active_inv.items)
+
+        path_str = QFileDialog.getOpenFileName(self, "Open Item Icon", str(self.config.config_dir), "*.png")[0]
+
+        if len(path_str) == 0:
+            return
+
+        path = Path(path_str).resolve()
+        assert path.exists(), "path doesn't exist!"
+        path = move_file_to_config(self.config, path)
+
+        if scene is not None:
+            self.pause_update = True
+            pixmap = QPixmap(str(path))
+            new_item = InventoryItem(
+                index,
+                path.stem,
+                [SourceItem(path.stem, path)],
+                None,
+                [Pos(0, 0)],
+                0,
+                False,
+                pixmap.width() != 32 or pixmap.height() != 32,
+                False,
+                None,
+                False,
+                None,
+                list(),
+                dict(),
+            )
+
+            self.config.active_inv.items.append(new_item)
+            self.model_cache.append((True, new_item.name, pixmap))
+            self.tracker.create_item(new_item, 0, new_item.positions[0])
+            self.reset_model_cache()
+            self.select_item(index)
+            self.pause_update = False
+            self.selection_changed()
 
     def remove_item(self):
         item = self.get_item()
-        scene = item.pixmap_items[0].scene()
+        scene = self.tracker.scene
 
         if scene is not None:
-            self.model_cache.pop(item.index)
+            self.pause_update = True
+            prev_index = item.index - 1
             self.config.active_inv.remove_item(item.index)
+            self.model_cache.pop(item.index)
 
-            if item.pixmap_items[0].label_counter is not None:
-                scene.removeItem(item.pixmap_items[0].label_counter)
+            for pixmap_item in item.pixmap_items:
+                if pixmap_item.label_counter is not None:
+                    scene.removeItem(pixmap_item.label_counter)
 
-            scene.removeItem(item.pixmap_items[0])
-            self.list_selected.viewport().update()
+                if pixmap_item.flag is not None:
+                    scene.removeItem(pixmap_item.flag)
+
+                if pixmap_item.extra is not None:
+                    scene.removeItem(pixmap_item.extra)
+
+                scene.removeItem(pixmap_item)
+
+            self.reset_model_cache()
+            self.select_item(prev_index)
+            self.prev_item = self.config.active_inv.items[prev_index]
+            self.pause_update = False
+            self.selection_changed()
 
     def update_item_name(self):
         item = self.get_item()
