@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtGui import QIcon, QFontDatabase
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -16,14 +17,70 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QFontComboBox,
     QFileDialog,
+    QGridLayout,
+    QWidget,
+    QColorDialog,
 )
-from PyQt6.QtGui import QPixmap, QIcon, QFont, QFontDatabase
 
-from config import Config, Font, FlagItem, ExtraItem, RewardItem
-from common import Pos, move_file_to_config
+from config import Config, Font, FlagItem, ExtraItem, RewardItem, TextSettings
+from common import Color, Pos, move_file_to_config
 
 if TYPE_CHECKING:
     from editor import TrackerEditorMenu
+
+
+def update_scene_rewards(config: Config):
+    offset = -1 if os.name == "nt" else 0
+    active_inv = config.active_inv
+
+    for item in active_inv.items:
+        for i, pixmap_item in enumerate(item.pixmap_items):
+            if i in item.reward_map:
+                reward_info = active_inv.rewards.items[item.pixmap_items[i].state.infos.reward_index]
+
+                pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
+                pos.x += reward_info.pos.x
+                pos.y += reward_info.pos.y
+
+                item.reward_map[i].setPlainText(reward_info.name)
+                item.reward_map[i].set_text_style(reward_info.text_settings_index, False)
+                item.reward_map[i].setPos(float(pos.x), float(pos.y))
+                item.reward_map[i].set_max_width(active_inv.rewards.get_longest_reward())
+
+
+def update_scene_flags(config: Config):
+    offset = -1 if os.name == "nt" else 0
+
+    for item in config.active_inv.items:
+        if item.flag_index is not None:
+            flag = config.flags[item.flag_index]
+
+            for i, pixmap_item in enumerate(item.pixmap_items):
+                pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
+                pos.x += flag.pos.x
+                pos.y += flag.pos.y
+
+                if pixmap_item.flag is not None:
+                    is_visible = pixmap_item.flag.isVisible()
+                    pixmap_item.flag.setPos(float(pos.x), float(pos.y))
+                    pixmap_item.flag.set_text_style(flag.text_settings_index, False)
+                    pixmap_item.flag.setPlainText(flag.texts[pixmap_item.state.infos.flag_text_index])
+                    pixmap_item.flag.set_max_width(flag.get_longest_flag())
+                    pixmap_item.flag.setVisible(is_visible)
+
+
+def update_scene(config: Config):
+    update_scene_rewards(config)
+    update_scene_flags(config)
+
+    # update counters
+    for item in config.active_inv.items:
+        for pixmap_item in item.pixmap_items:
+            if pixmap_item.label_counter is not None and item.counter is not None:
+                pos = pixmap_item.pos()
+                pixmap_item.label_counter.setPos(pos.x() + item.counter.pos.x, pos.y() + item.counter.pos.y)
+                pixmap_item.label_counter.set_text_style(item.counter.text_settings_index, False)
+                pixmap_item.label_counter.set_max_width(f"{item.counter.max}")
 
 
 class TextSettingsDialog(QDialog):
@@ -31,6 +88,7 @@ class TextSettingsDialog(QDialog):
         super().__init__(parent)
 
         self.config = config
+        self.pause_update = True
 
         self.label_item_index = QLabel("Item Index", self)
         self.label_item_index.setGeometry(9, 10, 71, 18)
@@ -54,27 +112,175 @@ class TextSettingsDialog(QDialog):
         )
         self.group_item_settings.setGeometry(10, 70, 241, 321)
 
+        self.form_widget = QWidget(self.group_item_settings)
+        self.form_widget.setGeometry(0, 25, 241, 299)
+        self.form_layout = QGridLayout(self.form_widget)
+
+        self.label_name = QLabel("Name", self.group_item_settings)
+        self.name = QLineEdit(self.group_item_settings)
+        self.name.textChanged.connect(self.update_name)
+        self.form_layout.addWidget(self.label_name, 0, 0)
+        self.form_layout.addWidget(self.name, 0, 1)
+
+        self.label_font_index = QLabel("Font Index", self.group_item_settings)
+        self.font_index = QSpinBox(self.group_item_settings)
+        self.font_index.setMaximum(len(self.config.fonts) - 1)
+        self.font_index.valueChanged.connect(self.update_font_index)
+        self.form_layout.addWidget(self.label_font_index, 1, 0)
+        self.form_layout.addWidget(self.font_index, 1, 1)
+
+        self.label_size = QLabel("Size", self.group_item_settings)
+        self.font_size = QDoubleSpinBox(self.group_item_settings)
+        self.font_size.valueChanged.connect(self.update_floats)
+        self.form_layout.addWidget(self.label_size, 2, 0)
+        self.form_layout.addWidget(self.font_size, 2, 1)
+
+        self.label_is_bold = QLabel("Is Bold", self.group_item_settings)
+        self.is_bold = QCheckBox(self.group_item_settings)
+        self.is_bold.toggled.connect(self.update_bools)
+        self.form_layout.addWidget(self.label_is_bold, 3, 0)
+        self.form_layout.addWidget(self.is_bold, 3, 1)
+
+        self.label_color = QLabel("Color: #000000", self.group_item_settings)
+        self.btn_set_color = QPushButton("Set Color", self.group_item_settings)
+        self.btn_set_color.pressed.connect(self.set_color)
+        self.form_layout.addWidget(self.label_color, 4, 0)
+        self.form_layout.addWidget(self.btn_set_color, 4, 1)
+
+        self.label_color_alt = QLabel("Color Alt.: #000000", self.group_item_settings)
+        self.btn_set_color_alt = QPushButton("Set Color Alt.", self.group_item_settings)
+        self.btn_set_color_alt.pressed.connect(self.set_color_alt)
+        self.form_layout.addWidget(self.label_color_alt, 5, 0)
+        self.form_layout.addWidget(self.btn_set_color_alt, 5, 1)
+
+        self.label_thickness = QLabel("Outline Thickness", self.group_item_settings)
+        self.thickness = QDoubleSpinBox(self.group_item_settings)
+        self.thickness.valueChanged.connect(self.update_floats)
+        self.form_layout.addWidget(self.label_thickness, 6, 0)
+        self.form_layout.addWidget(self.thickness, 6, 1)
+
+        self.label_is_timer = QLabel("Is Timer", self.group_item_settings)
+        self.is_timer = QCheckBox(self.group_item_settings)
+        self.is_timer.toggled.connect(self.update_bools)
+        self.form_layout.addWidget(self.label_is_timer, 7, 0)
+        self.form_layout.addWidget(self.is_timer, 7, 1)
+
         self.btn_ok_cancel = QDialogButtonBox(self)
         self.btn_ok_cancel.setGeometry(10, 400, 241, 32)
         self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
-        self.btn_ok_cancel.setStandardButtons(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
+
+        self.pause_update = False
+        self.item_value_changed(1)
+        self.setFixedSize(262, 440)
+        self.setWindowTitle("Text Settings")
 
     def item_value_changed(self, value: int):
         index = self.item_index.value()
 
-        self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.fonts)})")
+        self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.text_settings)})")
+
+        self.pause_update = True
+        settings = self.config.text_settings[self.item_index.value() - 1]
+        self.name.setText(settings.name)
+        self.font_index.setValue(settings.font)
+        self.font_size.setValue(settings.size)
+        self.is_bold.setChecked(settings.bold)
+        self.label_color.setText(f"Color: #{Color.pack(settings.color):06X}")
+        self.label_color_alt.setText(f"Color Alt.: #{Color.pack(settings.color_alt):06X}")
+        self.thickness.setValue(settings.outline_thickness)
+        self.is_timer.setChecked(settings.is_timer)
+        self.pause_update = False
 
     def item_add(self):
-        pass
+        index = len(self.config.text_settings)
+        self.config.text_settings.append(
+            TextSettings(
+                self.config.widget,
+                index,
+                str(),
+                -1,
+                0.0,
+                False,
+                Color(0, 0, 0),
+                Color(0, 0, 0),
+                0.0,
+                False,
+                False,
+                False,
+            )
+        )
+        self.item_index.setMaximum(len(self.config.text_settings))
+        self.item_index.setValue(index + 1)
 
     def item_del(self):
-        pass
+        index = self.item_index.value()
+        self.config.text_settings.pop(index - 1)
+        self.item_index.setMaximum(len(self.config.text_settings))
+        self.item_index.setValue(index - 1)
 
-    def accept(self):
-        super().accept()
+    def update_bools(self, enabled: bool):
+        index = self.item_index.value() - 1
+
+        if self.pause_update:
+            return
+
+        self.config.text_settings[index].bold = self.is_bold.isChecked()
+        self.config.text_settings[index].is_timer = self.is_timer.isChecked()
+        update_scene(self.config)
+
+    def update_floats(self, value: float):
+        index = self.item_index.value() - 1
+
+        if self.pause_update:
+            return
+
+        self.config.text_settings[index].size = self.font_size.value()
+        self.config.text_settings[index].outline_thickness = self.thickness.value()
+        update_scene(self.config)
+
+    def update_font_index(self, value: int):
+        index = self.item_index.value() - 1
+
+        if self.pause_update:
+            return
+
+        self.config.text_settings[index].font = self.font_index.value()
+        update_scene(self.config)
+
+    def update_name(self, value: str):
+        index = self.item_index.value() - 1
+
+        if self.pause_update:
+            return
+
+        self.config.text_settings[index].name = self.name.text()
+        update_scene(self.config)
+
+    def set_color(self):
+        index = self.item_index.value() - 1
+
+        picked_qcolor = QColorDialog.getColor(
+            Color.convert(self.config.text_settings[index].color), self, "Color Picker"
+        )
+        self.config.text_settings[index].color.r = picked_qcolor.red()
+        self.config.text_settings[index].color.g = picked_qcolor.green()
+        self.config.text_settings[index].color.b = picked_qcolor.blue()
+        self.label_color.setText(f"Color: #{Color.pack(self.config.text_settings[index].color):06X}")
+        update_scene(self.config)
+
+    def set_color_alt(self):
+        index = self.item_index.value() - 1
+
+        picked_qcolor = QColorDialog.getColor(
+            Color.convert(self.config.text_settings[index].color_alt), self, "Color Picker"
+        )
+        self.config.text_settings[index].color_alt.r = picked_qcolor.red()
+        self.config.text_settings[index].color_alt.g = picked_qcolor.green()
+        self.config.text_settings[index].color_alt.b = picked_qcolor.blue()
+        self.label_color_alt.setText(f"Color Alt.: #{Color.pack(self.config.text_settings[index].color_alt):06X}")
+        update_scene(self.config)
 
 
 class GoModeSettingsDialog(QDialog):
@@ -320,24 +526,6 @@ class RewardSettingsDialog(QDialog):
         self.setFixedSize(282, 260)
         self.setWindowTitle("Reward Settings")
 
-    def update_scene(self):
-        offset = -1 if os.name == "nt" else 0
-        active_inv = self.config.active_inv
-
-        for item in active_inv.items:
-            for i, pixmap_item in enumerate(item.pixmap_items):
-                if i in item.reward_map:
-                    reward_info = active_inv.rewards.items[item.pixmap_items[i].state.infos.reward_index]
-
-                    pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
-                    pos.x += reward_info.pos.x
-                    pos.y += reward_info.pos.y
-
-                    item.reward_map[i].setPlainText(reward_info.name)
-                    item.reward_map[i].set_text_style(reward_info.text_settings_index, False)
-                    item.reward_map[i].setPos(float(pos.x), float(pos.y))
-                    item.reward_map[i].set_max_width(active_inv.rewards.get_longest_reward())
-
     def item_value_changed(self, value: int):
         index = self.item_index.value()
 
@@ -370,7 +558,7 @@ class RewardSettingsDialog(QDialog):
             return
 
         self.config.active_inv.rewards.items[index - 1].name = self.name.text()
-        self.update_scene()
+        update_scene_rewards(self.config)
 
     def text_index_update(self, value: int):
         index = self.item_index.value()
@@ -379,7 +567,7 @@ class RewardSettingsDialog(QDialog):
             return
 
         self.config.active_inv.rewards.items[index - 1].text_settings_index = self.text_settings_index.value()
-        self.update_scene()
+        update_scene_rewards(self.config)
 
     def update_reward(self):
         index = self.item_index.value()
@@ -389,7 +577,7 @@ class RewardSettingsDialog(QDialog):
 
         self.config.active_inv.rewards.items[index - 1].pos.x = self.item_pos_x.value()
         self.config.active_inv.rewards.items[index - 1].pos.y = self.item_pos_y.value()
-        self.update_scene()
+        update_scene_rewards(self.config)
 
 
 class ExtraSettingsDialog(QDialog):
@@ -625,26 +813,6 @@ class FlagSettingsDialog(QDialog):
         self.editor.flag_index.setMaximum(len(self.config.flags) - 1)
         super().accept()
 
-    def update_scene(self):
-        offset = -1 if os.name == "nt" else 0
-
-        for item in self.config.active_inv.items:
-            if item.flag_index is not None:
-                flag = self.config.flags[item.flag_index]
-
-                for i, pixmap_item in enumerate(item.pixmap_items):
-                    pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
-                    pos.x += flag.pos.x
-                    pos.y += flag.pos.y
-
-                    if pixmap_item.flag is not None:
-                        is_visible = pixmap_item.flag.isVisible()
-                        pixmap_item.flag.setPos(float(pos.x), float(pos.y))
-                        pixmap_item.flag.set_text_style(flag.text_settings_index, False)
-                        pixmap_item.flag.setPlainText(flag.texts[pixmap_item.state.infos.flag_text_index])
-                        pixmap_item.flag.set_max_width(flag.get_longest_flag())
-                        pixmap_item.flag.setVisible(is_visible)
-
     def item_value_changed(self, value: int):
         index = self.item_index.value()
 
@@ -687,7 +855,7 @@ class FlagSettingsDialog(QDialog):
     def text_update(self, text: str):
         index = self.text_index.value() - 1
         self.config.flags[self.item_index.value() - 1].texts[index] = self.text.text()
-        self.update_scene()
+        update_scene_flags(self.config)
 
     def text_add(self):
         item_index = self.item_index.value() - 1
@@ -719,7 +887,7 @@ class FlagSettingsDialog(QDialog):
         self.config.flags[item_index].pos.x = self.item_pos_x.value()
         self.config.flags[item_index].pos.y = self.item_pos_y.value()
         self.config.flags[item_index].text_settings_index = self.text_settings_index.value()
-        self.update_scene()
+        update_scene_flags(self.config)
 
 
 class FontSettingsDialog(QDialog):
