@@ -424,24 +424,24 @@ class TrackerWindow(QMainWindow):
 
         for item in active_inv.items:
             for static_text in item.static_texts:
-                active_inv.text_map[static_text.index] = self.add_outline_text(
+                static_text.scene_item = self.add_outline_text(
                     f"item{item.index}_text_{static_text.index}",
                     QRect(static_text.pos.x, static_text.pos.y, 0, 0),
                     static_text.content,
                     static_text.text_settings_index,
                     static_text.rotation,
                 )
-                active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(True))
+                static_text.scene_item.set_max_width(active_inv.get_longest_static_text(True))
 
         for static_text in active_inv.static_texts:
-            active_inv.text_map[static_text.index] = self.add_outline_text(
+            static_text.scene_item = self.add_outline_text(
                 f"inventory{active_inv.index}_text_{static_text.index}",
                 QRect(static_text.pos.x, static_text.pos.y, 0, 0),
                 static_text.content,
                 static_text.text_settings_index,
                 static_text.rotation,
             )
-            active_inv.text_map[static_text.index].set_max_width(active_inv.get_longest_static_text(False))
+            static_text.scene_item.set_max_width(active_inv.get_longest_static_text(False))
 
         self.create_gomode(False)
 
@@ -507,9 +507,13 @@ class TrackerWindow(QMainWindow):
                 val.deleteLater()
             item.reward_map.clear()
 
-        for key, val in self.config.active_inv.text_map.items():
-            val.deleteLater()
-        self.config.active_inv.text_map.clear()
+            for static_text in item.static_texts:
+                static_text.scene_item.deleteLater()
+                static_text.scene_item = None
+
+        for static_text in self.config.active_inv.static_texts:
+            static_text.scene_item.deleteLater()
+            static_text.scene_item = None
 
         self.scene.clear()
         self.config.label_gomode_light = None

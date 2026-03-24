@@ -87,23 +87,23 @@ class TextSettings:
             show_error(self.widget, "ERROR: the name is none")
 
     def to_xml(self, parent: ET.Element, index: int):
-        return ET.SubElement(
-            parent,
-            "Item",
-            {
-                "Index": f"{index}",
-                "Name": f"{self.name}",
-                "FontIndex": f"{self.font}",
-                "Size": f"{self.size}",
-                "Bold": f"{self.bold}",
-                "Color": f"0x{Color.pack(self.color):06X}",
-                "ColorAlt": f"0x{Color.pack(self.color_alt):06X}",
-                "OutlineThickness": f"{self.outline_thickness}",
-                "IsTimer": f"{self.is_timer}",
-                "UseGradient": f"{self.use_gradient}",
-                "Minimal": f"{self.is_minimal}",
-            },
-        )
+        attrib = {
+            "Index": f"{index}",
+            "Name": f"{self.name}",
+            "FontIndex": f"{self.font}",
+            "Size": f"{self.size}",
+            "Bold": f"{self.bold}",
+            "Color": f"0x{Color.pack(self.color):06X}",
+            "ColorAlt": f"0x{Color.pack(self.color_alt):06X}",
+            "OutlineThickness": f"{self.outline_thickness}",
+        }
+
+        if self.is_timer:
+            attrib["IsTimer"] = f"{self.is_timer}"
+            attrib["UseGradient"] = f"{self.use_gradient}"
+            attrib["Minimal"] = f"{self.is_minimal}"
+
+        return ET.SubElement(parent, "Item", attrib)
 
 
 @dataclass
@@ -121,7 +121,6 @@ class Counter:
 
     * Optional:
         - `middle_click_increment` -> `MiddleIncrement="..."`
-        - `use_wheel` -> `UseWheel="..."`
     """
 
     min: int
@@ -130,7 +129,6 @@ class Counter:
     middle_click_increment: int
     text_settings_index: int
     pos: Pos
-    use_wheel: bool
 
     def __post_init__(self):
         self.value = self.min
@@ -198,6 +196,7 @@ class TextItem:
     rotation: int
     content: str
     text_settings_index: int
+    scene_item: Optional[OutlinedGraphicsTextItem] = None
 
     def to_xml(self, parent: ET.Element, index: int):
         return ET.SubElement(
@@ -294,7 +293,6 @@ class InventoryItem:
                     "MiddleIncrement": f"{self.counter.middle_click_increment}",
                     "TextSettings": f"{self.counter.text_settings_index}",
                     "Pos": self.counter.pos.to_str(),
-                    "UseWheel": f"{self.counter.use_wheel}",
                 },
             )
 
@@ -425,10 +423,6 @@ class Inventory:
 
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
-
-        # { item_index: { pos_index: data } }
-        # self.label_map: dict[int, dict[int, Label]] = {}
-        self.text_map: dict[int, OutlinedGraphicsTextItem] = {}
 
     def to_xml(self, parent: ET.Element):
         inventory = ET.SubElement(
@@ -858,7 +852,6 @@ class Config:
                                 int(c.get("MiddleIncrement", "0")),
                                 int(c.get("TextSettings", "0")),
                                 self.parse_pos(c.get("Pos"), "counter", True),
-                                self.parse_bool(c.get("UseWheel", "False")),
                             )
 
                         text_labels: list[TextItem] = []
