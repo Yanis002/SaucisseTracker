@@ -23,10 +23,10 @@ Available:
 - Auto-saves! Every 5 minutes, if the autosave checkbox from the `File` menu is enabled, the progress will be automatically saved. If no `StatePath` was set in the configuration it will be saved in a folder called `autosaves` where the executable is located. The file will be named `autosave_DATE_TIME.txt`. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this feature)
 - Support zip files for configs, the zip's filename will be what the main menu will show, and it will show an icon if there's a file called `icon.png` at the root of the zip with the config's content. When a zip is chosen on the main menu it will be temporarily extracted inside `temp/config`, inside `temp/icons` there's the icon for any zip file found, the `temp` folder will be located where the program is located, also note the zip file only works with xml config files for now (TODO: improve this feature)
 - Built-in [LiveSplit](https://github.com/LiveSplit/livesplit-core) to keep track of the seed's length! (TODO: save the time in the savestate and add an embedded mode)
+- Editor to create or modify tracker configurations
+- Automatic reload (or Ctrl + R) to apply an updated configuration
 
 Planned:
-- Editor to make configurations easier
-- "Refresh" button to apply an updated configuration
 - Make a global rotation config option (low priority)
 
 ## Keyboard Shortcuts
@@ -37,6 +37,7 @@ Planned:
 - Ctrl + H: toggles the visibility of the menu at the top
 - Ctrl + S: saves the state of the tracker (same as `File -> Save State`)
 - Ctrl + T: show the timer's window
+- Ctrl + R: force a configuration reload
 
 ### Timer Window
 
@@ -53,6 +54,8 @@ Planned:
 * Files:
     - `src/common.py`: hosts classes and functions that can be used in any other file
     - `src/config.py`: handles reading the configuration file and storing the informations in classes
+    - `src/editor.py`: the tracker editor's logic is handled there, this is using the normal tracker window as a base for convenience
+    - `src/editor_dialogs.py`: handles the different dialogs the editor can show
     - `src/livesplit_core.py`: python bindings to use the [LiveSplit library](https://github.com/LiveSplit/livesplit-core)
     - `src/main.py`: the main menu and the starting point of the program
     - `src/state.py`: handles importing and exporting savestates
@@ -67,6 +70,7 @@ Planned:
     - `res/`: the program's resources (packed when building)
     - `temp/`: working folder only used for zip archives, created automatically when the program starts and deleted automatically when it's closing
     - `tools/`: collection of tools made to test features before implementing them in the tracker
+    - `ui/`: unused but the ui files inside are used for convenience when designing an UI
 
 ## State File Structure
 
