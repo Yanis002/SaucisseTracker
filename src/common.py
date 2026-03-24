@@ -518,7 +518,7 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         """
 
         super().mouseReleaseEvent(event)
-        debug_print("new pos:", self.pos())
+        debug_print(f"new pos: {self.pos()}")
 
     def wheelEvent(self, event):
         """See `PixmalItem.wheelEvent`."""

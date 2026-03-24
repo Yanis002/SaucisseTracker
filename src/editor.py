@@ -53,7 +53,6 @@ class TrackerEditorMenu(QWidget):
         for item in self.config.active_inv.items:
             self.model_cache.append((True, item.name, item.pixmap_items[0].pixmap().scaled(32, 32)))
         self.reset_model_cache()
-        self.select_item(0)
 
         # item name, paths and sources section
         self.label_item_name = QLabel("Item Name", self.group_items)
@@ -316,8 +315,8 @@ class TrackerEditorMenu(QWidget):
         self.btn_save_cfg.setGeometry(900, 600, 101, 34)
         self.btn_save_cfg.pressed.connect(self.save_config)
 
-        self.selection_changed()
         self.pause_update = False
+        self.select_item(0)
 
         self.setFixedSize(1012, 640)
         self.setWindowTitle("Tracker Editor")

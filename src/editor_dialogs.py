@@ -1038,7 +1038,7 @@ class StaticTextSettingsDialog(QDialog):
 
         self.item_index = QSpinBox(self)
         self.item_index.setGeometry(10, 30, 61, 32)
-        self.item_index.setMinimum(1)
+        self.item_index.setMinimum(1 if list_len > 0 else 0)
         self.item_index.setMaximum(list_len)
         self.item_index.valueChanged.connect(self.item_value_changed)
 
@@ -1104,6 +1104,12 @@ class StaticTextSettingsDialog(QDialog):
     def get_text_item(self):
         index = self.item_index.value()
 
+        if self.item_index.minimum() == 0:
+            self.group_item_settings.setEnabled(False)
+            return None
+
+        self.group_item_settings.setEnabled(True)
+
         if self.item is not None:
             return self.item.static_texts[index - 1]
 
@@ -1116,76 +1122,98 @@ class StaticTextSettingsDialog(QDialog):
         self.group_item_settings.setTitle(f"Item Settings ({index} / {list_len})")
         self.pause_update = True
         text_item = self.get_text_item()
-        self.text_settings_index.setValue(text_item.text_settings_index)
-        self.pos_x.setValue(text_item.pos.x)
-        self.pos_y.setValue(text_item.pos.y)
-        self.angle.setValue(text_item.rotation)
-        self.content.setText(text_item.content)
+        if text_item is not None:
+            self.text_settings_index.setValue(text_item.text_settings_index)
+            self.pos_x.setValue(text_item.pos.x)
+            self.pos_y.setValue(text_item.pos.y)
+            self.angle.setValue(text_item.rotation)
+            self.content.setText(text_item.content)
         self.pause_update = False
 
     def item_add(self):
         if self.item is not None:
             index = len(self.item.static_texts)
             self.item.static_texts.append(TextItem(index, Pos(0, 0), 0, "new item text", 0))
+            self.editor.tracker.create_static_text(self.item.static_texts[-1], "inventory", self.item.index)
             self.item_index.setMaximum(len(self.item.static_texts))
             self.item_index.setValue(index + 1)
         else:
             index = len(self.config.active_inv.static_texts)
             self.config.active_inv.static_texts.append(TextItem(index, Pos(0, 0), 0, "new text", 0))
+            self.editor.tracker.create_static_text(
+                self.config.active_inv.static_texts[-1], "inventory", self.config.active_inv.index
+            )
             self.item_index.setMaximum(len(self.config.active_inv.static_texts))
             self.item_index.setValue(index + 1)
+
+        if self.item_index.minimum() == 0:
+            self.item_index.setMinimum(1)
+            self.group_item_settings.setEnabled(True)
+
+        self.item_value_changed(self.item_index.value())
 
     def item_del(self):
         if self.item is not None:
             index = len(self.item.static_texts)
+            self.editor.tracker.scene.removeItem(self.item.static_texts[index - 1].scene_item)
             self.item.static_texts.pop(index - 1)
             self.item_index.setMaximum(len(self.item.static_texts))
             self.item_index.setValue(index - 1)
         else:
             index = len(self.config.active_inv.static_texts)
+            self.editor.tracker.scene.removeItem(self.config.active_inv.static_texts[index - 1].scene_item)
             self.config.active_inv.static_texts.pop(index - 1)
             self.item_index.setMaximum(len(self.config.active_inv.static_texts))
             self.item_index.setValue(index - 1)
+
+        if self.item_index.maximum() == 0:
+            self.item_index.setMinimum(0)
+            self.group_item_settings.setEnabled(False)
 
     def update_text_index(self, value: int):
         if self.pause_update:
             return
 
         text_item = self.get_text_item()
-        text_item.text_settings_index = value
-        text_item.scene_item.set_text_style(value, False)
+        if text_item is not None:
+            text_item.text_settings_index = value
+            text_item.scene_item.set_text_style(value, False)
 
     def update_content(self, text: str):
         if self.pause_update:
             return
 
         text_item = self.get_text_item()
-        text_item.content = text
-        text_item.scene_item.setPlainText(text)
+        if text_item is not None:
+            text_item.content = text
+            text_item.scene_item.setPlainText(text)
 
     def update_pos_x(self, value: int):
         if self.pause_update:
             return
 
         text_item = self.get_text_item()
-        text_item.pos.x = value
-        text_item.scene_item.setPos(value, self.pos_y.value())
+        if text_item is not None:
+            text_item.pos.x = value
+            text_item.scene_item.setPos(value, self.pos_y.value())
 
     def update_pos_y(self, value: int):
         if self.pause_update:
             return
 
         text_item = self.get_text_item()
-        text_item.pos.y = value
-        text_item.scene_item.setPos(self.pos_x.value(), value)
+        if text_item is not None:
+            text_item.pos.y = value
+            text_item.scene_item.setPos(self.pos_x.value(), value)
 
     def update_angle(self, value: int):
         if self.pause_update:
             return
 
         text_item = self.get_text_item()
-        text_item.rotation = value
-        text_item.scene_item.setRotation(float(value))
+        if text_item is not None:
+            text_item.rotation = value
+            text_item.scene_item.setRotation(float(value))
 
 
 class ConfigSettingsDialog(QDialog):

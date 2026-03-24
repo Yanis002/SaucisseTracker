@@ -35,7 +35,7 @@ from common import (
     CURRENT_STATE_VERSION,
 )
 
-from config import Config, InventoryItem
+from config import Config, InventoryItem, TextItem
 from state import LabelState, State
 from timer import LiveSplit
 
@@ -433,6 +433,16 @@ class TrackerWindow(QMainWindow):
 
             self.config.label_gomode.setPos(gomode_settings.pos.x, gomode_settings.pos.y)
 
+    def create_static_text(self, static_text: TextItem, kind: str, index: int):
+        static_text.scene_item = self.add_outline_text(
+            f"{kind}{index}_text_{static_text.index}",
+            QRect(static_text.pos.x, static_text.pos.y, 0, 0),
+            static_text.content,
+            static_text.text_settings_index,
+            static_text.rotation,
+        )
+        static_text.scene_item.set_max_width(self.config.active_inv.get_longest_static_text(kind == "item"))
+
     def create_items(self):
         # the order the scene items are created defines the "priority",
         # this means older items will be more in the background while
@@ -449,24 +459,10 @@ class TrackerWindow(QMainWindow):
 
         for item in active_inv.items:
             for static_text in item.static_texts:
-                static_text.scene_item = self.add_outline_text(
-                    f"item{item.index}_text_{static_text.index}",
-                    QRect(static_text.pos.x, static_text.pos.y, 0, 0),
-                    static_text.content,
-                    static_text.text_settings_index,
-                    static_text.rotation,
-                )
-                static_text.scene_item.set_max_width(active_inv.get_longest_static_text(True))
+                self.create_static_text(static_text, "item", item.index)
 
         for static_text in active_inv.static_texts:
-            static_text.scene_item = self.add_outline_text(
-                f"inventory{active_inv.index}_text_{static_text.index}",
-                QRect(static_text.pos.x, static_text.pos.y, 0, 0),
-                static_text.content,
-                static_text.text_settings_index,
-                static_text.rotation,
-            )
-            static_text.scene_item.set_max_width(active_inv.get_longest_static_text(False))
+            self.create_static_text(static_text, "inventory", active_inv.index)
 
         self.create_gomode(False)
 
@@ -524,12 +520,16 @@ class TrackerWindow(QMainWindow):
         self.task_autosave = None
         self.task_rotation = None
 
+        def clear_static_texts(item_list: list[TextItem]):
+            for item in item_list:
+                item.scene_item = None
+
         # cleanup existing references
         for item in self.config.active_inv.items:
             item.reward_map.clear()
-            item.static_texts.clear()
+            clear_static_texts(item.static_texts)
 
-        self.config.active_inv.static_texts.clear()
+        clear_static_texts(self.config.active_inv.static_texts)
         self.scene.clear()
         self.config.label_gomode = None
         self.config.label_gomode_light = None
