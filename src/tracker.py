@@ -123,6 +123,9 @@ class TrackerWindow(QMainWindow):
         self.ze_layout.setContentsMargins(0, 0, 0, 0)
         self.ze_layout.addWidget(self.view)
 
+        self.timer_proxy = self.scene.addWidget(None)
+        self.update_timer_embed(False)
+
         self.create_items()
 
         self.setCentralWidget(self.central_widget)
@@ -130,9 +133,6 @@ class TrackerWindow(QMainWindow):
 
         icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
         self.setWindowIcon(QIcon(str(icon_path)))
-
-        self.timer_proxy = self.scene.addWidget(None)
-        self.update_timer_embed(False)
 
         # update geometry
         self.update_window_geometry(True)
