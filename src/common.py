@@ -104,6 +104,7 @@ class PixmapItem(QGraphicsPixmapItem):
         self.extra: Optional["PixmapItem"] = None
         self.flag: Optional["OutlinedGraphicsTextItem"] = None
         self.obj_name = obj_name
+        self.initial_scale = self.scale()
 
         # used for the black & white effect, enabled by default
         if create_effect:
