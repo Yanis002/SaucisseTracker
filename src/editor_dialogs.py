@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
-from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QFontDatabase
 from PyQt6.QtWidgets import (
     QDialog,
@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
     QColorDialog,
 )
 
-from config import Config, Font, FlagItem, ExtraItem, RewardItem, TextSettings
+from config import Config, Font, FlagItem, ExtraItem, RewardItem, TextSettings, InventoryItem, TextItem
 from common import Color, Pos, move_file_to_config
 
 if TYPE_CHECKING:
@@ -111,10 +111,10 @@ class TextSettingsDialog(QDialog):
         self.group_item_settings = QGroupBox(
             f"Item Settings ({self.item_index.value()} / {len(self.config.text_settings)})", self
         )
-        self.group_item_settings.setGeometry(10, 70, 241, 321)
+        self.group_item_settings.setGeometry(10, 70, 241, 371)
 
         self.form_widget = QWidget(self.group_item_settings)
-        self.form_widget.setGeometry(0, 25, 241, 299)
+        self.form_widget.setGeometry(5, 25, 232, 268)
         self.form_layout = QGridLayout(self.form_widget)
 
         self.label_name = QLabel("Name", self.group_item_settings)
@@ -160,21 +160,29 @@ class TextSettingsDialog(QDialog):
         self.form_layout.addWidget(self.label_thickness, 6, 0)
         self.form_layout.addWidget(self.thickness, 6, 1)
 
-        self.label_is_timer = QLabel("Is Timer", self.group_item_settings)
-        self.is_timer = QCheckBox(self.group_item_settings)
-        self.is_timer.toggled.connect(self.update_bools)
-        self.form_layout.addWidget(self.label_is_timer, 7, 0)
-        self.form_layout.addWidget(self.is_timer, 7, 1)
+        self.group_timer = QGroupBox("Is Timer", self.group_item_settings)
+        self.group_timer.setGeometry(10, 290, 221, 71)
+        self.group_timer.setCheckable(True)
+        self.group_timer.setChecked(False)
+        self.group_timer.toggled.connect(self.update_timer)
+
+        self.use_gradient = QCheckBox("Use Gradient", self.group_timer)
+        self.use_gradient.setGeometry(10, 25, 120, 22)
+        self.use_gradient.checkStateChanged.connect(self.update_bools)
+
+        self.is_minimal = QCheckBox("Minimal", self.group_timer)
+        self.is_minimal.setGeometry(10, 45, 120, 22)
+        self.is_minimal.checkStateChanged.connect(self.update_bools)
 
         self.btn_ok_cancel = QDialogButtonBox(self)
-        self.btn_ok_cancel.setGeometry(10, 400, 241, 32)
+        self.btn_ok_cancel.setGeometry(10, 450, 241, 32)
         self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
         self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
 
         self.pause_update = False
         self.item_value_changed(1)
-        self.setFixedSize(262, 440)
+        self.setFixedSize(262, 490)
         self.setWindowTitle("Text Settings")
         self.setWindowIcon(self.editor.windowIcon())
 
@@ -192,7 +200,9 @@ class TextSettingsDialog(QDialog):
         self.label_color.setText(f"Color: #{Color.pack(settings.color):06X}")
         self.label_color_alt.setText(f"Color Alt.: #{Color.pack(settings.color_alt):06X}")
         self.thickness.setValue(settings.outline_thickness)
-        self.is_timer.setChecked(settings.is_timer)
+        self.group_timer.setChecked(settings.is_timer)
+        self.use_gradient.setChecked(settings.use_gradient)
+        self.is_minimal.setChecked(settings.is_minimal)
         self.pause_update = False
 
     def item_add(self):
@@ -222,14 +232,24 @@ class TextSettingsDialog(QDialog):
         self.item_index.setMaximum(len(self.config.text_settings))
         self.item_index.setValue(index - 1)
 
-    def update_bools(self, enabled: bool):
+    def update_bools(self, state):
         index = self.item_index.value() - 1
 
         if self.pause_update:
             return
 
         self.config.text_settings[index].bold = self.is_bold.isChecked()
-        self.config.text_settings[index].is_timer = self.is_timer.isChecked()
+        self.config.text_settings[index].use_gradient = self.use_gradient.isChecked()
+        self.config.text_settings[index].is_minimal = self.is_minimal.isChecked()
+        update_scene(self.config)
+
+    def update_timer(self, enabled: bool):
+        index = self.item_index.value() - 1
+
+        if self.pause_update:
+            return
+
+        self.config.text_settings[index].is_timer = self.group_timer.isChecked()
         update_scene(self.config)
 
     def update_floats(self, value: float):
@@ -502,6 +522,7 @@ class RewardSettingsDialog(QDialog):
         self.label_text_settings_index.setGeometry(133, 30, 121, 18)
         self.text_settings_index = QSpinBox(self.group_item_settings)
         self.text_settings_index.setGeometry(130, 50, 115, 32)
+        self.text_settings_index.setMaximum(len(self.config.text_settings) - 1)
         self.text_settings_index.valueChanged.connect(self.text_index_update)
 
         self.label_pos_x = QLabel("X", self.group_item_settings)
@@ -770,6 +791,7 @@ class FlagSettingsDialog(QDialog):
         self.label_text_settings_index.setGeometry(13, 87, 121, 18)
         self.text_settings_index = QSpinBox(self.group_item_settings)
         self.text_settings_index.setGeometry(10, 107, 115, 32)
+        self.text_settings_index.setMaximum(len(self.config.text_settings) - 1)
         self.text_settings_index.valueChanged.connect(self.update_flag)
 
         self.is_hidden = QCheckBox("Is Hidden", self.group_item_settings)
@@ -877,7 +899,7 @@ class FlagSettingsDialog(QDialog):
         self.text_index.setMaximum(len(self.config.flags[item_index].texts))
         self.text_index.setValue(1)
 
-    def hidden_update(self):
+    def hidden_update(self, state):
         item_index = self.item_index.value() - 1
 
         if self.pause_update:
@@ -999,3 +1021,268 @@ class FontSettingsDialog(QDialog):
         self.config.fonts.pop(index - 1)
         self.item_index.setMaximum(len(self.config.fonts))
         self.item_index.setValue(index - 1)
+
+
+class StaticTextSettingsDialog(QDialog):
+    def __init__(self, config: Config, parent: "TrackerEditorMenu", item: Optional[InventoryItem]):
+        super().__init__(parent)
+
+        self.config = config
+        self.editor = parent
+        self.item = item
+        self.pause_update = True
+        list_len = len(self.item.static_texts) if self.item is not None else len(self.config.active_inv.static_texts)
+
+        self.label_item_index = QLabel("Item Index", self)
+        self.label_item_index.setGeometry(9, 10, 71, 18)
+
+        self.item_index = QSpinBox(self)
+        self.item_index.setGeometry(10, 30, 61, 32)
+        self.item_index.setMinimum(1)
+        self.item_index.setMaximum(list_len)
+        self.item_index.valueChanged.connect(self.item_value_changed)
+
+        self.btn_item_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self)
+        self.btn_item_add.setGeometry(80, 30, 41, 33)
+        self.btn_item_add.pressed.connect(self.item_add)
+
+        self.btn_item_del = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListRemove), "", self)
+        self.btn_item_del.setGeometry(130, 30, 41, 33)
+        self.btn_item_del.pressed.connect(self.item_del)
+
+        self.group_item_settings = QGroupBox(f"Item Settings ({self.item_index.value()} / {list_len})", self)
+        self.group_item_settings.setGeometry(10, 70, 250, 151)
+
+        self.label_text_settings_index = QLabel("Text Settings Index", self.group_item_settings)
+        self.label_text_settings_index.setGeometry(7, 30, 121, 18)
+        self.text_settings_index = QSpinBox(self.group_item_settings)
+        self.text_settings_index.setGeometry(7, 50, 115, 32)
+        self.text_settings_index.setMaximum(len(self.config.text_settings) - 1)
+        self.text_settings_index.valueChanged.connect(self.update_text_index)
+
+        self.label_content = QLabel("Content", self.group_item_settings)
+        self.label_content.setGeometry(38, 90, 58, 18)
+        self.content = QLineEdit(self.group_item_settings)
+        self.content.setGeometry(7, 110, 113, 32)
+        self.content.textChanged.connect(self.update_content)
+
+        self.label_pos_x = QLabel("X", self.group_item_settings)
+        self.label_pos_x.setGeometry(150, 30, 21, 18)
+        self.pos_x = QSpinBox(self.group_item_settings)
+        self.pos_x.setGeometry(127, 50, 55, 32)
+        self.pos_x.setMinimum(-999)
+        self.pos_x.setMaximum(999)
+        self.pos_x.valueChanged.connect(self.update_pos_x)
+
+        self.label_pos_y = QLabel("Y", self.group_item_settings)
+        self.label_pos_y.setGeometry(210, 30, 21, 18)
+        self.pos_y = QSpinBox(self.group_item_settings)
+        self.pos_y.setGeometry(188, 50, 55, 32)
+        self.pos_y.setMinimum(-999)
+        self.pos_y.setMaximum(999)
+        self.pos_y.valueChanged.connect(self.update_pos_y)
+
+        self.label_angle = QLabel("Angle", self.group_item_settings)
+        self.label_angle.setGeometry(167, 90, 41, 20)
+        self.angle = QSpinBox(self.group_item_settings)
+        self.angle.setGeometry(157, 110, 55, 32)
+        self.angle.setMaximum(360)
+        self.angle.valueChanged.connect(self.update_angle)
+
+        self.btn_ok_cancel = QDialogButtonBox(self)
+        self.btn_ok_cancel.setGeometry(10, 230, 251, 32)
+        self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
+        self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
+        self.btn_ok_cancel.accepted.connect(self.accept)
+
+        self.item_value_changed(1)
+        prefix = "Item " if self.item is not None else ""
+        self.setFixedSize(272, 270)
+        self.setWindowTitle(f"{prefix}Static Text Settings")
+        self.setWindowIcon(self.editor.windowIcon())
+
+    def get_text_item(self):
+        index = self.item_index.value()
+
+        if self.item is not None:
+            return self.item.static_texts[index - 1]
+
+        return self.config.active_inv.static_texts[index - 1]
+
+    def item_value_changed(self, value: int):
+        index = self.item_index.value()
+        list_len = len(self.item.static_texts) if self.item is not None else len(self.config.active_inv.static_texts)
+
+        self.group_item_settings.setTitle(f"Item Settings ({index} / {list_len})")
+        self.pause_update = True
+        text_item = self.get_text_item()
+        self.text_settings_index.setValue(text_item.text_settings_index)
+        self.pos_x.setValue(text_item.pos.x)
+        self.pos_y.setValue(text_item.pos.y)
+        self.angle.setValue(text_item.rotation)
+        self.content.setText(text_item.content)
+        self.pause_update = False
+
+    def item_add(self):
+        if self.item is not None:
+            index = len(self.item.static_texts)
+            self.item.static_texts.append(TextItem(index, Pos(0, 0), 0, "new item text", 0))
+            self.item_index.setMaximum(len(self.item.static_texts))
+            self.item_index.setValue(index + 1)
+        else:
+            index = len(self.config.active_inv.static_texts)
+            self.config.active_inv.static_texts.append(TextItem(index, Pos(0, 0), 0, "new text", 0))
+            self.item_index.setMaximum(len(self.config.active_inv.static_texts))
+            self.item_index.setValue(index + 1)
+
+    def item_del(self):
+        if self.item is not None:
+            index = len(self.item.static_texts)
+            self.item.static_texts.pop(index - 1)
+            self.item_index.setMaximum(len(self.item.static_texts))
+            self.item_index.setValue(index - 1)
+        else:
+            index = len(self.config.active_inv.static_texts)
+            self.config.active_inv.static_texts.pop(index - 1)
+            self.item_index.setMaximum(len(self.config.active_inv.static_texts))
+            self.item_index.setValue(index - 1)
+
+    def update_text_index(self, value: int):
+        if self.pause_update:
+            return
+
+        text_item = self.get_text_item()
+        text_item.text_settings_index = value
+        text_item.scene_item.set_text_style(value, False)
+
+    def update_content(self, text: str):
+        if self.pause_update:
+            return
+
+        text_item = self.get_text_item()
+        text_item.content = text
+        text_item.scene_item.setPlainText(text)
+
+    def update_pos_x(self, value: int):
+        if self.pause_update:
+            return
+
+        text_item = self.get_text_item()
+        text_item.pos.x = value
+        text_item.scene_item.setPos(value, self.pos_y.value())
+
+    def update_pos_y(self, value: int):
+        if self.pause_update:
+            return
+
+        text_item = self.get_text_item()
+        text_item.pos.y = value
+        text_item.scene_item.setPos(self.pos_x.value(), value)
+
+    def update_angle(self, value: int):
+        if self.pause_update:
+            return
+
+        text_item = self.get_text_item()
+        text_item.rotation = value
+        text_item.scene_item.setRotation(float(value))
+
+
+class ConfigSettingsDialog(QDialog):
+    def __init__(self, config: Config, parent: "TrackerEditorMenu"):
+        super().__init__(parent)
+
+        self.config = config
+        self.editor = parent
+        self.pause_update = True
+
+        self.label_name = QLabel("Name", self)
+        self.label_name.setGeometry(10, 18, 61, 18)
+        self.name = QLineEdit(self)
+        self.name.setGeometry(80, 10, 231, 32)
+        self.name.textChanged.connect(self.update_name)
+
+        self.label_icon = QLabel("Icon Path", self)
+        self.label_icon.setGeometry(10, 57, 61, 18)
+        self.icon_path = QLineEdit(self)
+        self.icon_path.setGeometry(80, 50, 231, 32)
+        self.icon_path.setReadOnly(True)
+        self.btn_set_icon_path = QPushButton("Set Path", self)
+        self.btn_set_icon_path.setGeometry(320, 49, 71, 34)
+        self.btn_set_icon_path.pressed.connect(self.set_icon_path)
+
+        self.label_state = QLabel("State Path", self)
+        self.label_state.setGeometry(10, 97, 71, 18)
+        self.state_path = QLineEdit(self)
+        self.state_path.setGeometry(80, 90, 231, 32)
+        self.state_path.setReadOnly(True)
+        self.btn_set_state_path = QPushButton("Set Path", self)
+        self.btn_set_state_path.setGeometry(320, 89, 71, 34)
+        self.btn_set_state_path.pressed.connect(self.set_state_path)
+
+        self.show_timer = QCheckBox("Show Timer", self)
+        self.show_timer.setGeometry(6, 130, 111, 22)
+        self.show_timer.checkStateChanged.connect(self.update_timer)
+
+        self.embed_timer = QCheckBox("Embed Timer", self)
+        self.embed_timer.setGeometry(6, 157, 111, 22)
+        self.embed_timer.checkStateChanged.connect(self.update_timer)
+
+        self.btn_ok_cancel = QDialogButtonBox(self)
+        self.btn_ok_cancel.setGeometry(10, 180, 381, 32)
+        self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
+        self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
+        self.btn_ok_cancel.accepted.connect(self.accept)
+
+        self.name.setText(self.config.name)
+        self.icon_path.setText(str(self.config.icon_path))
+        self.state_path.setText(str(self.config.state_path))
+        self.show_timer.setChecked(self.config.show_timer)
+        self.embed_timer.setChecked(self.config.embed_timer)
+
+        self.pause_update = False
+        self.setFixedSize(400, 220)
+        self.setWindowTitle("Config Settings")
+        self.setWindowIcon(self.editor.windowIcon())
+
+    def update_name(self, text: str):
+        if self.pause_update:
+            return
+
+        self.config.name = self.name.text()
+
+    def update_timer(self, state):
+        if self.pause_update:
+            return
+
+        self.config.show_timer = self.show_timer.isChecked()
+        self.config.embed_timer = self.embed_timer.isChecked()
+
+    def set_icon_path(self):
+        if self.pause_update:
+            return
+
+        path_str = QFileDialog.getOpenFileName(self, "Open Icon Path", str(self.config.icon_path.parent), "*.png")[0]
+
+        if len(path_str) == 0:
+            return
+
+        path = Path(path_str).resolve()
+        assert path.exists(), "path doesn't exist!"
+        path = move_file_to_config(self.config, path)
+
+        self.config.icon_path = path
+        self.icon_path.setText(str(path))
+
+    def set_state_path(self):
+        if self.pause_update:
+            return
+
+        path_str = QFileDialog.getSaveFileName(self, "Open State Path", str(self.config.state_path.parent), "*.txt")[0]
+
+        if len(path_str) == 0:
+            return
+
+        path = Path(path_str).resolve()
+        self.config.state_path = path
+        self.state_path.setText(str(path))

@@ -10,11 +10,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QGraphicsItem,
-    QFrame,
     QLineEdit,
     QGroupBox,
-    QTableWidget,
-    QTableWidgetItem,
     QColorDialog,
     QFileDialog,
     QCheckBox,
@@ -31,6 +28,8 @@ from editor_dialogs import (
     ExtraSettingsDialog,
     FlagSettingsDialog,
     FontSettingsDialog,
+    StaticTextSettingsDialog,
+    ConfigSettingsDialog,
 )
 
 
@@ -46,9 +45,9 @@ class TrackerEditorMenu(QWidget):
 
         # items section
         self.group_items = QGroupBox("Items", self)
-        self.group_items.setGeometry(10, 10, 261, 591)
+        self.group_items.setGeometry(10, 10, 261, 621)
         self.list_selected = QListView(self.group_items)
-        self.list_selected.setGeometry(10, 32, 240, 461)
+        self.list_selected.setGeometry(10, 32, 240, 491)
 
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         for item in self.config.active_inv.items:
@@ -58,62 +57,62 @@ class TrackerEditorMenu(QWidget):
 
         # item name, paths and sources section
         self.label_item_name = QLabel("Item Name", self.group_items)
-        self.label_item_name.setGeometry(10, 531, 70, 20)
+        self.label_item_name.setGeometry(10, 561, 70, 20)
         self.item_name = QLineEdit(self.group_items)
-        self.item_name.setGeometry(9, 551, 241, 32)
+        self.item_name.setGeometry(9, 581, 241, 32)
         self.item_name.textChanged.connect(self.update_item_name)
 
         self.btn_add_item = QPushButton("Add Item", self.group_items)
-        self.btn_add_item.setGeometry(10, 500, 111, 34)
+        self.btn_add_item.setGeometry(10, 530, 111, 34)
         self.btn_add_item.pressed.connect(self.add_item)
 
         self.btn_delete_item = QPushButton("Delete Item", self.group_items)
-        self.btn_delete_item.setGeometry(140, 500, 111, 34)
+        self.btn_delete_item.setGeometry(140, 530, 111, 34)
         self.btn_delete_item.pressed.connect(self.remove_item)
 
         self.group_pos = QGroupBox("Positions", self)
-        self.group_pos.setGeometry(410, 170, 251, 181)
+        self.group_pos.setGeometry(410, 210, 251, 161)
 
         self.label_item_pos = QLabel("Pos. Index", self.group_pos)
-        self.label_item_pos.setGeometry(9, 20, 71, 18)
+        self.label_item_pos.setGeometry(9, 13, 71, 18)
         self.item_pos_index = QSpinBox(self.group_pos)
-        self.item_pos_index.setGeometry(10, 40, 61, 32)
+        self.item_pos_index.setGeometry(10, 33, 61, 32)
         self.item_pos_index.setMinimum(1)
         self.item_pos_index.setMaximum(len(first_item.positions))
         self.item_pos_index.valueChanged.connect(self.item_pos_value_changed)
 
         self.btn_pos_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self.group_pos)
-        self.btn_pos_add.setGeometry(80, 40, 41, 33)
+        self.btn_pos_add.setGeometry(80, 33, 41, 33)
         self.btn_pos_add.pressed.connect(self.item_pos_add)
         self.btn_pos_del = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListRemove), "", self.group_pos)
-        self.btn_pos_del.setGeometry(130, 40, 41, 33)
+        self.btn_pos_del.setGeometry(130, 33, 41, 33)
         self.btn_pos_del.pressed.connect(self.item_pos_del)
 
         self.group_pos_settings = QGroupBox(
             f"Position Settings ({self.item_pos_index.value()} / {len(first_item.positions)})", self.group_pos
         )
-        self.group_pos_settings.setGeometry(10, 80, 231, 91)
+        self.group_pos_settings.setGeometry(10, 70, 231, 81)
 
         self.label_pos_x = QLabel("X", self.group_pos_settings)
-        self.label_pos_x.setGeometry(31, 30, 21, 18)
+        self.label_pos_x.setGeometry(31, 21, 21, 18)
         self.pos_x = QSpinBox(self.group_pos_settings)
-        self.pos_x.setGeometry(8, 50, 55, 32)
+        self.pos_x.setGeometry(8, 41, 55, 32)
         self.pos_x.setMinimum(-999)
         self.pos_x.setMaximum(999)
         self.pos_x.valueChanged.connect(self.update_pos_x)
 
         self.label_pos_y = QLabel("Y", self.group_pos_settings)
-        self.label_pos_y.setGeometry(110, 30, 21, 18)
+        self.label_pos_y.setGeometry(110, 21, 21, 18)
         self.pos_y = QSpinBox(self.group_pos_settings)
-        self.pos_y.setGeometry(88, 50, 55, 32)
+        self.pos_y.setGeometry(88, 41, 55, 32)
         self.pos_y.setMinimum(-999)
         self.pos_y.setMaximum(999)
         self.pos_y.valueChanged.connect(self.update_pos_y)
 
         self.label_pos_y = QLabel("Angle", self.group_pos_settings)
-        self.label_pos_y.setGeometry(178, 30, 41, 20)
+        self.label_pos_y.setGeometry(178, 21, 41, 20)
         self.angle = QSpinBox(self.group_pos_settings)
-        self.angle.setGeometry(168, 50, 55, 32)
+        self.angle.setGeometry(168, 41, 55, 32)
         self.angle.setMinimum(-999)
         self.angle.setMaximum(999)
         self.angle.valueChanged.connect(self.update_angle)
@@ -153,53 +152,60 @@ class TrackerEditorMenu(QWidget):
         self.btn_sources_down.pressed.connect(self.sources_move_down)
 
         self.group_counters = QGroupBox("Use Counters", self)
-        self.group_counters.setGeometry(410, 10, 251, 151)
+        self.group_counters.setGeometry(410, 10, 251, 191)
         self.group_counters.setCheckable(True)
         self.group_counters.setChecked(False)
         self.group_counters.toggled.connect(self.update_counter_enabled)
 
         self.label_text_index = QLabel("Text Settings Index", self.group_counters)
-        self.label_text_index.setGeometry(8, 30, 121, 18)
+        self.label_text_index.setGeometry(8, 25, 121, 18)
         self.counter_text_index = QSpinBox(self.group_counters)
-        self.counter_text_index.setGeometry(8, 50, 115, 32)
+        self.counter_text_index.setGeometry(8, 45, 115, 32)
         self.counter_text_index.setMinimum(0)
         self.counter_text_index.setMaximum(len(self.config.text_settings) - 1)
         self.counter_text_index.valueChanged.connect(self.update_counter_info)
 
         self.label_min = QLabel("Min.", self.group_counters)
-        self.label_min.setGeometry(22, 90, 31, 18)
+        self.label_min.setGeometry(22, 80, 31, 18)
         self.counter_min = QSpinBox(self.group_counters)
-        self.counter_min.setGeometry(8, 110, 55, 32)
+        self.counter_min.setGeometry(8, 100, 55, 32)
         self.counter_min.setMinimum(0)
         self.counter_min.valueChanged.connect(self.update_counter_info)
 
         self.label_max = QLabel("Max.", self.group_counters)
-        self.label_max.setGeometry(79, 90, 41, 18)
+        self.label_max.setGeometry(79, 80, 41, 18)
         self.counter_max = QSpinBox(self.group_counters)
-        self.counter_max.setGeometry(68, 110, 55, 32)
+        self.counter_max.setGeometry(68, 100, 55, 32)
         self.counter_max.setMinimum(0)
         self.counter_max.valueChanged.connect(self.update_counter_info)
 
         self.label_incr = QLabel("Increment", self.group_counters)
-        self.label_incr.setGeometry(152, 30, 71, 20)
+        self.label_incr.setGeometry(152, 25, 71, 20)
         self.counter_incr = QSpinBox(self.group_counters)
-        self.counter_incr.setGeometry(128, 50, 115, 32)
+        self.counter_incr.setGeometry(128, 45, 115, 32)
         self.counter_incr.setMinimum(0)
         self.counter_incr.valueChanged.connect(self.update_counter_info)
 
         self.label_pos_x = QLabel("X", self.group_counters)
-        self.label_pos_x.setGeometry(151, 90, 21, 18)
+        self.label_pos_x.setGeometry(151, 80, 21, 18)
         self.counter_pos_x = QSpinBox(self.group_counters)
-        self.counter_pos_x.setGeometry(128, 110, 55, 32)
+        self.counter_pos_x.setGeometry(128, 100, 55, 32)
         self.counter_pos_x.setMinimum(-1000)
         self.counter_pos_x.valueChanged.connect(self.update_counter_info)
 
         self.label_pox_y = QLabel("Y", self.group_counters)
-        self.label_pox_y.setGeometry(210, 90, 21, 18)
+        self.label_pox_y.setGeometry(210, 80, 21, 18)
         self.counter_pos_y = QSpinBox(self.group_counters)
-        self.counter_pos_y.setGeometry(188, 110, 55, 32)
+        self.counter_pos_y.setGeometry(188, 100, 55, 32)
         self.counter_pos_y.setMinimum(-1000)
         self.counter_pos_y.valueChanged.connect(self.update_counter_info)
+
+        self.label_middle_incr = QLabel("Middle Increment", self.group_counters)
+        self.label_middle_incr.setGeometry(10, 150, 121, 20)
+        self.counter_mid_incr = QSpinBox(self.group_counters)
+        self.counter_mid_incr.setGeometry(127, 145, 115, 32)
+        self.counter_mid_incr.setMinimum(1)
+        self.counter_mid_incr.valueChanged.connect(self.update_counter_info)
 
         self.group_extras_main = QGroupBox("Extras", self)
         self.group_extras_main.setGeometry(280, 210, 121, 191)
@@ -244,53 +250,76 @@ class TrackerEditorMenu(QWidget):
         self.btn_open_flags_settings.pressed.connect(self.open_flags_settings)
 
         self.group_bg = QGroupBox("Background Settings", self)
-        self.group_bg.setGeometry(410, 360, 251, 161)
+        self.group_bg.setGeometry(410, 380, 251, 141)
 
         self.label_bg_color = QLabel(f"BG Color: #{Color.pack(config.active_inv.background_color):06X}", self.group_bg)
-        self.label_bg_color.setGeometry(10, 40, 161, 18)
+        self.label_bg_color.setGeometry(10, 35, 161, 18)
         self.btn_bg_color = QPushButton("Set BG Color", self.group_bg)
-        self.btn_bg_color.setGeometry(130, 33, 111, 32)
+        self.btn_bg_color.setGeometry(130, 28, 111, 32)
         self.btn_bg_color.pressed.connect(self.update_bg_color)
 
         self.bg_path = QLineEdit(self.group_bg)
         self.bg_path.setReadOnly(True)
-        self.bg_path.setGeometry(10, 80, 231, 32)
+        self.bg_path.setGeometry(10, 64, 231, 32)
         self.bg_path.setText(f"{config.active_inv.background}")
         self.btn_bg_open_file = QPushButton("Open File", self.group_bg)
-        self.btn_bg_open_file.setGeometry(10, 117, 111, 32)
+        self.btn_bg_open_file.setGeometry(10, 100, 111, 32)
         self.btn_bg_open_file.pressed.connect(self.update_bg)
 
         self.group_reward = QGroupBox("Rewards", self)
-        self.group_reward.setGeometry(280, 410, 121, 111)
+        self.group_reward.setGeometry(280, 410, 121, 91)
         self.is_reward = QCheckBox("Is Reward", self.group_reward)
-        self.is_reward.setGeometry(8, 30, 101, 22)
+        self.is_reward.setGeometry(8, 20, 101, 22)
         self.is_reward.checkStateChanged.connect(self.update_rewards_enabled)
         self.btn_open_rewards_settings = QPushButton("Settings", self.group_reward)
-        self.btn_open_rewards_settings.setGeometry(9, 60, 103, 41)
+        self.btn_open_rewards_settings.setGeometry(9, 40, 103, 41)
         self.btn_open_rewards_settings.pressed.connect(self.open_rewards_settings)
 
-        self.group_misc = QGroupBox("Misc", self)
-        self.group_misc.setGeometry(280, 530, 381, 71)
+        self.group_misc = QGroupBox("Misc Global Settings", self)
+        self.group_misc.setGeometry(410, 530, 251, 101)
         self.btn_open_gomode_settings = QPushButton("Go Mode", self.group_misc)
-        self.btn_open_gomode_settings.setGeometry(9, 30, 103, 31)
+        self.btn_open_gomode_settings.setGeometry(10, 30, 111, 31)
         self.btn_open_gomode_settings.pressed.connect(self.open_gomode_settings)
 
         self.btn_open_text_settings = QPushButton("Text Settings", self.group_misc)
-        self.btn_open_text_settings.setGeometry(140, 30, 103, 31)
+        self.btn_open_text_settings.setGeometry(130, 30, 111, 31)
         self.btn_open_text_settings.pressed.connect(self.open_text_settings)
 
         self.btn_open_font_settings = QPushButton("Font Settings", self.group_misc)
-        self.btn_open_font_settings.setGeometry(270, 30, 103, 31)
+        self.btn_open_font_settings.setGeometry(10, 60, 111, 31)
         self.btn_open_font_settings.pressed.connect(self.open_font_settings)
 
+        self.btn_open_static_text_settings = QPushButton("Static Texts", self.group_misc)
+        self.btn_open_static_text_settings.setGeometry(130, 60, 111, 31)
+        self.btn_open_static_text_settings.pressed.connect(self.open_static_text_settings)
+
+        self.group_misc_items = QGroupBox("Misc Item Settings", self)
+        self.group_misc_items.setGeometry(280, 510, 120, 121)
+
+        self.use_wheel = QCheckBox("Use Wheel", self.group_misc_items)
+        self.use_wheel.setGeometry(8, 30, 101, 22)
+        self.use_wheel.checkStateChanged.connect(self.update_use_wheel)
+
+        self.scale_content = QCheckBox("Re-scale Icon", self.group_misc_items)
+        self.scale_content.setGeometry(8, 50, 111, 22)
+        self.scale_content.checkStateChanged.connect(self.update_scale_content)
+
+        self.btn_open_item_static_txt = QPushButton("Static Texts", self.group_misc_items)
+        self.btn_open_item_static_txt.setGeometry(9, 80, 103, 31)
+        self.btn_open_item_static_txt.pressed.connect(self.open_item_static_text_settings)
+
+        self.btn_open_cfg_settings = QPushButton("Config Settings", self)
+        self.btn_open_cfg_settings.setGeometry(790, 600, 101, 33)
+        self.btn_open_cfg_settings.pressed.connect(self.open_config_settings)
+
         self.btn_save_cfg = QPushButton("Save Config", self)
-        self.btn_save_cfg.setGeometry(900, 568, 101, 34)
+        self.btn_save_cfg.setGeometry(900, 600, 101, 34)
         self.btn_save_cfg.pressed.connect(self.save_config)
 
         self.selection_changed()
         self.pause_update = False
 
-        self.setFixedSize(1012, 610)
+        self.setFixedSize(1012, 640)
         self.setWindowTitle("Tracker Editor")
         self.setWindowIcon(self.tracker.windowIcon())
 
@@ -311,7 +340,6 @@ class TrackerEditorMenu(QWidget):
 
     def select_item(self, item_index: int):
         self.list_selected.setCurrentIndex(self.list_selected.model().index(item_index, 0))
-        print(f"item index ({self.list_selected.currentIndex().row()} vs {item_index})")
         assert (
             self.list_selected.currentIndex().row() == item_index
         ), f"wrong item index ({self.list_selected.currentIndex().row()} vs {item_index})"
@@ -394,6 +422,7 @@ class TrackerEditorMenu(QWidget):
             self.counter_incr.setValue(item.counter.increment)
             self.counter_pos_x.setValue(item.counter.pos.x)
             self.counter_pos_y.setValue(item.counter.pos.y)
+            self.counter_mid_incr.setValue(item.counter.middle_click_increment)
 
             item.counter.show = True
             for pixmap_item in item.pixmap_items:
@@ -405,6 +434,7 @@ class TrackerEditorMenu(QWidget):
             self.counter_incr.setValue(0)
             self.counter_pos_x.setValue(0)
             self.counter_pos_y.setValue(0)
+            self.counter_mid_incr.setValue(0)
 
         # update extras group
         self.group_extras.setChecked(item.extra_index is not None)
@@ -418,6 +448,10 @@ class TrackerEditorMenu(QWidget):
 
         # update rewards
         self.is_reward.setChecked(item.is_reward)
+
+        # update misc item settings
+        self.use_wheel.setChecked(item.use_wheel)
+        self.scale_content.setChecked(item.scale_content)
 
         def toggle_all(target_item: InventoryItem, enabled: bool):
             for pixmap_item in target_item.pixmap_items:
@@ -633,20 +667,18 @@ class TrackerEditorMenu(QWidget):
                 self.counter_min.value(),
                 self.counter_max.value(),
                 self.counter_incr.value(),
-                0,  # TODO
+                self.counter_mid_incr.value(),
                 self.counter_text_index.value(),
                 Pos(self.counter_pos_x.value(), self.counter_pos_y.value()),
-                False,  # TODO
             )
         else:
             item.counter.min = self.counter_min.value()
             item.counter.max = self.counter_max.value()
             item.counter.increment = self.counter_incr.value()
-            item.counter.middle_click_increment = 0  # TODO
+            item.counter.middle_click_increment = self.counter_mid_incr.value()
             item.counter.text_settings_index = self.counter_text_index.value()
             item.counter.pos.x = self.counter_pos_x.value()
             item.counter.pos.y = self.counter_pos_y.value()
-            item.counter.use_wheel = False  # TODO
 
         item.counter.value = item.counter.min
 
@@ -672,6 +704,28 @@ class TrackerEditorMenu(QWidget):
 
         if item.counter is not None:
             item.counter.show = enabled
+
+    def update_use_wheel(self, state):
+        item = self.get_item()
+
+        if self.pause_update:
+            return
+
+        item.use_wheel = self.use_wheel.isChecked()
+
+    def update_scale_content(self, state):
+        item = self.get_item()
+
+        if self.pause_update:
+            return
+
+        item.scale_content = self.scale_content.isChecked()
+
+        # TODO: see todo from create_item
+        for pixmap_item in item.pixmap_items:
+            p = pixmap_item.pixmap()
+            new_scale = min(32 / p.width(), 32 / p.height()) if item.scale_content else pixmap_item.initial_scale
+            pixmap_item.setScale(new_scale)
 
     def update_bg_color(self):
         picked_qcolor = QColorDialog.getColor(
@@ -916,6 +970,18 @@ class TrackerEditorMenu(QWidget):
 
     def open_font_settings(self):
         dialog = FontSettingsDialog(self.config, self)
+        dialog.open()
+
+    def open_static_text_settings(self):
+        dialog = StaticTextSettingsDialog(self.config, self, None)
+        dialog.open()
+
+    def open_item_static_text_settings(self):
+        dialog = StaticTextSettingsDialog(self.config, self, self.get_item())
+        dialog.open()
+
+    def open_config_settings(self):
+        dialog = ConfigSettingsDialog(self.config, self)
         dialog.open()
 
 
