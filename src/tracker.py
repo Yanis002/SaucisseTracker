@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from PyQt6.QtCore import pyqtSignal, QFileSystemWatcher, QRect, Qt, QThread
+from PyQt6.QtCore import pyqtSignal, QFileSystemWatcher, QRect, Qt, QThread, QWaitCondition, QMutex
 from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QKeyEvent, QPixmap
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -46,22 +46,27 @@ class AutosaveThread(QThread):
 
         self.setParent(parent)
         self.setTerminationEnabled(True)
+        self.mutex = QMutex()
+        self.wait_cond = QWaitCondition()
         self.config = config
         self.do_run = True
         self.setObjectName("AutosaveThread")
 
     def stop(self):
         self.do_run = False
-        self.wait()
+        self.wait_cond.wakeAll()
         self.quit()
+        self.wait()
 
     def run(self):
         while self.do_run:
+            self.mutex.lock()
             # every 5 minutes
             # TODO: configurable time
-            self.sleep(5 * 60)
+            self.wait_cond.wait(self.mutex, (5 * 60) * 1000)
+            self.mutex.unlock()
 
-            if self.config.autosave_enabled:
+            if self.do_run and self.config.autosave_enabled:
                 folder = Path("autosaves/").resolve()
                 if not folder.exists():
                     folder.mkdir(parents=True, exist_ok=True)
@@ -499,8 +504,6 @@ class TrackerWindow(QMainWindow):
                     self.update_timer_embed(True, True)
 
     def closeEvent(self, e: Optional[QCloseEvent]):
-        super(QMainWindow, self).closeEvent(e)
-
         if not self.config.state_saved:
             answer = QMessageBox.question(
                 self,
@@ -523,24 +526,19 @@ class TrackerWindow(QMainWindow):
 
         # cleanup existing references
         for item in self.config.active_inv.items:
-            for key, val in item.reward_map.items():
-                val.deleteLater()
             item.reward_map.clear()
+            item.static_texts.clear()
 
-            for static_text in item.static_texts:
-                static_text.scene_item.deleteLater()
-                static_text.scene_item = None
-
-        for static_text in self.config.active_inv.static_texts:
-            static_text.scene_item.deleteLater()
-            static_text.scene_item = None
-
+        self.config.active_inv.static_texts.clear()
         self.scene.clear()
+        self.config.label_gomode = None
         self.config.label_gomode_light = None
 
         if self.parent_ is not None:
             self.parent_.show()
             self.close()
+
+        super(QMainWindow, self).closeEvent(e)
 
     def create_menubar(self):
         self.menu = QMenuBar()

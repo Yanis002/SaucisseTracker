@@ -76,8 +76,8 @@ class LiveSplitThread(QThread):
 
     def stop(self):
         self.do_run = False
-        self.wait()
         self.quit()
+        self.wait()
 
 
 class LiveSplit(QMainWindow):
