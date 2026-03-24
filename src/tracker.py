@@ -30,6 +30,7 @@ from common import (
     Rotation,
     show_error,
     show_message,
+    debug_print,
     OS_MENU_OFFSET,
     CURRENT_STATE_VERSION,
 )
@@ -47,6 +48,7 @@ class AutosaveThread(QThread):
         self.setTerminationEnabled(True)
         self.config = config
         self.do_run = True
+        self.setObjectName("AutosaveThread")
 
     def stop(self):
         self.do_run = False
@@ -197,7 +199,13 @@ class TrackerWindow(QMainWindow):
         self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height + offset)
 
     def update_window(self):
+        prev_title = self.windowTitle()
+        self.setWindowTitle("Reloading configuration...")
+        self.file_save_triggered()  # trigger a save
+        self.task_rotation.pause_update = True
+
         if not self.is_editor:
+            debug_print("parsing config...")
             # update the config
             self.configs[str(self.config.config_path)] = Config(self.config.widget, self.config.config_path)
             self.config = list(self.configs.values())[self.config_index]
@@ -207,25 +215,37 @@ class TrackerWindow(QMainWindow):
             return
 
         # clear current scene items
+        debug_print("clearing scene...")
         self.scene.clear()
+        self.config.label_gomode = None
         self.config.label_gomode_light = None
 
         ### similar to the init function ###
 
         # create the new background and update the scene's geometry
+        debug_print("setting new background pixmap...")
         bg_img = QPixmap(str(self.config.active_inv.background))
         self.background = self.scene.addPixmap(bg_img)
 
         if not self.is_editor:
-            self.timer = LiveSplit(self.config)
+            debug_print("recreate livesplit widget...")
+            self.timer.ls_thread.stop()
+            self.timer = LiveSplit(self.config, self.is_editor)
             self.timer_proxy = self.scene.addWidget(None)
             self.update_timer_embed(False)
 
         # create the new items
+        debug_print("creating items...")
         self.create_items()
 
         # update geometry
+        debug_print("final tasks...")
         self.update_window_geometry()
+        self.task_rotation.config = self.config
+        self.task_rotation.pause_update = False
+        debug_print("config reloaded!")
+        self.file_open_triggered()  # restore the save
+        self.setWindowTitle(prev_title)
 
     def set_movable(self):
         # TODO: unset flags
@@ -450,10 +470,10 @@ class TrackerWindow(QMainWindow):
 
         if self.autoreload_enabled:
             if path.stem == "config":
-                print("change detected", path)
+                debug_print(f"change detected ({path})")
                 self.update_window()
         else:
-            print("change detected but autoreload is disabled", path)
+            debug_print(f"change detected but autoreload is disabled ({path})")
 
     def keyPressEvent(self, event: QKeyEvent):
         super().keyPressEvent(event)
@@ -654,9 +674,6 @@ class TrackerWindow(QMainWindow):
             for item in reversed(self.scene.items()):
                 if isinstance(item, PixmapItem):
                     self.state.items.append(item.state)
-
-                    if "Bombchu" in item.state.name:
-                        pass
 
             self.state.save()
         else:

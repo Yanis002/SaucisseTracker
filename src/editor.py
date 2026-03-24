@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
 )
 
-from common import ListViewModel, Color, Pos, move_file_to_config
+from common import ListViewModel, Color, Pos, move_file_to_config, show_info, debug_print
 from config import Config, InventoryItem, Counter, SourceItem
 from tracker import TrackerWindow
 
@@ -575,7 +575,7 @@ class TrackerEditorMenu(QWidget):
 
     def save_config(self):
         self.config.to_xml()
-        print("Config saved successfully!")
+        show_info(self, "Configuration saved successfully!")
 
     def add_item(self):
         scene = self.tracker.scene
@@ -744,7 +744,7 @@ class TrackerEditorMenu(QWidget):
         path_str = QFileDialog.getOpenFileName(self, "Open Background Image", str(config_folder), "*.png")[0]
 
         if len(path_str) == 0:
-            print("operation was cancelled (bg img file open)")
+            debug_print("operation was cancelled (bg img file open)")
             return
 
         # resolve path, make sure it exists and copy the file to the config folder if the path isn't relative to it
@@ -842,7 +842,7 @@ class TrackerEditorMenu(QWidget):
         paths_str = QFileDialog.getOpenFileNames(self, "Open Item Icon", str(src_dir), "*.png")[0]
 
         if len(paths_str) == 0:
-            print("operation cancelled (source files open)")
+            debug_print("operation cancelled (source files open)")
             return
 
         for path_str in paths_str:
@@ -886,7 +886,7 @@ class TrackerEditorMenu(QWidget):
         path_str = QFileDialog.getOpenFileName(self, "Open Item Icon", str(src_dir), "*.png")[0]
 
         if len(path_str) == 0:
-            print("operation cancelled (source file open)")
+            debug_print("operation cancelled (source file open)")
             return
 
         path = Path(path_str).resolve()

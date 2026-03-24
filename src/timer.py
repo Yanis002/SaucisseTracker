@@ -28,6 +28,7 @@ class LiveSplitThread(QThread):
         self.ls_run.push_segment(LS.Segment.new("Seed Completed"))
         self.create_timer(self.ls_run)
         self.do_run = True
+        self.setObjectName("LiveSplitThread")
 
     def create_timer(self, run: LS.Run):
         self.ls_timer = LS.Timer.new(run)

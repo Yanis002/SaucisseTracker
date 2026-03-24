@@ -25,6 +25,7 @@ OS_MENU_OFFSET = 34 if os.name == "nt" else 22
 GLOBAL_HALF_OPACITY = 0.58
 CURRENT_XML_VERSION = (1, 0)
 CURRENT_STATE_VERSION = (1, 0)
+DEBUG_PRINTS = False
 
 
 class ListViewModel(QAbstractListModel):
@@ -62,6 +63,8 @@ class Rotation(QThread):
         self.speed = self.config.gomode_settings.rotation_speed
         self.thread_refresh = self.config.gomode_settings.thread_refresh_rate
         self.do_run = True
+        self.pause_update = False
+        self.setObjectName("RotationThread")
 
     def stop(self):
         self.do_run = False
@@ -70,6 +73,9 @@ class Rotation(QThread):
 
     def run(self):
         while self.do_run:
+            if self.pause_update:
+                continue
+
             if self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
                 diff = self.thread_refresh * self.speed
                 self.position = round((self.position + diff) % 360, 2)
@@ -512,7 +518,7 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         """
 
         super().mouseReleaseEvent(event)
-        print("new pos:", self.pos())
+        debug_print("new pos:", self.pos())
 
     def wheelEvent(self, event):
         """See `PixmalItem.wheelEvent`."""
@@ -636,3 +642,8 @@ def move_file_to_config(config: "Config", path: Path):
         path = dest
 
     return path
+
+
+def debug_print(msg: str):
+    if DEBUG_PRINTS:
+        print(msg)

@@ -273,10 +273,11 @@ class InventoryItem:
             for label in self.static_texts:
                 _ = ET.SubElement(
                     item,
-                    "Label",
+                    "Text",
                     {
                         "Index": f"{label.index}",
                         "Pos": label.pos.to_str(),
+                        "Rot": f"{label.rotation}",
                         "Content": label.content,
                         "TextSettings": f"{label.text_settings_index}",
                     },
