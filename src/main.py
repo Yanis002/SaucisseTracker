@@ -189,8 +189,10 @@ class MainWindow(QMainWindow):
         for path in sorted(dir.rglob("config.*")):
             absolute = path.resolve()
             new_config = Config(self, absolute)
+            config_xml_version = (new_config.xml_version[0], new_config.xml_version[1])
+            cur_xml_version = (CURRENT_XML_VERSION[0], CURRENT_XML_VERSION[1])
 
-            if not self.is_debug and new_config.xml_version < CURRENT_XML_VERSION:
+            if not self.is_debug and config_xml_version < cur_xml_version:
                 # previously the config's name was defined based on the first inventory name
                 show_info(self, f"Ignoring outdated config named '{new_config.active_inv.name}'.")
             else:

@@ -13,8 +13,8 @@ from common import (
     PixmapItem,
     Pos,
     show_error,
-    move_file_to_config,
     GLOBAL_HALF_OPACITY,
+    CURRENT_XML_VERSION,
 )
 
 if TYPE_CHECKING:
@@ -548,7 +548,7 @@ class Config:
         self.extras: Optional[Extras] = None
         self.state_saved = False
         self.autosave_enabled = False
-        self.xml_version = (1, 0)
+        self.xml_version = (1, 0, 1)
         self.name = str()
         self.icon_path: Optional[Path] = None
         self.default_icon_path = (
@@ -668,7 +668,7 @@ class Config:
         root = ET.Element("Root")
 
         attrib = {
-            "XMLVersion": f"{self.xml_version[0]}.{self.xml_version[1]}",
+            "XMLVersion": ".".join(list(CURRENT_XML_VERSION)),
             "Name": self.name,
             "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
             "DefaultInventory": f"{self.default_inv}",
@@ -727,7 +727,7 @@ class Config:
 
         xml_version = config.get("XMLVersion", "0.0").split(".")
 
-        self.xml_version = (int(xml_version[0]), int(xml_version[1]))
+        self.xml_version = tuple([int(elem) for elem in xml_version])
         self.name = config.get("Name", "Unknown Config")
         self.icon_path = self.parse_path(config.get("Icon", self.default_icon_path), "config icon path", False)
         self.default_inv = int(config.get("DefaultInventory", "0"))
@@ -793,6 +793,14 @@ class Config:
                         int(elem.get("LightRotSpeed", "-30")),
                         float(elem.get("LightRotRefresh", "0.001")),
                     )
+
+                    if self.xml_version >= (1, 0, 1):
+                        self.gomode_settings.use_light = self.parse_bool(elem.get("UseLight", "False"))
+                    else:
+                        self.gomode_settings.use_light = (
+                            self.gomode_settings.light_path is not None and self.gomode_settings.light_pos is not None
+                        )
+
                 case "Extras":
                     extra_items: list[ExtraItem] = []
                     for item in elem:
