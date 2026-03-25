@@ -316,7 +316,7 @@ class MainWindow(QMainWindow):
         answer = QMessageBox.question(
             self,
             "Warning",
-            f"Are you sure you want to delete '{config.active_inv.name}'?",
+            f"Are you sure you want to delete '{config.name}'?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 

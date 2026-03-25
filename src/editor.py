@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QColorDialog,
     QFileDialog,
     QCheckBox,
+    QMessageBox,
 )
 
 from common import ListViewModel, Color, Pos, move_file_to_config, show_info, debug_print
@@ -350,6 +351,19 @@ class TrackerEditorMenu(QWidget):
     def moveEvent(self, a0):
         super().moveEvent(a0)
         self.tracker.move(self.pos().x() + self.width() + 1, self.pos().y())
+
+    def closeEvent(self, a0):
+        answer = QMessageBox.question(
+            self,
+            "Warning",
+            f"Are you sure you want quit? Changes won't be saved!",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+
+        if answer == QMessageBox.StandardButton.Yes:
+            super().closeEvent(a0)
+        else:
+            a0.ignore()
 
     def reset_model_cache(self):
         self.list_selected.setModel(ListViewModel(self.model_cache))
@@ -1083,7 +1097,10 @@ class TrackerEditor(TrackerWindow):
         self.autoreload_enabled = False
 
     def closeEvent(self, e):
-        self.edit_menu.close()
+        if not self.edit_menu.close():
+            e.ignore()
+            return
+
         self.config.edit_menu = None
         super().closeEvent(e)
 
