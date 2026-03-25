@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
 
 from common import ListViewModel, show_error, show_info, move_file_to_config, OS_MENU_OFFSET, CURRENT_XML_VERSION
 from config import Config
-from tracker import TrackerWindow
+from tracker import MainTrackerWindow
 from editor import TrackerEditor
 from editor_dialogs import ConfigSettingsDialog
 
@@ -50,7 +50,7 @@ class MainWindow(QMainWindow):
         self.configs: dict[str, Config] = {}
         self.config_dir = Path()
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
-        self.tracker_window: Optional[TrackerWindow] = None
+        self.tracker_window: Optional[MainTrackerWindow] = None
         self.is_debug = is_debug
         self.is_editor = is_editor
         offset = 5 if os.name == "nt" else 0
@@ -261,7 +261,7 @@ class MainWindow(QMainWindow):
                 self.configs[str(xml_path)] = Config(self, xml_path)
 
             if len(self.configs) > 0:
-                self.tracker_window = TrackerWindow(self, copy(self.configs), index.row())
+                self.tracker_window = MainTrackerWindow(self, copy(self.configs), index.row())
                 self.hide()
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")

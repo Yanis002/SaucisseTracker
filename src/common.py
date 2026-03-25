@@ -82,7 +82,11 @@ class Rotation(QThread):
             if self.pause_update:
                 continue
 
-            if self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
+            if (
+                self.do_run
+                and self.config.label_gomode_light is not None
+                and self.config.label_gomode_light.isVisible()
+            ):
                 diff = self.thread_refresh * self.speed
                 self.position = round((self.position + diff) % 360, 2)
                 self.positionChanged.emit(self.position)

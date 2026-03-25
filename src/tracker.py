@@ -82,7 +82,7 @@ class AutosaveThread(QThread):
                 state.save()
 
 
-class TrackerWindow(QMainWindow):
+class TrackerWindow(QWidget):
     keyPressed = pyqtSignal()
 
     def __init__(
@@ -124,17 +124,16 @@ class TrackerWindow(QMainWindow):
         self.create_menubar()
 
         # create the scene and generate the items from the config
-        self.central_widget = QWidget(self)
         bg_img = QPixmap(str(self.config.active_inv.background))
 
-        self.scene = QGraphicsScene(self.central_widget)
+        self.scene = QGraphicsScene(self)
         self.background = self.scene.addPixmap(bg_img)
 
         self.view = QGraphicsView(self.scene)
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        self.ze_layout = QVBoxLayout(self.central_widget)
+        self.ze_layout = QVBoxLayout(self)
         self.ze_layout.setContentsMargins(0, 0, 0, 0)
         self.ze_layout.addWidget(self.view)
 
@@ -143,7 +142,6 @@ class TrackerWindow(QMainWindow):
 
         self.create_items()
 
-        self.setCentralWidget(self.central_widget)
         self.setWindowTitle("SaucisseTracker")
 
         icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
@@ -165,8 +163,6 @@ class TrackerWindow(QMainWindow):
 
         if not self.is_editor and self.config.show_timer:
             self.timer.show()
-
-        self.show()
 
     def update_timer_embed(self, update_geo: bool, force: bool = False):
         if not self.is_editor:
@@ -191,7 +187,12 @@ class TrackerWindow(QMainWindow):
 
     def update_window_geometry(self, is_init: bool = False):
         bg_size = self.background.pixmap().size()
-        menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
+
+        if self.is_editor:
+            menu_height = 0
+        else:
+            menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
+
         timer_menu_height = self.timer.menu.sizeHint().height() if self.timer is not None else 0
         timer_height = (
             self.timer.height() - timer_menu_height
@@ -210,11 +211,14 @@ class TrackerWindow(QMainWindow):
         self.ze_layout.setGeometry(QRect(0, 0, bg_size.width(), bg_size.height() + timer_height))
 
         # update main window's geometry
-        self.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height + offset)
+        if self.parent_ is not None:
+            self.parent_.setFixedSize(bg_size.width(), bg_size.height() + menu_height + timer_height + offset)
 
     def update_window(self):
         prev_title = self.windowTitle()
         self.setWindowTitle("Reloading configuration...")
+        if self.parent_ is not None:
+            self.parent_.setWindowTitle("Reloading configuration...")
         self.state_file_opensave_abort = True
         self.file_save_triggered()  # trigger a save
         self.task_rotation.pause_update = True
@@ -263,6 +267,8 @@ class TrackerWindow(QMainWindow):
         self.file_open_triggered()  # restore the save
         self.state_file_opensave_abort = False
         self.setWindowTitle(prev_title)
+        if self.parent_ is not None:
+            self.parent_.setWindowTitle(prev_title)
 
     def set_movable(self):
         # TODO: unset flags
@@ -497,67 +503,21 @@ class TrackerWindow(QMainWindow):
     def keyPressEvent(self, event: QKeyEvent):
         super().keyPressEvent(event)
 
-        if event.key() == Qt.Key.Key_Escape:
-            self.close()
-        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             # Ctrl + ...
             match event.key():
-                case Qt.Key.Key_H:
-                    self.update_menu_visibility(not self.menu.isHidden())
                 case Qt.Key.Key_S:
                     # kinda hacky but whatever
                     self.file_save_triggered()
                 case Qt.Key.Key_O:
                     self.file_open_triggered()
                 case Qt.Key.Key_T:
-                    if not self.is_editor:
+                    if not self.is_editor and self.timer is not None:
                         self.timer.show()
                 case Qt.Key.Key_R:
                     self.update_window()
                 case Qt.Key.Key_P:
                     self.update_timer_embed(True, True)
-
-    def closeEvent(self, e: Optional[QCloseEvent]):
-        if not self.config.state_saved and not self.is_editor:
-            answer = QMessageBox.question(
-                self,
-                "Warning",
-                "Quit without saving the tracker's progress?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            )
-
-            if answer == QMessageBox.StandardButton.No:
-                e.ignore()
-                return
-
-        if self.timer is not None:
-            self.timer.close()
-
-        # terminate and remove the threads
-        self.task_autosave.stop()
-        self.task_rotation.stop()
-        self.task_autosave = None
-        self.task_rotation = None
-
-        def clear_static_texts(item_list: list[TextItem]):
-            for item in item_list:
-                item.scene_item = None
-
-        # cleanup existing references
-        for item in self.config.active_inv.items:
-            item.reward_map.clear()
-            clear_static_texts(item.static_texts)
-
-        clear_static_texts(self.config.active_inv.static_texts)
-        self.scene.clear()
-        self.config.label_gomode = None
-        self.config.label_gomode_light = None
-
-        if self.parent_ is not None:
-            self.parent_.show()
-            self.close()
-
-        super(QMainWindow, self).closeEvent(e)
 
     def create_menubar(self):
         self.menu = QMenuBar()
@@ -655,7 +615,6 @@ class TrackerWindow(QMainWindow):
         self.menu.addAction(self.menu_settings.menuAction())
         self.menu.addAction(self.menu_timer.menuAction())
         self.menu.addAction(self.action_about)
-        self.setMenuBar(self.menu)
 
     def update_menu_visibility(self, hide: bool):
         self.menu.setHidden(hide)
@@ -746,3 +705,69 @@ class TrackerWindow(QMainWindow):
 
     def update_timer_embed_callback(self):
         self.update_timer_embed(True)
+
+
+class MainTrackerWindow(QMainWindow):
+    def __init__(
+        self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False
+    ):
+        super().__init__(parent)
+        self.parent_ = parent
+        self.tracker = TrackerWindow(self, configs, config_index, is_editor)
+        self.setMenuBar(self.tracker.menu)
+        self.setCentralWidget(self.tracker)
+        self.setWindowTitle("SaucisseTracker")
+        self.show()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        super().keyPressEvent(event)
+
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            # Ctrl + ...
+            match event.key():
+                case Qt.Key.Key_H:
+                    self.tracker.update_menu_visibility(not self.tracker.menu.isHidden())
+
+    def closeEvent(self, e: Optional[QCloseEvent]):
+        if not self.tracker.config.state_saved and not self.tracker.is_editor:
+            answer = QMessageBox.question(
+                self.tracker,
+                "Warning",
+                "Quit without saving the tracker's progress?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+
+            if answer == QMessageBox.StandardButton.No:
+                e.ignore()
+                return
+
+        if self.tracker.timer is not None:
+            self.tracker.timer.close()
+
+        # terminate and remove the threads
+        self.tracker.task_autosave.stop()
+        self.tracker.task_rotation.stop()
+        self.tracker.task_autosave = None
+        self.tracker.task_rotation = None
+
+        def clear_static_texts(item_list: list[TextItem]):
+            for item in item_list:
+                item.scene_item = None
+
+        # cleanup existing references
+        for item in self.tracker.config.active_inv.items:
+            item.reward_map.clear()
+            clear_static_texts(item.static_texts)
+
+        clear_static_texts(self.tracker.config.active_inv.static_texts)
+        self.tracker.scene.clear()
+        self.tracker.config.label_gomode = None
+        self.tracker.config.label_gomode_light = None
+
+        if self.parent_ is not None:
+            self.parent_.show()
+            self.close()
+
+        super().closeEvent(e)

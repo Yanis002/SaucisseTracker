@@ -1089,20 +1089,25 @@ class TrackerEditorMenu(QWidget):
 
 class TrackerEditor(TrackerWindow):
     def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
-        super().__init__(parent, configs, config_index, True)
+        super().__init__(self, configs, config_index, True)
 
+        self.parent_ = parent
         self.edit_menu = TrackerEditorMenu(self.config, self)
         self.config.edit_menu = self.edit_menu
         self.config.edit_menu.list_selected.clearSelection()
         self.autoreload_enabled = False
 
-    def closeEvent(self, e):
+    def closeEvent(self, a0):
         if not self.edit_menu.close():
-            e.ignore()
+            a0.ignore()
             return
 
+        if self.parent_ is not None:
+            self.parent_.show()
+            self.close()
+
         self.config.edit_menu = None
-        super().closeEvent(e)
+        super().closeEvent(a0)
 
     def update_window(self):
         if self.config.edit_menu is not None:
