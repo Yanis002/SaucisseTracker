@@ -7,7 +7,15 @@ from xml.dom import minidom as MD
 from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
 
-from common import Color, OutlinedGraphicsTextItem, PixmapItem, Pos, show_error, GLOBAL_HALF_OPACITY
+from common import (
+    Color,
+    OutlinedGraphicsTextItem,
+    PixmapItem,
+    Pos,
+    show_error,
+    move_file_to_config,
+    GLOBAL_HALF_OPACITY,
+)
 
 if TYPE_CHECKING:
     from editor import TrackerEditorMenu
@@ -353,10 +361,9 @@ class Rewards:
     def __init__(self):
         self.index = 0
         self.items: list[RewardItem] = []
-        self.use_wheel = False
 
     def to_xml(self, parent: ET.Element):
-        rewards = ET.SubElement(parent, "Rewards", {"UseWheel": f"{self.use_wheel}"})
+        rewards = ET.SubElement(parent, "Rewards")
 
         for reward in self.items:
             _ = reward.to_xml(rewards)
@@ -410,20 +417,20 @@ class Inventory:
         name: str,
         bg_path: Path,
         bg_color: Color,
-        icon_path: Path,
-        icon: QPixmap,
         static_texts: list[TextItem],
     ):
         self.index = index
         self.name = name
         self.background = bg_path
         self.background_color = bg_color
-        self.icon_path = icon_path
-        self.icon = icon
         self.static_texts = static_texts
 
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
+
+    @staticmethod
+    def empty(index: int):
+        return Inventory(index, f"New Inventory ({index})", None, Color(0, 0, 0), list())
 
     def to_xml(self, parent: ET.Element):
         inventory = ET.SubElement(
@@ -431,7 +438,6 @@ class Inventory:
             "Inventory",
             {
                 "Index": f"{self.index}",
-                "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
                 "Name": f"{self.name}",
                 "Background": f"{self.background.relative_to(active_config_dir)}",
                 "BackgroundColor": f"0x{Color.pack(self.background_color):06X}",
@@ -527,8 +533,6 @@ class GoModeSettings:
 class Config:
     def __init__(self, widget: QWidget, config_path: Path):
         self.widget = widget
-        self.config_path = config_path
-        self.config_dir = self.config_path.parent
 
         self.default_inv = 0
         self.show_timer = False
@@ -542,7 +546,7 @@ class Config:
         self.extras: Optional[Extras] = None
         self.state_saved = False
         self.autosave_enabled = False
-        self.xml_version = (0, 0)
+        self.xml_version = (1, 0)
         self.name = str()
         self.icon_path: Optional[Path] = None
         self.default_icon_path = (
@@ -553,13 +557,24 @@ class Config:
         self.label_gomode_light: Optional[PixmapItem] = None
         self.edit_menu: Optional["TrackerEditorMenu"] = None
 
+        if config_path is None:
+            return
+
+        self.config_path = config_path
+        self.config_dir = self.config_path.parent
+
         match self.config_path.suffix:
             case ".xml":
                 self.from_xml()
             case _:
                 show_error(self.widget, "ERROR: the config file's format isn't supported yet.")
 
-        self.validate()
+        # create default inventory if necessary
+        if len(self.inventories) == 0:
+            self.inventories[0] = Inventory.empty(0)
+        else:
+            # don't validate if the config is new
+            self.validate()
 
         # register external fonts
         for font in self.fonts:
@@ -650,23 +665,23 @@ class Config:
         active_config_dir = self.config_dir
         root = ET.Element("Root")
 
-        state_path = self.state_path
-        if not state_path.is_relative_to(active_config_dir):
-            state_path = self.state_path.relative_to(active_config_dir)
+        attrib = {
+            "XMLVersion": f"{self.xml_version[0]}.{self.xml_version[1]}",
+            "Name": self.name,
+            "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
+            "DefaultInventory": f"{self.default_inv}",
+            "ShowTimer": f"{self.show_timer}",
+            "EmbedTimer": f"{self.embed_timer}",
+        }
 
-        config = ET.SubElement(
-            root,
-            "Config",
-            {
-                "XMLVersion": f"{self.xml_version[0]}.{self.xml_version[1]}",
-                "Name": self.name,
-                "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
-                "DefaultInventory": f"{self.default_inv}",
-                "StatePath": f"{state_path}",
-                "ShowTimer": f"{self.show_timer}",
-                "EmbedTimer": f"{self.embed_timer}",
-            },
-        )
+        if self.state_path is not None:
+            state_path = self.state_path
+            if not state_path.is_relative_to(active_config_dir):
+                state_path = self.state_path.relative_to(active_config_dir)
+
+            attrib["StatePath"] = f"{state_path}"
+
+        config = ET.SubElement(root, "Config", attrib)
 
         to_export: dict[str, Any] = {
             "Fonts": self.fonts,
@@ -810,8 +825,6 @@ class Config:
                         elem.get("Name", "Unknown"),
                         self.parse_path(elem.get("Background"), "background", True),
                         Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0)),
-                        path,
-                        QPixmap(str(path)),
                         text_labels,
                     )
 
@@ -896,7 +909,6 @@ class Config:
                                     int(item.get("TextSettings", "0")),
                                 )
                             )
-                        inventory.rewards.use_wheel = self.parse_bool(rewards.get("UseWheel", "False"))
 
                     self.inventories[inventory.index] = inventory
                 case _:

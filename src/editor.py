@@ -41,7 +41,10 @@ class TrackerEditorMenu(QWidget):
         self.prev_item: Optional[InventoryItem] = None
         self.pause_update = True
 
-        first_item = self.config.active_inv.items[0]
+        if len(self.config.active_inv.items) > 0:
+            first_item = self.config.active_inv.items[0]
+        else:
+            first_item = None
 
         # items section
         self.group_items = QGroupBox("Items", self)
@@ -77,7 +80,7 @@ class TrackerEditorMenu(QWidget):
         self.item_pos_index = QSpinBox(self.group_pos)
         self.item_pos_index.setGeometry(10, 33, 61, 32)
         self.item_pos_index.setMinimum(1)
-        self.item_pos_index.setMaximum(len(first_item.positions))
+        self.item_pos_index.setMaximum(len(first_item.positions) if first_item is not None else 1)
         self.item_pos_index.valueChanged.connect(self.item_pos_value_changed)
 
         self.btn_pos_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self.group_pos)
@@ -88,7 +91,7 @@ class TrackerEditorMenu(QWidget):
         self.btn_pos_del.pressed.connect(self.item_pos_del)
 
         self.group_pos_settings = QGroupBox(
-            f"Position Settings ({self.item_pos_index.value()} / {len(first_item.positions)})", self.group_pos
+            f"Position Settings ({self.item_pos_index.value()} / {self.item_pos_index.maximum()})", self.group_pos
         )
         self.group_pos_settings.setGeometry(10, 70, 231, 81)
 
@@ -123,12 +126,11 @@ class TrackerEditorMenu(QWidget):
         self.list_sources.setGeometry(10, 30, 311, 441)
 
         self.model_cache_sources: list[tuple[bool, str, QPixmap]] = []
-        for src_item in first_item.sources:
-            self.model_cache_sources.append((True, str(src_item.path), QPixmap(str(src_item.path))))
-        self.list_sources.setModel(ListViewModel(self.model_cache_sources))
+        if first_item is not None:
+            for src_item in first_item.sources:
+                self.model_cache_sources.append((True, str(src_item.path), QPixmap(str(src_item.path))))
+        self.reset_model_cache_sources()
         self.list_sources.setCurrentIndex(self.list_sources.model().index(0, 0))
-        self.model_sources = self.list_sources.selectionModel()
-        self.model_sources.currentChanged.connect(self.sources_selection_update)
 
         self.btn_sources_add = QPushButton("Add", self.group_sources)
         self.btn_sources_add.setGeometry(9, 480, 71, 21)
@@ -220,7 +222,7 @@ class TrackerEditorMenu(QWidget):
         self.extra_index = QSpinBox(self.group_extras)
         self.extra_index.setGeometry(9, 57, 81, 32)
         self.extra_index.setMinimum(0)
-        self.extra_index.setMaximum(len(self.config.extras.items) - 1)
+        self.extra_index.setMaximum(len(self.config.extras.items) - 1 if self.config.extras is not None else 0)
         self.extra_index.valueChanged.connect(self.update_extra_info)
 
         self.btn_open_extra_settings = QPushButton("Settings", self.group_extras_main)
@@ -241,7 +243,7 @@ class TrackerEditorMenu(QWidget):
         self.flag_index = QSpinBox(self.group_flags)
         self.flag_index.setGeometry(9, 57, 81, 32)
         self.flag_index.setMinimum(0)
-        self.flag_index.setMaximum(len(self.config.flags) - 1)
+        self.flag_index.setMaximum(len(self.config.flags) - 1 if len(self.config.flags) > 0 else 0)
         self.flag_index.valueChanged.connect(self.update_flag_info)
 
         self.btn_open_flags_settings = QPushButton("Settings", self.group_flags_main)
@@ -295,12 +297,17 @@ class TrackerEditorMenu(QWidget):
         self.group_misc_items = QGroupBox("Misc Item Settings", self)
         self.group_misc_items.setGeometry(280, 510, 120, 121)
 
+        self.default_enable = QCheckBox("Def. Enable", self.group_misc_items)
+        self.default_enable.setGeometry(8, 23, 111, 22)
+        self.default_enable.setToolTip("Enable the item by default")
+        self.default_enable.checkStateChanged.connect(self.update_default_enable)
+
         self.use_wheel = QCheckBox("Use Wheel", self.group_misc_items)
-        self.use_wheel.setGeometry(8, 30, 101, 22)
+        self.use_wheel.setGeometry(8, 41, 101, 22)
         self.use_wheel.checkStateChanged.connect(self.update_use_wheel)
 
         self.scale_content = QCheckBox("Re-scale Icon", self.group_misc_items)
-        self.scale_content.setGeometry(8, 50, 111, 22)
+        self.scale_content.setGeometry(8, 59, 111, 22)
         self.scale_content.checkStateChanged.connect(self.update_scale_content)
 
         self.btn_open_item_static_txt = QPushButton("Static Texts", self.group_misc_items)
@@ -316,7 +323,17 @@ class TrackerEditorMenu(QWidget):
         self.btn_save_cfg.pressed.connect(self.save_config)
 
         self.pause_update = False
-        self.select_item(0)
+
+        if first_item is not None:
+            self.select_item(0)
+        else:
+            self.group_flags_main.setEnabled(False)
+            self.group_extras_main.setEnabled(False)
+            self.group_reward.setEnabled(False)
+            self.group_misc_items.setEnabled(False)
+            self.group_counters.setEnabled(False)
+            self.group_pos.setEnabled(False)
+            self.group_sources.setEnabled(False)
 
         self.setFixedSize(1012, 640)
         self.setWindowTitle("Tracker Editor")
@@ -330,12 +347,23 @@ class TrackerEditorMenu(QWidget):
 
         self.show()
 
+    def moveEvent(self, a0):
+        super().moveEvent(a0)
+        self.tracker.move(self.pos().x() + self.width() + 1, self.pos().y())
+
     def reset_model_cache(self):
         self.list_selected.setModel(ListViewModel(self.model_cache))
         self.model = self.list_selected.selectionModel()
         self.model.currentChanged.connect(self.selection_changed)
         self.list_selected.update()
         self.list_selected.viewport().update()
+
+    def reset_model_cache_sources(self):
+        self.list_sources.setModel(ListViewModel(self.model_cache_sources))
+        self.model_sources = self.list_sources.selectionModel()
+        self.model_sources.currentChanged.connect(self.sources_selection_update)
+        self.list_sources.update()
+        self.list_sources.viewport().update()
 
     def select_item(self, item_index: int):
         self.list_selected.setCurrentIndex(self.list_selected.model().index(item_index, 0))
@@ -449,6 +477,7 @@ class TrackerEditorMenu(QWidget):
         self.is_reward.setChecked(item.is_reward)
 
         # update misc item settings
+        self.default_enable.setChecked(item.enabled)
         self.use_wheel.setChecked(item.use_wheel)
         self.scale_content.setChecked(item.scale_content)
 
@@ -493,6 +522,9 @@ class TrackerEditorMenu(QWidget):
         self.pause_update = False
         self.item_pos_value_changed(index + 1)
 
+        if item.counter is not None:
+            self.update_counter_info(0)
+
     def item_pos_del(self):
         item = self.get_item()
         index = self.item_pos_index.value() - 1
@@ -500,6 +532,11 @@ class TrackerEditorMenu(QWidget):
         self.item_pos_index.setMaximum(len(item.positions))
         self.item_pos_index.setValue(index)
         self.tracker.scene.removeItem(item.pixmap_items[index])
+
+        if item.pixmap_items[index].label_counter is not None:
+            self.tracker.scene.removeItem(item.pixmap_items[index].label_counter)
+
+        item.pixmap_items.pop(index)
 
     def update_item_surroundings(self, index: int):
         offset = self.tracker.get_item_os_offset()
@@ -617,7 +654,18 @@ class TrackerEditorMenu(QWidget):
             self.pause_update = False
             self.selection_changed()
 
+            self.group_flags_main.setEnabled(True)
+            self.group_extras_main.setEnabled(True)
+            self.group_reward.setEnabled(True)
+            self.group_misc_items.setEnabled(True)
+            self.group_counters.setEnabled(True)
+            self.group_pos.setEnabled(True)
+            self.group_sources.setEnabled(True)
+
     def remove_item(self):
+        if len(self.config.active_inv.items) == 0:
+            return
+
         item = self.get_item()
         scene = self.tracker.scene
 
@@ -641,9 +689,22 @@ class TrackerEditorMenu(QWidget):
 
             self.reset_model_cache()
             self.select_item(prev_index)
-            self.prev_item = self.config.active_inv.items[prev_index]
+            enabled = len(self.config.active_inv.items) > 0
             self.pause_update = False
-            self.selection_changed()
+
+            if enabled:
+                self.prev_item = self.config.active_inv.items[prev_index]
+                self.selection_changed()
+            else:
+                self.prev_item = None
+
+            self.group_flags_main.setEnabled(enabled)
+            self.group_extras_main.setEnabled(enabled)
+            self.group_reward.setEnabled(enabled)
+            self.group_misc_items.setEnabled(enabled)
+            self.group_counters.setEnabled(enabled)
+            self.group_pos.setEnabled(enabled)
+            self.group_sources.setEnabled(enabled)
 
     def update_item_name(self):
         item = self.get_item()
@@ -660,6 +721,7 @@ class TrackerEditorMenu(QWidget):
             return
 
         item = self.get_item()
+        offset = self.tracker.get_item_os_offset()
 
         if item.counter is None:
             item.counter = Counter(
@@ -681,7 +743,12 @@ class TrackerEditorMenu(QWidget):
 
         item.counter.value = item.counter.min
 
-        for pixmap_item in item.pixmap_items:
+        for i, pixmap_item in enumerate(item.pixmap_items):
+            if pixmap_item.label_counter is None:
+                temp_pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
+                self.tracker.create_counter(item, i, pixmap_item.obj_name, temp_pos)
+
+            assert pixmap_item.label_counter is not None, "label counter is still none"
             pos = pixmap_item.pos()
             pixmap_item.label_counter.setPos(pos.x() + item.counter.pos.x, pos.y() + item.counter.pos.y)
             pixmap_item.label_counter.set_text_style(item.counter.text_settings_index, False)
@@ -693,16 +760,25 @@ class TrackerEditorMenu(QWidget):
 
         item = self.get_item()
 
-        for pixmap_item in item.pixmap_items:
-            pixmap_item.label_counter.setVisible(enabled)
-
         if enabled:
             self.update_counter_info(0)
         else:
             item.counter = None
 
+        for pixmap_item in item.pixmap_items:
+            if pixmap_item.label_counter is not None:
+                pixmap_item.label_counter.setVisible(enabled)
+
         if item.counter is not None:
             item.counter.show = enabled
+
+    def update_default_enable(self, state):
+        item = self.get_item()
+
+        if self.pause_update:
+            return
+
+        item.enabled = self.default_enable.isChecked()
 
     def update_use_wheel(self, state):
         item = self.get_item()
@@ -758,7 +834,7 @@ class TrackerEditorMenu(QWidget):
 
     def update_extra_info(self, new_value: int):
         item = self.get_item()
-        item.extra_index = new_value
+        item.extra_index = self.extra_index.value()
         offset = self.tracker.get_item_os_offset()
 
         for i, pixmap_item in enumerate(item.pixmap_items):
@@ -775,6 +851,7 @@ class TrackerEditorMenu(QWidget):
 
         if enabled:
             item.extra_index = self.extra_index.value()
+            self.update_extra_info(0)
         else:
             item.extra_index = None
 
@@ -827,7 +904,8 @@ class TrackerEditorMenu(QWidget):
                 pos = Pos(item.positions[i].x + offset, item.positions[i].y + offset)
                 self.tracker.create_reward(item, i, pixmap_item.obj_name, pos)
 
-            item.reward_map[i].setVisible(enabled)
+            if i in item.reward_map:
+                item.reward_map[i].setVisible(enabled)
 
         # rewards and extras can't co-exist
         self.group_extras.setEnabled(not enabled)
@@ -851,7 +929,7 @@ class TrackerEditorMenu(QWidget):
 
             item.sources.append(SourceItem(path.stem, path))
             self.model_cache_sources.append((True, str(path), QPixmap(str(path))))
-        self.list_sources.viewport().update()
+        self.reset_model_cache_sources()
 
         for pixmap_item in item.pixmap_items:
             pixmap_item.update_item_visibility()
@@ -869,7 +947,7 @@ class TrackerEditorMenu(QWidget):
             item.sources.pop(index)
             self.model_cache_sources.pop(index)
             self.list_sources.setCurrentIndex(self.list_sources.model().index(index - 1, 0))
-            self.list_sources.viewport().update()
+            self.reset_model_cache_sources()
 
             for pixmap_item in item.pixmap_items:
                 pixmap_item.update_item_visibility()
@@ -895,7 +973,7 @@ class TrackerEditorMenu(QWidget):
         item.sources[index].name = path.stem
         item.sources[index].path = path
         self.model_cache_sources[index] = (True, str(path), QPixmap(str(path)))
-        self.list_sources.viewport().update()
+        self.reset_model_cache_sources()
 
     def sources_move_up(self):
         item = self.get_item()
@@ -906,6 +984,7 @@ class TrackerEditorMenu(QWidget):
             cur_elem = self.model_cache_sources[index]
             self.model_cache_sources[index] = prev_elem
             self.model_cache_sources[index - 1] = cur_elem
+            self.list_sources.update()
             self.list_sources.viewport().update()
 
         if index - 1 >= 0:
@@ -928,6 +1007,7 @@ class TrackerEditorMenu(QWidget):
             next_elem = self.model_cache_sources[index + 1]
             self.model_cache_sources[index] = next_elem
             self.model_cache_sources[index + 1] = cur_elem
+            self.list_sources.update()
             self.list_sources.viewport().update()
 
         if index + 1 < len(item.sources):
@@ -942,12 +1022,19 @@ class TrackerEditorMenu(QWidget):
         self.sources_selection_update()
 
     def sources_selection_update(self):
+        if self.pause_update:
+            return
+
         index = self.list_sources.currentIndex().row()
         self.btn_sources_del.setEnabled(len(self.model_cache_sources) > 1)
         self.btn_sources_up.setEnabled(index - 1 >= 0)
         self.btn_sources_down.setEnabled(index + 1 < len(self.model_cache_sources))
 
     def open_text_settings(self):
+        if len(self.config.fonts) == 0:
+            show_info(self, "This requires fonts but the list is empty.")
+            return
+
         dialog = TextSettingsDialog(self.config, self)
         dialog.open()
 
@@ -956,6 +1043,10 @@ class TrackerEditorMenu(QWidget):
         dialog.open()
 
     def open_rewards_settings(self):
+        if len(self.config.text_settings) == 0:
+            show_info(self, "This requires text settings but the list is empty.")
+            return
+
         dialog = RewardSettingsDialog(self.config, self)
         dialog.open()
 
@@ -964,6 +1055,10 @@ class TrackerEditorMenu(QWidget):
         dialog.open()
 
     def open_flags_settings(self):
+        if len(self.config.text_settings) == 0:
+            show_info(self, "This requires text settings but the list is empty.")
+            return
+
         dialog = FlagSettingsDialog(self.config, self)
         dialog.open()
 
@@ -991,6 +1086,7 @@ class TrackerEditor(TrackerWindow):
         self.edit_menu = TrackerEditorMenu(self.config, self)
         self.config.edit_menu = self.edit_menu
         self.config.edit_menu.list_selected.clearSelection()
+        self.autoreload_enabled = False
 
     def closeEvent(self, e):
         self.edit_menu.close()

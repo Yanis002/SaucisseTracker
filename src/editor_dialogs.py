@@ -22,8 +22,19 @@ from PyQt6.QtWidgets import (
     QColorDialog,
 )
 
-from config import Config, Font, FlagItem, ExtraItem, RewardItem, TextSettings, InventoryItem, TextItem
 from common import Color, Pos, move_file_to_config
+from config import (
+    Config,
+    Font,
+    FlagItem,
+    ExtraItem,
+    RewardItem,
+    TextSettings,
+    InventoryItem,
+    TextItem,
+    Extras,
+    GoModeSettings,
+)
 
 if TYPE_CHECKING:
     from editor import TrackerEditorMenu
@@ -73,8 +84,19 @@ def update_scene(config: Config):
     update_scene_rewards(config)
     update_scene_flags(config)
 
+    # update static texts
+    def update_static(item_list: list[TextItem], is_items: bool):
+        for item in item_list:
+            if item.scene_item is not None:
+                item.scene_item.set_text_style(item.text_settings_index, False)
+                item.scene_item.set_max_width(config.active_inv.get_longest_static_text(is_items))
+
+    update_static(config.active_inv.static_texts, False)
+
     # update counters
     for item in config.active_inv.items:
+        update_static(item.static_texts, True)
+
         for pixmap_item in item.pixmap_items:
             if pixmap_item.label_counter is not None and item.counter is not None:
                 pos = pixmap_item.pos()
@@ -90,14 +112,15 @@ class TextSettingsDialog(QDialog):
         self.config = config
         self.editor = parent
         self.pause_update = True
+        list_len = len(self.config.text_settings)
 
         self.label_item_index = QLabel("Item Index", self)
         self.label_item_index.setGeometry(9, 10, 71, 18)
 
         self.item_index = QSpinBox(self)
         self.item_index.setGeometry(10, 30, 61, 32)
-        self.item_index.setMinimum(1)
-        self.item_index.setMaximum(len(self.config.text_settings))
+        self.item_index.setMinimum(1 if list_len > 0 else 0)
+        self.item_index.setMaximum(list_len)
         self.item_index.valueChanged.connect(self.item_value_changed)
 
         self.btn_item_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self)
@@ -108,9 +131,7 @@ class TextSettingsDialog(QDialog):
         self.btn_item_del.setGeometry(130, 30, 41, 33)
         self.btn_item_del.pressed.connect(self.item_del)
 
-        self.group_item_settings = QGroupBox(
-            f"Item Settings ({self.item_index.value()} / {len(self.config.text_settings)})", self
-        )
+        self.group_item_settings = QGroupBox(f"Item Settings ({self.item_index.value()} / {list_len})", self)
         self.group_item_settings.setGeometry(10, 70, 241, 371)
 
         self.form_widget = QWidget(self.group_item_settings)
@@ -180,6 +201,9 @@ class TextSettingsDialog(QDialog):
         self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
 
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+
         self.pause_update = False
         self.item_value_changed(1)
         self.setFixedSize(262, 490)
@@ -188,6 +212,10 @@ class TextSettingsDialog(QDialog):
 
     def item_value_changed(self, value: int):
         index = self.item_index.value()
+
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+            return
 
         self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.text_settings)})")
 
@@ -212,7 +240,7 @@ class TextSettingsDialog(QDialog):
                 self.config.widget,
                 index,
                 str(),
-                -1,
+                0,
                 0.0,
                 False,
                 Color(0, 0, 0),
@@ -226,11 +254,22 @@ class TextSettingsDialog(QDialog):
         self.item_index.setMaximum(len(self.config.text_settings))
         self.item_index.setValue(index + 1)
 
+        if self.item_index.minimum() == 0:
+            self.item_index.setMinimum(1)
+            self.group_item_settings.setEnabled(True)
+
     def item_del(self):
+        if len(self.config.text_settings) == 0:
+            return
+
         index = self.item_index.value()
         self.config.text_settings.pop(index - 1)
         self.item_index.setMaximum(len(self.config.text_settings))
         self.item_index.setValue(index - 1)
+
+        if self.item_index.maximum() == 0:
+            self.item_index.setMinimum(0)
+            self.group_item_settings.setEnabled(False)
 
     def update_bools(self, state):
         index = self.item_index.value() - 1
@@ -396,12 +435,16 @@ class GoModeSettingsDialog(QDialog):
         self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
 
+        if self.config.gomode_settings is None:
+            self.config.gomode_settings = GoModeSettings(Pos(0, 0), True, Path(), None, None, -70, 0.001)
+
         self.icon_pos_x.setValue(self.config.gomode_settings.pos.x)
         self.icon_pos_y.setValue(self.config.gomode_settings.pos.y)
         self.icon_path.setText(str(self.config.gomode_settings.path))
 
-        self.light_pos_x.setValue(self.config.gomode_settings.light_pos.x)
-        self.light_pos_y.setValue(self.config.gomode_settings.light_pos.y)
+        if self.config.gomode_settings.light_pos is not None:
+            self.light_pos_x.setValue(self.config.gomode_settings.light_pos.x)
+            self.light_pos_y.setValue(self.config.gomode_settings.light_pos.y)
         self.light_path.setText(str(self.config.gomode_settings.light_path))
 
         self.rot_speed.setValue(self.config.gomode_settings.rotation_speed)
@@ -425,7 +468,7 @@ class GoModeSettingsDialog(QDialog):
             self.editor.tracker.scene.removeItem(self.config.label_gomode_light)
             self.config.label_gomode_light = None
 
-        self.editor.tracker.create_gomode(self.hide_if_disabled.isChecked())
+        self.editor.tracker.create_gomode(True)
 
     def update_icon_pos(self, value: int):
         if self.pause_update:
@@ -433,7 +476,9 @@ class GoModeSettingsDialog(QDialog):
 
         self.config.gomode_settings.pos.x = self.icon_pos_x.value()
         self.config.gomode_settings.pos.y = self.icon_pos_y.value()
-        self.update_scene()
+
+        if self.config.label_gomode is not None:
+            self.config.label_gomode.setPos(self.icon_pos_x.value(), self.icon_pos_y.value())
 
     def open_icon_path(self):
         path_str = QFileDialog.getOpenFileName(
@@ -448,6 +493,7 @@ class GoModeSettingsDialog(QDialog):
         path = move_file_to_config(self.config, path)
 
         self.config.gomode_settings.path = path
+        self.icon_path.setText(str(path))
         self.update_scene()
 
     def update_light_pos(self, value: int):
@@ -456,12 +502,13 @@ class GoModeSettingsDialog(QDialog):
 
         self.config.gomode_settings.light_pos.x = self.light_pos_x.value()
         self.config.gomode_settings.light_pos.y = self.light_pos_y.value()
-        self.update_scene()
+
+        if self.config.label_gomode_light is not None:
+            self.config.label_gomode_light.setPos(self.light_pos_x.value(), self.light_pos_y.value())
 
     def open_light_img_path(self):
-        path_str = QFileDialog.getOpenFileName(
-            self, "Open Go Mode Light Image", str(self.config.gomode_settings.light_path.parent), "*.png"
-        )[0]
+        p = Path() if self.config.gomode_settings.light_path is None else self.config.gomode_settings.light_path.parent
+        path_str = QFileDialog.getOpenFileName(self, "Open Go Mode Light Image", str(p), "*.png")[0]
 
         if len(path_str) == 0:
             return
@@ -471,6 +518,8 @@ class GoModeSettingsDialog(QDialog):
         path = move_file_to_config(self.config, path)
 
         self.config.gomode_settings.light_path = path
+        self.config.gomode_settings.light_pos = Pos(0, 0)
+        self.light_path.setText(str(path))
         self.update_scene()
 
     def update_rotation(self, value: int):
@@ -479,7 +528,6 @@ class GoModeSettingsDialog(QDialog):
 
         self.config.gomode_settings.rotation_speed = self.rot_speed.value()
         self.config.gomode_settings.thread_refresh_rate = self.rot_refresh.value()
-        self.update_scene()
 
 
 class RewardSettingsDialog(QDialog):
@@ -489,14 +537,15 @@ class RewardSettingsDialog(QDialog):
         self.config = config
         self.editor = parent
         self.pause_update = False
+        list_len = len(self.config.active_inv.rewards.items)
 
         self.label_item_index = QLabel("Item Index", self)
         self.label_item_index.setGeometry(9, 10, 71, 18)
 
         self.item_index = QSpinBox(self)
         self.item_index.setGeometry(10, 30, 61, 32)
-        self.item_index.setMinimum(1)
-        self.item_index.setMaximum(len(self.config.active_inv.rewards.items))
+        self.item_index.setMinimum(1 if list_len > 0 else 0)
+        self.item_index.setMaximum(list_len)
         self.item_index.valueChanged.connect(self.item_value_changed)
 
         self.btn_item_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self)
@@ -507,9 +556,7 @@ class RewardSettingsDialog(QDialog):
         self.btn_item_del.setGeometry(130, 30, 41, 33)
         self.btn_item_del.pressed.connect(self.item_del)
 
-        self.group_item_settings = QGroupBox(
-            f"Item Settings ({self.item_index.value()} / {len(self.config.active_inv.rewards.items)})", self
-        )
+        self.group_item_settings = QGroupBox(f"Item Settings ({self.item_index.value()} / {list_len})", self)
         self.group_item_settings.setGeometry(10, 70, 261, 145)
 
         self.label_name = QLabel("Name", self.group_item_settings)
@@ -547,6 +594,9 @@ class RewardSettingsDialog(QDialog):
         self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
 
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+
         self.item_value_changed(1)
         self.setFixedSize(282, 260)
         self.setWindowTitle("Reward Settings")
@@ -554,6 +604,10 @@ class RewardSettingsDialog(QDialog):
 
     def item_value_changed(self, value: int):
         index = self.item_index.value()
+
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+            return
 
         self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.active_inv.rewards.items)})")
 
@@ -567,15 +621,26 @@ class RewardSettingsDialog(QDialog):
 
     def item_add(self):
         index = len(self.config.active_inv.rewards.items)
-        self.config.active_inv.rewards.items.append(RewardItem(index - 1, Pos(0, 0), Path()))
+        self.config.active_inv.rewards.items.append(RewardItem(Pos(0, 0), "new reward", 0))
         self.item_index.setMaximum(len(self.config.active_inv.rewards.items))
         self.item_index.setValue(index + 1)
 
+        if self.item_index.minimum() == 0:
+            self.item_index.setMinimum(1)
+            self.group_item_settings.setEnabled(True)
+
     def item_del(self):
+        if len(self.config.active_inv.rewards.items) == 0:
+            return
+
         index = self.item_index.value()
         self.config.active_inv.rewards.items.pop(index - 1)
         self.item_index.setMaximum(len(self.config.active_inv.rewards.items))
         self.item_index.setValue(index - 1)
+
+        if self.item_index.maximum() == 0:
+            self.item_index.setMinimum(0)
+            self.group_item_settings.setEnabled(False)
 
     def name_update(self, text):
         index = self.item_index.value()
@@ -613,14 +678,15 @@ class ExtraSettingsDialog(QDialog):
         self.config = config
         self.editor = parent
         self.pause_update = False
+        list_len = len(self.config.extras.items) if self.config.extras is not None else 0
 
         self.label_item_index = QLabel("Item Index", self)
         self.label_item_index.setGeometry(9, 10, 71, 18)
 
         self.item_index = QSpinBox(self)
         self.item_index.setGeometry(10, 30, 61, 32)
-        self.item_index.setMinimum(1)
-        self.item_index.setMaximum(len(self.config.extras.items))
+        self.item_index.setMinimum(1 if list_len > 0 else 0)
+        self.item_index.setMaximum(list_len)
         self.item_index.valueChanged.connect(self.item_value_changed)
 
         self.btn_item_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self)
@@ -631,9 +697,7 @@ class ExtraSettingsDialog(QDialog):
         self.btn_item_del.setGeometry(130, 30, 41, 33)
         self.btn_item_del.pressed.connect(self.item_del)
 
-        self.group_item_settings = QGroupBox(
-            f"Item Settings ({self.item_index.value()} / {len(self.config.extras.items)})", self
-        )
+        self.group_item_settings = QGroupBox(f"Item Settings ({self.item_index.value()} / {list_len})", self)
         self.group_item_settings.setGeometry(10, 70, 181, 145)
 
         self.label_icon_path = QLabel("Icon Path", self.group_item_settings)
@@ -668,13 +732,17 @@ class ExtraSettingsDialog(QDialog):
         self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
 
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+
         self.item_value_changed(1)
         self.setFixedSize(201, 260)
         self.setWindowTitle("Extra Settings")
         self.setWindowIcon(self.editor.windowIcon())
 
     def accept(self):
-        self.editor.extra_index.setMaximum(len(self.config.extras.items) - 1)
+        if self.config.extras is not None:
+            self.editor.extra_index.setMaximum(len(self.config.extras.items) - 1)
         super().accept()
 
     def update_scene(self):
@@ -693,6 +761,10 @@ class ExtraSettingsDialog(QDialog):
     def item_value_changed(self, value: int):
         index = self.item_index.value()
 
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+            return
+
         self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.extras.items)})")
         self.pause_update = True
         extra = self.config.extras.items[index - 1]
@@ -702,16 +774,30 @@ class ExtraSettingsDialog(QDialog):
         self.pause_update = False
 
     def item_add(self):
+        if self.config.extras is None:
+            self.config.extras = Extras(list())
+
         index = len(self.config.extras.items)
-        self.config.extras.items.append(ExtraItem(index - 1, Pos(0, 0), Path()))
+        self.config.extras.items.append(ExtraItem(index, Pos(0, 0), Path()))
         self.item_index.setMaximum(len(self.config.extras.items))
         self.item_index.setValue(index + 1)
 
+        if self.item_index.minimum() == 0:
+            self.item_index.setMinimum(1)
+            self.group_item_settings.setEnabled(True)
+
     def item_del(self):
+        if self.config.extras is None or len(self.config.extras.items) == 0:
+            return
+
         index = self.item_index.value()
         self.config.extras.items.pop(index - 1)
         self.item_index.setMaximum(len(self.config.extras.items))
         self.item_index.setValue(index - 1)
+
+        if self.item_index.maximum() == 0:
+            self.item_index.setMinimum(0)
+            self.group_item_settings.setEnabled(False)
 
     def update_extra(self):
         index = self.item_index.value()
@@ -748,14 +834,15 @@ class FlagSettingsDialog(QDialog):
         self.config = config
         self.editor = parent
         self.pause_update = False
+        list_len = len(self.config.flags)
 
         self.label_item_index = QLabel("Item Index", self)
         self.label_item_index.setGeometry(9, 10, 71, 18)
 
         self.item_index = QSpinBox(self)
         self.item_index.setGeometry(10, 30, 61, 32)
-        self.item_index.setMinimum(1)
-        self.item_index.setMaximum(len(self.config.flags))
+        self.item_index.setMinimum(1 if list_len > 0 else 0)
+        self.item_index.setMaximum(list_len)
         self.item_index.valueChanged.connect(self.item_value_changed)
 
         self.btn_item_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self)
@@ -766,9 +853,7 @@ class FlagSettingsDialog(QDialog):
         self.btn_item_del.setGeometry(130, 30, 41, 33)
         self.btn_item_del.pressed.connect(self.item_del)
 
-        self.group_item_settings = QGroupBox(
-            f"Item Settings ({self.item_index.value()} / {self.item_index.maximum()})", self
-        )
+        self.group_item_settings = QGroupBox(f"Item Settings ({self.item_index.value()} / {list_len})", self)
         self.group_item_settings.setGeometry(10, 70, 191, 311)
 
         self.label_pos_x = QLabel("X", self.group_item_settings)
@@ -809,12 +894,13 @@ class FlagSettingsDialog(QDialog):
         self.btn_text_del.setGeometry(118, 50, 41, 33)
         self.btn_text_del.pressed.connect(self.text_del)
 
+        sub_list_len = len(self.config.flags[0].texts) if list_len > 0 else 0
         self.label_text_index = QLabel("Text Index", self.group_text_list)
         self.label_text_index.setGeometry(4, 30, 71, 18)
         self.text_index = QSpinBox(self.group_text_list)
         self.text_index.setGeometry(5, 50, 61, 32)
-        self.text_index.setMinimum(1)
-        self.text_index.setMaximum(len(self.config.flags[self.item_index.value()].texts))
+        self.text_index.setMinimum(1 if list_len > 0 else 0)
+        self.text_index.setMaximum(sub_list_len)
         self.text_index.valueChanged.connect(self.text_value_changed)
 
         self.label_text_total = QLabel(f"Total: {self.text_index.maximum()}", self.group_text_list)
@@ -825,6 +911,7 @@ class FlagSettingsDialog(QDialog):
 
         self.text = QLineEdit(self.group_text_list)
         self.text.setGeometry(5, 90, 161, 32)
+        self.text.setEnabled(self.text_index.maximum() != 0)
         self.text.textChanged.connect(self.text_update)
 
         self.btn_ok_cancel = QDialogButtonBox(self)
@@ -832,6 +919,9 @@ class FlagSettingsDialog(QDialog):
         self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
         self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
+
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
 
         self.item_value_changed(1)
         self.setFixedSize(212, 430)
@@ -845,7 +935,12 @@ class FlagSettingsDialog(QDialog):
     def item_value_changed(self, value: int):
         index = self.item_index.value()
 
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+            return
+
         self.group_item_settings.setTitle(f"Item Settings ({index} / {self.item_index.maximum()})")
+        self.text.setEnabled(self.text_index.maximum() != 0)
 
         flag = self.config.flags[index - 1]
         self.pause_update = True
@@ -860,24 +955,44 @@ class FlagSettingsDialog(QDialog):
 
     def item_add(self):
         index = len(self.config.flags)
-        self.config.flags.append(FlagItem(index - 1, [""], Pos(0, 0), 0, False, 0, 0))
+        self.config.flags.append(FlagItem(index, [""], Pos(0, 0), 0, False))
         self.item_index.setMaximum(len(self.config.flags))
         self.item_index.setValue(index + 1)
+        self.editor.flag_index.setMaximum(self.item_index.maximum() - 1)
 
         self.text_index.setMaximum(1)
         self.text_index.setValue(1)
 
+        if self.item_index.minimum() == 0:
+            self.item_index.setMinimum(1)
+            self.group_item_settings.setEnabled(True)
+            self.text.setEnabled(True)
+
     def item_del(self):
+        if len(self.config.flags) == 0:
+            return
+
         index = self.item_index.value()
         self.config.flags.pop(index - 1)
         self.item_index.setMaximum(len(self.config.flags))
         self.item_index.setValue(index - 1)
 
-        flag = self.config.flags[index - 1 - 1]
-        self.text_index.setMaximum(len(flag.texts))
+        if len(self.config.flags) > 0:
+            length = len(self.config.flags[index - 1 - 1].texts)
+        else:
+            length = 0
+
+        self.text_index.setMaximum(length)
         self.text_index.setValue(1)
 
+        if self.item_index.maximum() == 0:
+            self.item_index.setMinimum(0)
+            self.group_item_settings.setEnabled(False)
+
     def text_value_changed(self, value: int):
+        if len(self.config.flags) == 0 or len(self.config.flags[self.item_index.value() - 1].texts) == 0:
+            return
+
         index = self.text_index.value() - 1
         self.text.setText(self.config.flags[self.item_index.value() - 1].texts[index])
 
@@ -889,15 +1004,27 @@ class FlagSettingsDialog(QDialog):
     def text_add(self):
         item_index = self.item_index.value() - 1
         self.config.flags[item_index].texts.append(str())
+        self.text_index.setMinimum(1)
         self.text_index.setMaximum(len(self.config.flags[item_index].texts))
-        self.text_index.setValue(1)
+        self.text_index.setValue(self.text_index.maximum())
+        self.text.setEnabled(True)
+        self.label_text_total.setText(f"Total: {self.text_index.maximum()}")
 
     def text_del(self):
         item_index = self.item_index.value() - 1
+
+        if len(self.config.flags[item_index].texts) == 0:
+            return
+
         index = self.text_index.value() - 1
         self.config.flags[item_index].texts.pop(index)
         self.text_index.setMaximum(len(self.config.flags[item_index].texts))
         self.text_index.setValue(1)
+
+        if len(self.config.flags[item_index].texts) == 0:
+            self.text.setEnabled(False)
+            self.text_index.setMinimum(0)
+            self.label_text_total.setText("Total: 0")
 
     def hidden_update(self, state):
         item_index = self.item_index.value() - 1
@@ -925,14 +1052,15 @@ class FontSettingsDialog(QDialog):
 
         self.config = config
         self.editor = parent
+        list_len = len(self.config.fonts)
 
         self.label_item_index = QLabel("Item Index", self)
         self.label_item_index.setGeometry(9, 10, 71, 18)
 
         self.item_index = QSpinBox(self)
         self.item_index.setGeometry(10, 30, 61, 32)
-        self.item_index.setMinimum(1)
-        self.item_index.setMaximum(len(self.config.fonts))
+        self.item_index.setMinimum(1 if list_len > 0 else 0)
+        self.item_index.setMaximum(list_len)
         self.item_index.valueChanged.connect(self.item_value_changed)
 
         self.btn_item_add = QPushButton(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), "", self)
@@ -943,9 +1071,7 @@ class FontSettingsDialog(QDialog):
         self.btn_item_del.setGeometry(130, 30, 41, 33)
         self.btn_item_del.pressed.connect(self.item_del)
 
-        self.group_item_settings = QGroupBox(
-            f"Item Settings ({self.item_index.value()} / {len(self.config.fonts)})", self
-        )
+        self.group_item_settings = QGroupBox(f"Item Settings ({self.item_index.value()} / {list_len})", self)
         self.group_item_settings.setGeometry(10, 70, 251, 141)
 
         self.is_custom = QCheckBox("Use Custom Font File", self.group_item_settings)
@@ -968,6 +1094,11 @@ class FontSettingsDialog(QDialog):
         self.btn_ok_cancel.setOrientation(Qt.Orientation.Horizontal)
         self.btn_ok_cancel.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self.btn_ok_cancel.accepted.connect(self.accept)
+
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+        else:
+            self.item_value_changed(1)
 
         self.is_custom.setChecked(True)
         self.setFixedSize(270, 260)
@@ -994,6 +1125,7 @@ class FontSettingsDialog(QDialog):
         assert font_id != -1, "font cannot be loaded"
         self.config.fonts[index].path = path
         self.config.fonts[index].name = QFontDatabase.applicationFontFamilies(font_id)[0]
+        self.custom_font_path.setText(str(path))
 
     def toggle_custom(self, state):
         self.custom_font_path.setEnabled(self.is_custom.isChecked())
@@ -1002,6 +1134,10 @@ class FontSettingsDialog(QDialog):
 
     def item_value_changed(self, value: int):
         index = self.item_index.value()
+
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+            return
 
         self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.fonts)})")
         self.is_custom.setChecked(not self.config.fonts[index - 1].is_system)
@@ -1016,11 +1152,22 @@ class FontSettingsDialog(QDialog):
         self.item_index.setMaximum(len(self.config.fonts))
         self.item_index.setValue(index + 1)
 
+        if self.item_index.minimum() == 0:
+            self.item_index.setMinimum(1)
+            self.group_item_settings.setEnabled(True)
+
     def item_del(self):
+        if len(self.config.fonts) == 0:
+            return
+
         index = self.item_index.value()
         self.config.fonts.pop(index - 1)
         self.item_index.setMaximum(len(self.config.fonts))
         self.item_index.setValue(index - 1)
+
+        if self.item_index.maximum() == 0:
+            self.item_index.setMinimum(0)
+            self.group_item_settings.setEnabled(False)
 
 
 class StaticTextSettingsDialog(QDialog):
@@ -1119,6 +1266,10 @@ class StaticTextSettingsDialog(QDialog):
         index = self.item_index.value()
         list_len = len(self.item.static_texts) if self.item is not None else len(self.config.active_inv.static_texts)
 
+        if self.item_index.maximum() == 0:
+            self.group_item_settings.setEnabled(False)
+            return
+
         self.group_item_settings.setTitle(f"Item Settings ({index} / {list_len})")
         self.pause_update = True
         text_item = self.get_text_item()
@@ -1155,12 +1306,20 @@ class StaticTextSettingsDialog(QDialog):
     def item_del(self):
         if self.item is not None:
             index = len(self.item.static_texts)
+
+            if index == 0:
+                return
+
             self.editor.tracker.scene.removeItem(self.item.static_texts[index - 1].scene_item)
             self.item.static_texts.pop(index - 1)
             self.item_index.setMaximum(len(self.item.static_texts))
             self.item_index.setValue(index - 1)
         else:
             index = len(self.config.active_inv.static_texts)
+
+            if index == 0:
+                return
+
             self.editor.tracker.scene.removeItem(self.config.active_inv.static_texts[index - 1].scene_item)
             self.config.active_inv.static_texts.pop(index - 1)
             self.item_index.setMaximum(len(self.config.active_inv.static_texts))

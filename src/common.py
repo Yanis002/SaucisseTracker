@@ -60,8 +60,14 @@ class Rotation(QThread):
         self.setTerminationEnabled(True)
         self.config = config
         self.position = position
-        self.speed = self.config.gomode_settings.rotation_speed
-        self.thread_refresh = self.config.gomode_settings.thread_refresh_rate
+
+        if self.config.gomode_settings is not None:
+            self.speed = self.config.gomode_settings.rotation_speed
+            self.thread_refresh = self.config.gomode_settings.thread_refresh_rate
+        else:
+            self.speed = -70
+            self.thread_refresh = 0.001
+
         self.do_run = True
         self.pause_update = False
         self.setObjectName("RotationThread")
@@ -197,24 +203,27 @@ class PixmapItem(QGraphicsPixmapItem):
 
         super().wheelEvent(event)
 
+        # editor only, avoid updating the item if it can be moved
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            return
+
         if self.is_gomode():
             return
 
         if event is not None:
             item = self.config.active_inv.items[self.state.index]
-            rewards = self.config.active_inv.rewards
 
-            if item.use_wheel or rewards.use_wheel:
+            if item.use_wheel:
                 # adapted from https://stackoverflow.com/a/20152809
                 value = 0
                 steps = event.delta() // 120
                 for _ in range(1, abs(steps) + 1):
                     value += steps and steps // abs(steps)  # 0, 1, or -1
                     if value != 0:
-                        if item.use_wheel:
-                            self.update_item(value > 0, False)
-                        elif rewards.use_wheel:
+                        if item.is_reward:
                             self.next_reward(value > 0)
+                        elif item.use_wheel:
+                            self.update_item(value > 0, False)
 
     def shape(self):
         """Override to fix a behavior where you need to click on the texture, which we don't want here"""
@@ -287,15 +296,14 @@ class PixmapItem(QGraphicsPixmapItem):
                 self.effect.setStrength(1.0)  # enable filter
             self.setOpacity(GLOBAL_HALF_OPACITY)
             path_index = 0
-            item.enabled = False
+            self.state.infos.enabled = False
         else:
             if self.effect is not None:
                 self.effect.setStrength(0.0)  # disable filter
             self.setOpacity(1.0)
             path_index = self.state.infos.img_index
-            item.enabled = True
+            self.state.infos.enabled = True
 
-        self.state.infos.enabled = item.enabled
         self.setPixmap(QPixmap(str(item.sources[path_index].path)))
 
     def update_flag(self, force_is_max: bool = False):
@@ -307,7 +315,7 @@ class PixmapItem(QGraphicsPixmapItem):
         self.validate_item_index()
         item = self.config.active_inv.items[self.state.index]
 
-        if self.flag is not None and item.flag_index is not None:
+        if self.flag is not None and item.flag_index is not None and len(self.config.flags) > 0:
             flag = self.config.flags[item.flag_index]
             total = len(flag.texts) - 1
 
@@ -354,8 +362,7 @@ class PixmapItem(QGraphicsPixmapItem):
                 item.counter.decr()
 
             item.counter.update(self)
-            item.enabled = item.counter.show
-            self.state.infos.enabled = item.enabled
+            self.state.infos.enabled = item.counter.show
             self.state.infos.counter_show = item.counter.show
             self.state.infos.counter_value = item.counter.value
         elif self.effect is not None:
@@ -424,8 +431,6 @@ class PixmapItem(QGraphicsPixmapItem):
                     if self.effect is not None:
                         self.effect.setStrength(1.0)
                     self.setOpacity(GLOBAL_HALF_OPACITY)
-
-            item.enabled = self.state.infos.enabled
 
 
 # from https://stackoverflow.com/a/78362730
@@ -636,7 +641,9 @@ def move_file_to_config(config: "Config", path: Path):
     config_folder = config.config_path.parent
 
     if not path.is_relative_to(config_folder):
-        dest = config_folder / "auto_copied" / f"{path.stem}{path.suffix}"
+        dest_folder = config_folder / "auto_copied"
+        dest_folder.mkdir(exist_ok=True)
+        dest = dest_folder / f"{path.stem}{path.suffix}"
         copyfile(path, dest)
         assert dest.exists(), "unknown file copy failure"
         path = dest

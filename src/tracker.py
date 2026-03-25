@@ -99,7 +99,12 @@ class TrackerWindow(QMainWindow):
         self.bg_path = self.config.active_inv.background
         self.state = State(self.config)
         self.autoreload_enabled = True
-        self.timer = LiveSplit(self.config, self.is_editor)
+        self.state_file_opensave_abort = False  # never ask for file path, used for the editor
+
+        if self.is_editor:
+            self.timer = None
+        else:
+            self.timer = LiveSplit(self.config, self.is_editor)
 
         self.task_autosave = AutosaveThread(self, self.config)
         self.task_autosave.start()
@@ -187,8 +192,12 @@ class TrackerWindow(QMainWindow):
     def update_window_geometry(self, is_init: bool = False):
         bg_size = self.background.pixmap().size()
         menu_height = self.menu.sizeHint().height() if self.menu.isVisible() or is_init else 0
-        timer_menu_height = self.timer.menu.sizeHint().height()
-        timer_height = self.timer.height() - timer_menu_height if self.timer.is_separate and not self.is_editor else 0
+        timer_menu_height = self.timer.menu.sizeHint().height() if self.timer is not None else 0
+        timer_height = (
+            self.timer.height() - timer_menu_height
+            if self.timer is not None and self.timer.is_separate and not self.is_editor
+            else 0
+        )
         offset = 1 if os.name == "nt" else 0
 
         # set background color and remove border
@@ -206,6 +215,7 @@ class TrackerWindow(QMainWindow):
     def update_window(self):
         prev_title = self.windowTitle()
         self.setWindowTitle("Reloading configuration...")
+        self.state_file_opensave_abort = True
         self.file_save_triggered()  # trigger a save
         self.task_rotation.pause_update = True
 
@@ -217,6 +227,7 @@ class TrackerWindow(QMainWindow):
 
         if not self.config.active_inv.background.exists():
             show_error(self, f"ERROR: the following background path does not exist: {repr(self.bg_path)}")
+            self.state_file_opensave_abort = False
             return
 
         # clear current scene items
@@ -232,7 +243,7 @@ class TrackerWindow(QMainWindow):
         bg_img = QPixmap(str(self.config.active_inv.background))
         self.background = self.scene.addPixmap(bg_img)
 
-        if not self.is_editor:
+        if not self.is_editor and self.timer is not None:
             debug_print("recreate livesplit widget...")
             self.timer.ls_thread.stop()
             self.timer = LiveSplit(self.config, self.is_editor)
@@ -250,6 +261,7 @@ class TrackerWindow(QMainWindow):
         self.task_rotation.pause_update = False
         debug_print("config reloaded!")
         self.file_open_triggered()  # restore the save
+        self.state_file_opensave_abort = False
         self.setWindowTitle(prev_title)
 
     def set_movable(self):
@@ -338,7 +350,7 @@ class TrackerWindow(QMainWindow):
     def create_reward(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
         active_inv = self.config.active_inv
 
-        if item.is_reward:
+        if item.is_reward and len(active_inv.rewards.items) > 0:
             reward_info = active_inv.rewards.items[item.pixmap_items[index].state.infos.reward_index]
 
             item.reward_map[index] = self.add_outline_text(
@@ -351,6 +363,17 @@ class TrackerWindow(QMainWindow):
 
             if item.reward_map[index].item_pixmap is None:
                 item.reward_map[index].item_pixmap = item.pixmap_items[index]
+
+    def create_counter(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
+        if item.counter is not None:
+            item.pixmap_items[index].label_counter = self.add_outline_text(
+                f"{obj_name}_counter",
+                QRect(pos.x + item.counter.pos.x, pos.y + item.counter.pos.y, 0, 0),
+                "",
+                item.counter.text_settings_index,
+            )
+            item.pixmap_items[index].label_counter.item_pixmap = item.pixmap_items[index]
+            item.pixmap_items[index].label_counter.set_max_width(f"{item.counter.max}")
 
     def get_item_os_offset(self):
         return -1 if os.name == "nt" else 0
@@ -379,16 +402,7 @@ class TrackerWindow(QMainWindow):
             p = item.pixmap_items[index].pixmap()
             item.pixmap_items[index].setScale(min(32 / p.width(), 32 / p.height()))
 
-        if item.counter is not None:
-            item.pixmap_items[index].label_counter = self.add_outline_text(
-                f"{obj_name}_counter",
-                QRect(pos.x + item.counter.pos.x, pos.y + item.counter.pos.y, 0, 0),
-                "",
-                item.counter.text_settings_index,
-            )
-            item.pixmap_items[index].label_counter.item_pixmap = item.pixmap_items[index]
-            item.pixmap_items[index].label_counter.set_max_width(f"{item.counter.max}")
-
+        self.create_counter(item, index, obj_name, pos)
         self.create_reward(item, index, obj_name, pos)
         self.create_extra(item, index, obj_name, pos)
 
@@ -512,7 +526,8 @@ class TrackerWindow(QMainWindow):
                 e.ignore()
                 return
 
-        self.timer.close()
+        if self.timer is not None:
+            self.timer.close()
 
         # terminate and remove the threads
         self.task_autosave.stop()
@@ -574,14 +589,19 @@ class TrackerWindow(QMainWindow):
         self.action_livesplit = QAction()
         self.action_livesplit.setObjectName("action_livesplit")
         self.action_livesplit.setText("Show Timer (Ctrl + T)")
-        self.action_livesplit.triggered.connect(self.timer.show)
 
         self.action_timer_embed = QAction(self.menu_file)
         self.action_timer_embed.setCheckable(True)
-        self.action_timer_embed.setChecked(self.timer.is_separate)
         self.action_timer_embed.setObjectName("action_timer_embed")
         self.action_timer_embed.setText("Embedded Window (Ctrl + P)")
         self.action_timer_embed.triggered.connect(self.update_timer_embed_callback)
+
+        if self.timer is not None:
+            self.action_livesplit.triggered.connect(self.timer.show)
+            self.action_timer_embed.setChecked(self.timer.is_separate)
+        else:
+            self.action_livesplit.setEnabled(False)
+            self.action_timer_embed.setEnabled(False)
 
         self.action_close = QAction(self.menu_file)
         self.action_close.setObjectName("action_close")
@@ -622,8 +642,10 @@ class TrackerWindow(QMainWindow):
 
         self.menu_timer.addAction(self.action_timer_embed)
         self.menu_timer.addAction(self.action_livesplit)
-        self.menu_timer.addAction(self.timer.menu_ctrls.menuAction())
-        self.menu_timer.addAction(self.timer.menu_cosmetic.menuAction())
+
+        if self.timer is not None:
+            self.menu_timer.addAction(self.timer.menu_ctrls.menuAction())
+            self.menu_timer.addAction(self.timer.menu_cosmetic.menuAction())
 
         self.menu.addAction(self.menu_file.menuAction())
         self.menu.addAction(self.menu_settings.menuAction())
@@ -639,9 +661,15 @@ class TrackerWindow(QMainWindow):
 
     def file_open_triggered(self):
         if self.config.state_path is None:
-            self.config.state_path = Path(
-                QFileDialog.getOpenFileName(None, "Open State File", str(Path.home()), "*.txt")[0]
-            ).resolve()
+            if self.state_file_opensave_abort:
+                return
+
+            path_str = QFileDialog.getOpenFileName(None, "Open State File", str(Path.home()), "*.txt")[0]
+
+            if len(path_str) == 0:
+                return
+
+            self.config.state_path = Path(path_str).resolve()
 
         if self.state.version >= CURRENT_STATE_VERSION and self.config.state_path.exists():
             state_items = self.state.open()
@@ -662,9 +690,15 @@ class TrackerWindow(QMainWindow):
 
     def file_save_triggered(self):
         if self.config.state_path is None:
-            self.config.state_path = Path(
-                QFileDialog.getSaveFileName(None, "Save State File", str(Path.home()), "*.txt")[0]
-            ).resolve()
+            if self.state_file_opensave_abort:
+                return
+
+            path_str = QFileDialog.getSaveFileName(None, "Save State File", str(Path.home()), "*.txt")[0]
+
+            if len(path_str) == 0:
+                return
+
+            self.config.state_path = Path(path_str).resolve()
 
         if self.config.state_path.parent.exists():
             self.state.items.clear()

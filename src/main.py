@@ -12,7 +12,6 @@ from typing import Optional
 from zipfile import ZipFile
 
 from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QPixmap, QShowEvent
-from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -20,17 +19,17 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QListView,
     QMainWindow,
-    QMenu,
     QMenuBar,
     QMessageBox,
     QPushButton,
     QWidget,
 )
 
-from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET, CURRENT_XML_VERSION
+from common import ListViewModel, show_error, show_info, move_file_to_config, OS_MENU_OFFSET, CURRENT_XML_VERSION
 from config import Config
 from tracker import TrackerWindow
 from editor import TrackerEditor
+from editor_dialogs import ConfigSettingsDialog
 
 TEMP_DIR = Path("temp").resolve()
 TEMP_ICONS_DIR = TEMP_DIR / "icons"
@@ -266,18 +265,33 @@ class MainWindow(QMainWindow):
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
     def action_new_triggered(self):
-        """Not implemented yet. Supposed to be opening the future editor to create a new config from scratch."""
-        pass
+        """Opens the editor to create a new config."""
+        self.config_dir = Path(self.line_edit_config_folder.text()).resolve()
+        new_config = Config(self, None)
 
-    def action_edit_triggered(self, arg: bool, index_override: int = -1):
-        """Not implemented yet. Supposed to be opening the future editor to edit an existing config."""
+        def accepted_impl():
+            new_config.config_dir = self.config_dir / new_config.name.replace(" ", "_").lower()
+            new_config.config_dir.mkdir()
+            new_config.config_path = new_config.config_dir / "config.xml"
+
+            if new_config.icon_path is None:
+                new_config.icon_path = move_file_to_config(new_config, new_config.default_icon_path)
+
+            new_config.to_xml()
+            self.update_config_list()
+
+        dialog = ConfigSettingsDialog(new_config, self)
+        dialog.accepted.connect(accepted_impl)
+        dialog.open()
+
+    def action_edit_triggered(self, arg: bool):
+        """Opens the editor to edit an existing config."""
 
         index = self.list_configs.currentIndex()
         item_name: str = list(self.list_configs.model().itemData(index).values())[0]
 
         if len(self.configs) > 0 and not item_name.endswith(".zip"):
-            i = index_override if index_override >= 0 else index.row()
-            self.tracker_editor = TrackerEditor(self, copy(self.configs), i)
+            self.tracker_editor = TrackerEditor(self, copy(self.configs), index.row())
             self.tracker_editor.show()
             self.hide()
 
@@ -287,11 +301,9 @@ class MainWindow(QMainWindow):
         # TODO: rename config
         config = self.get_config()
         new_config_dir = Path(str(config.config_dir))
-        i = -1
 
         while new_config_dir.exists():
             new_config_dir = Path(str(new_config_dir) + "_copy")
-            i += 1
 
         copytree(config.config_dir, new_config_dir)
         self.update_config_list()

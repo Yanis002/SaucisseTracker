@@ -4,6 +4,7 @@ temp/
 
 # specific files
 config/**/items/**
+config/test/
 state.txt
 *.zip
 
