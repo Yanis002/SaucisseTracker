@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QFontDatabase
+from PyQt6.QtGui import QIcon, QFontDatabase, QFont
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -1103,6 +1103,7 @@ class FontSettingsDialog(QDialog):
 
         self.combo_font = QFontComboBox(self.group_item_settings)
         self.combo_font.setGeometry(10, 100, 231, 32)
+        self.combo_font.currentFontChanged.connect(self.font_selection_changed)
 
         self.btn_ok_cancel = QDialogButtonBox(self)
         self.btn_ok_cancel.setGeometry(10, 220, 251, 32)
@@ -1122,9 +1123,8 @@ class FontSettingsDialog(QDialog):
 
     def set_font_path(self):
         index = self.item_index.value() - 1
-        path_str = QFileDialog.getOpenFileName(
-            self, "Select Font File", str(self.config.fonts[index].path.parent), "Font files (*.otf *.ttf)"
-        )[0]
+        font_dir = self.config.fonts[index].path.parent if self.config.fonts[index].path is not None else Path()
+        path_str = QFileDialog.getOpenFileName(self, "Select Font File", str(font_dir), "Font files (*.otf *.ttf)")[0]
 
         if len(path_str) == 0:
             return
@@ -1140,12 +1140,29 @@ class FontSettingsDialog(QDialog):
         assert font_id != -1, "font cannot be loaded"
         self.config.fonts[index].path = path
         self.config.fonts[index].name = QFontDatabase.applicationFontFamilies(font_id)[0]
+        self.config.fonts[index].font_id = font_id
         self.custom_font_path.setText(str(path))
+        update_scene(self.config)
+
+    def font_selection_changed(self, font: QFont):
+        index = self.item_index.value() - 1
+        self.config.fonts[index].name = font.family()
+        self.config.fonts[index].path = None
+        update_scene(self.config)
 
     def toggle_custom(self, state):
         self.custom_font_path.setEnabled(self.is_custom.isChecked())
         self.btn_set_path.setEnabled(self.is_custom.isChecked())
         self.combo_font.setEnabled(not self.is_custom.isChecked())
+
+        index = self.item_index.value() - 1
+
+        if self.is_custom.isChecked():
+            self.config.fonts[index].name = QFontDatabase.applicationFontFamilies(self.config.fonts[index].font_id)[0]
+        else:
+            self.config.fonts[index].name = self.combo_font.currentFont().family()
+
+        update_scene(self.config)
 
     def item_value_changed(self, value: int):
         index = self.item_index.value()
@@ -1155,11 +1172,11 @@ class FontSettingsDialog(QDialog):
             return
 
         self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.fonts)})")
-        self.is_custom.setChecked(not self.config.fonts[index - 1].is_system)
+        self.is_custom.setChecked(self.config.fonts[index - 1].path is not None)
         if self.is_custom.isChecked():
             self.custom_font_path.setText(str(self.config.fonts[index - 1].path))
         else:
-            pass
+            self.custom_font_path.setText("(System Font)")
 
     def item_add(self):
         index = len(self.config.fonts)

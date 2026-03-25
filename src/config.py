@@ -36,25 +36,24 @@ class Font:
     widget: QWidget
     index: int
     name: str
-    path: Path
+    path: Optional[Path]
 
     def __post_init__(self):
         self.font_id = -1
-        self.is_system = False
 
         if self.name is None:
             show_error(self.widget, "ERROR: the font's name is none")
 
     def to_xml(self, parent: ET.Element, index: int):
-        return ET.SubElement(
-            parent,
-            "Item",
-            {
-                "Index": f"{index}",
-                "Name": f"{self.name}",
-                "Source": f"{self.path.relative_to(active_config_dir)}",
-            },
-        )
+        attrib = {
+            "Index": f"{index}",
+            "Name": f"{self.name}",
+        }
+
+        if self.path is not None:
+            attrib["Source"] = f"{self.path.relative_to(active_config_dir)}"
+
+        return ET.SubElement(parent, "Item", attrib)
 
 
 @dataclass
@@ -580,11 +579,12 @@ class Config:
 
         # register external fonts
         for font in self.fonts:
-            if font.path.exists():
-                font.font_id = QFontDatabase.addApplicationFont(str(font.path))
-                assert font.font_id != -1, "font cannot be added"
-            else:
-                show_error(self.widget, f"ERROR: this font doesn't exist '{font.path}'")
+            if font.path is not None:
+                if font.path.exists():
+                    font.font_id = QFontDatabase.addApplicationFont(str(font.path))
+                    assert font.font_id != -1, "font cannot be added"
+                else:
+                    show_error(self.widget, f"ERROR: this font doesn't exist '{font.path}'")
 
         # set the active inventory from default value
         self.active_inv = self.inventories[self.default_inv]
@@ -668,7 +668,7 @@ class Config:
         root = ET.Element("Root")
 
         attrib = {
-            "XMLVersion": ".".join(list(CURRENT_XML_VERSION)),
+            "XMLVersion": ".".join(f"{elem}" for elem in CURRENT_XML_VERSION),
             "Name": self.name,
             "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
             "DefaultInventory": f"{self.default_inv}",
@@ -746,7 +746,7 @@ class Config:
                                 self.widget,
                                 int(item.get("Index", "0")),
                                 item.get("Name"),
-                                self.parse_path(item.get("Source"), "font", True),
+                                self.parse_path(item.get("Source"), "font", False),
                             )
                         )
                 case "TextSettings":
