@@ -432,13 +432,7 @@ class TrackerEditorMenu(QWidget):
         for src_item in item.sources:
             self.model_cache_sources.append((True, str(src_item.path), QPixmap(str(src_item.path))))
         self.list_sources.model().deleteLater()
-        self.list_sources.setModel(ListViewModel(self.model_cache_sources))
-        self.list_sources.setCurrentIndex(self.list_sources.model().index(0, 0))
-        self.model_sources = self.list_sources.selectionModel()
-        self.model_sources.currentChanged.connect(
-            self.sources_selection_update
-        )  # TODO: figure out if this is necessary
-        self.sources_selection_update()
+        self.reset_model_cache_sources()
 
         # update counters table
         self.group_counters.setChecked(item.counter is not None)

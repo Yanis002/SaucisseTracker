@@ -281,7 +281,8 @@ class PixmapItem(QGraphicsPixmapItem):
             self.state.infos.gomode_visibility = False
 
         if gomode_visibility is None and self.config.label_gomode_light is not None:
-            self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
+            if gomode_settings.use_light:
+                self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
             self.state.infos.gomode_light_visibility = self.config.label_gomode_light.isVisible()
 
     def update_item_visibility(self):
@@ -407,7 +408,7 @@ class PixmapItem(QGraphicsPixmapItem):
                     self.setOpacity(0.001 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
 
                 # go-mode light
-                if self.config.label_gomode_light is not None:
+                if self.config.label_gomode_light is not None and gomode_settings.use_light:
                     self.config.label_gomode_light.setVisible(self.state.infos.gomode_light_visibility)
             elif len(item.sources) > 1:
                 # items using multiple images (like OoT bottles)

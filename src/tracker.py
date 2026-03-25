@@ -413,7 +413,11 @@ class TrackerWindow(QMainWindow):
         if self.config.gomode_settings is not None:
             gomode_settings = self.config.gomode_settings
 
-            if gomode_settings.light_path is not None and gomode_settings.light_pos is not None:
+            if (
+                gomode_settings.use_light
+                and gomode_settings.light_path is not None
+                and gomode_settings.light_pos is not None
+            ):
                 if self.config.label_gomode_light is None:
                     pixmap = QPixmap(str(gomode_settings.light_path))
                     self.config.label_gomode_light = self.add_pixmap(
@@ -514,7 +518,7 @@ class TrackerWindow(QMainWindow):
                     self.update_timer_embed(True, True)
 
     def closeEvent(self, e: Optional[QCloseEvent]):
-        if not self.config.state_saved:
+        if not self.config.state_saved and not self.is_editor:
             answer = QMessageBox.question(
                 self,
                 "Warning",

@@ -3,6 +3,7 @@
 # See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html
 # or `black --help` for what can go here
 
+required-version = '23'
 line-length = 120
 
 target-version = [

@@ -386,6 +386,7 @@ class GoModeSettingsDialog(QDialog):
         self.group_light = QGroupBox("Use Light", self)
         self.group_light.setGeometry(10, 130, 315, 173)
         self.group_light.setCheckable(True)
+        self.group_light.toggled.connect(self.update_use_light)
 
         self.label_light_pos_x = QLabel("X", self.group_light)
         self.label_light_pos_x.setGeometry(33, 30, 21, 18)
@@ -495,6 +496,20 @@ class GoModeSettingsDialog(QDialog):
         self.config.gomode_settings.path = path
         self.icon_path.setText(str(path))
         self.update_scene()
+
+    def update_use_light(self, enabled: bool):
+        if self.pause_update:
+            return
+
+        self.config.gomode_settings.use_light = self.group_light.isChecked()
+
+        if self.config.label_gomode_light is not None:
+            self.config.label_gomode_light.setVisible(self.group_light.isChecked())
+        else:
+            self.editor.tracker.create_gomode(self.group_light.isChecked())
+
+            if self.config.label_gomode is not None:
+                self.config.label_gomode.setZValue(0.1)
 
     def update_light_pos(self, value: int):
         if self.pause_update:

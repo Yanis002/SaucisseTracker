@@ -513,6 +513,7 @@ class GoModeSettings:
     light_pos: Optional[Pos]
     rotation_speed: int
     thread_refresh_rate: float
+    use_light: bool = False
 
     def to_xml(self, parent: ET.Element):
         attrib = {
@@ -522,6 +523,7 @@ class GoModeSettings:
         }
 
         if self.light_path is not None and self.light_pos is not None:
+            attrib["UseLight"] = f"{self.use_light}"
             attrib["LightPath"] = f"{self.light_path.relative_to(active_config_dir)}"
             attrib["LightPos"] = self.light_pos.to_str()
             attrib["LightRotSpeed"] = f"{self.rotation_speed}"
