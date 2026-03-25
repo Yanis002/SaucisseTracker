@@ -88,7 +88,7 @@ class TrackerWindow(QWidget):
     def __init__(
         self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False
     ):
-        super().__init__()
+        super().__init__(parent)
 
         self.parent_ = parent
         self.configs = configs
@@ -706,6 +706,30 @@ class TrackerWindow(QWidget):
     def update_timer_embed_callback(self):
         self.update_timer_embed(True)
 
+    def clean_up(self):
+        if self.timer is not None:
+            self.timer.close()
+
+        # terminate and remove the threads
+        self.task_autosave.stop()
+        self.task_rotation.stop()
+        self.task_autosave = None
+        self.task_rotation = None
+
+        def clear_static_texts(item_list: list[TextItem]):
+            for item in item_list:
+                item.scene_item = None
+
+        # cleanup existing references
+        for item in self.config.active_inv.items:
+            item.reward_map.clear()
+            clear_static_texts(item.static_texts)
+
+        clear_static_texts(self.config.active_inv.static_texts)
+        self.scene.clear()
+        self.config.label_gomode = None
+        self.config.label_gomode_light = None
+
 
 class MainTrackerWindow(QMainWindow):
     def __init__(
@@ -743,28 +767,7 @@ class MainTrackerWindow(QMainWindow):
                 e.ignore()
                 return
 
-        if self.tracker.timer is not None:
-            self.tracker.timer.close()
-
-        # terminate and remove the threads
-        self.tracker.task_autosave.stop()
-        self.tracker.task_rotation.stop()
-        self.tracker.task_autosave = None
-        self.tracker.task_rotation = None
-
-        def clear_static_texts(item_list: list[TextItem]):
-            for item in item_list:
-                item.scene_item = None
-
-        # cleanup existing references
-        for item in self.tracker.config.active_inv.items:
-            item.reward_map.clear()
-            clear_static_texts(item.static_texts)
-
-        clear_static_texts(self.tracker.config.active_inv.static_texts)
-        self.tracker.scene.clear()
-        self.tracker.config.label_gomode = None
-        self.tracker.config.label_gomode_light = None
+        self.tracker.clean_up()
 
         if self.parent_ is not None:
             self.parent_.show()

@@ -28,7 +28,7 @@ from PyQt6.QtWidgets import (
 from common import ListViewModel, show_error, show_info, move_file_to_config, OS_MENU_OFFSET, CURRENT_XML_VERSION
 from config import Config
 from tracker import MainTrackerWindow
-from editor import TrackerEditor
+from editor import TrackerEditorMenu
 from editor_dialogs import ConfigSettingsDialog
 
 TEMP_DIR = Path("temp").resolve()
@@ -161,6 +161,7 @@ class MainWindow(QMainWindow):
 
         if self.tracker_window is not None:
             self.tracker_window.deleteLater()
+            self.tracker_window = None
 
     def closeEvent(self, e: Optional[QCloseEvent]):
         """Actions to do when the window is closing (not hiding)."""
@@ -293,7 +294,7 @@ class MainWindow(QMainWindow):
         item_name: str = list(self.list_configs.model().itemData(index).values())[0]
 
         if len(self.configs) > 0 and not item_name.endswith(".zip"):
-            self.tracker_editor = TrackerEditor(self, copy(self.configs), index.row())
+            self.tracker_editor = TrackerEditorMenu(self, copy(self.configs), index.row())
             self.tracker_editor.show()
             self.hide()
 

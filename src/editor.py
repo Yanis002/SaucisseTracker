@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QCheckBox,
     QMessageBox,
+    QFrame,
 )
 
 from common import ListViewModel, Color, Pos, move_file_to_config, show_info, debug_print
@@ -34,11 +35,32 @@ from editor_dialogs import (
 )
 
 
+class TrackerEditor(TrackerWindow):
+    def __init__(
+        self, edit_menu: "TrackerEditorMenu", parent: Optional[QWidget], configs: dict[Path, Config], config_index: int
+    ):
+        super().__init__(edit_menu, configs, config_index, True)
+
+        self.parent_ = parent
+        self.autoreload_enabled = False
+
+    def update_window(self):
+        if self.config.edit_menu is not None:
+            self.config.edit_menu.clear_prev_item_flags()
+            super().update_window()
+
+            self.config.edit_menu.config = self.config
+            self.config.edit_menu.prev_item = None
+            self.config.edit_menu.list_selected.clearSelection()
+
+
 class TrackerEditorMenu(QWidget):
-    def __init__(self, config: Config, tracker: "TrackerEditor"):
+    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
         super().__init__()
-        self.config = config
-        self.tracker = tracker
+        self.main_menu = parent
+        self.tracker = TrackerEditor(self, parent, configs, config_index)
+        self.config = self.tracker.config
+        self.config.edit_menu = self
         self.prev_item: Optional[InventoryItem] = None
         self.pause_update = True
 
@@ -254,7 +276,9 @@ class TrackerEditorMenu(QWidget):
         self.group_bg = QGroupBox("Background Settings", self)
         self.group_bg.setGeometry(410, 380, 251, 141)
 
-        self.label_bg_color = QLabel(f"BG Color: #{Color.pack(config.active_inv.background_color):06X}", self.group_bg)
+        self.label_bg_color = QLabel(
+            f"BG Color: #{Color.pack(self.config.active_inv.background_color):06X}", self.group_bg
+        )
         self.label_bg_color.setGeometry(10, 35, 161, 18)
         self.btn_bg_color = QPushButton("Set BG Color", self.group_bg)
         self.btn_bg_color.setGeometry(130, 28, 111, 32)
@@ -263,7 +287,7 @@ class TrackerEditorMenu(QWidget):
         self.bg_path = QLineEdit(self.group_bg)
         self.bg_path.setReadOnly(True)
         self.bg_path.setGeometry(10, 64, 231, 32)
-        self.bg_path.setText(f"{config.active_inv.background}")
+        self.bg_path.setText(f"{self.config.active_inv.background}")
         self.btn_bg_open_file = QPushButton("Open File", self.group_bg)
         self.btn_bg_open_file.setGeometry(10, 100, 111, 32)
         self.btn_bg_open_file.pressed.connect(self.update_bg)
@@ -336,7 +360,19 @@ class TrackerEditorMenu(QWidget):
             self.group_pos.setEnabled(False)
             self.group_sources.setEnabled(False)
 
+        # set initial size
+        self.initial_width = 1012
+        self.initial_height = 640
         self.setFixedSize(1012, 640)
+
+        # vertical line
+        self.separator_1 = QFrame(self)
+        self.separator_1.setFrameShape(QFrame.Shape.VLine)
+        self.separator_1.setFrameShadow(QFrame.Shadow.Sunken)
+
+        # adjust
+        self.adjust_window_size()
+
         self.setWindowTitle("Tracker Editor")
         self.setWindowIcon(self.tracker.windowIcon())
 
@@ -345,12 +381,6 @@ class TrackerEditorMenu(QWidget):
         centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
-
-        self.show()
-
-    def moveEvent(self, a0):
-        super().moveEvent(a0)
-        self.tracker.move(self.pos().x() + self.width() + 1, self.pos().y())
 
     def closeEvent(self, a0):
         answer = QMessageBox.question(
@@ -361,9 +391,30 @@ class TrackerEditorMenu(QWidget):
         )
 
         if answer == QMessageBox.StandardButton.Yes:
+            self.config.edit_menu = None
+            self.tracker.clean_up()
             super().closeEvent(a0)
+
+            if self.main_menu is not None:
+                self.main_menu.show()
         else:
             a0.ignore()
+
+    def adjust_window_size(self):
+        bg_size = self.tracker.background.pixmap().size()
+
+        width = self.initial_width
+        if bg_size.width() < width:
+            width += bg_size.width()
+
+        height = self.initial_height
+        if bg_size.height() > height:
+            height += bg_size.height()
+
+        sep_pos = self.group_sources.pos().x() + self.group_sources.width() - 5
+        self.separator_1.setGeometry(sep_pos, 10, 20, height - 17)
+        self.setFixedSize(width + 5, height)
+        self.tracker.setGeometry(sep_pos + 16, 10, bg_size.width(), bg_size.height())
 
     def reset_model_cache(self):
         self.list_selected.setModel(ListViewModel(self.model_cache))
@@ -838,7 +889,11 @@ class TrackerEditorMenu(QWidget):
         # update the config, the ui and the window
         self.config.active_inv.background = path
         self.bg_path.setText(str(path))
-        self.tracker.update_window()
+
+        if self.tracker.background is not None:
+            self.tracker.background.setPixmap(QPixmap(str(path)))
+            self.tracker.update_window_geometry()
+            self.adjust_window_size()
 
     def update_extra_info(self, new_value: int):
         item = self.get_item()
@@ -1085,36 +1140,3 @@ class TrackerEditorMenu(QWidget):
     def open_config_settings(self):
         dialog = ConfigSettingsDialog(self.config, self)
         dialog.open()
-
-
-class TrackerEditor(TrackerWindow):
-    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
-        super().__init__(self, configs, config_index, True)
-
-        self.parent_ = parent
-        self.edit_menu = TrackerEditorMenu(self.config, self)
-        self.config.edit_menu = self.edit_menu
-        self.config.edit_menu.list_selected.clearSelection()
-        self.autoreload_enabled = False
-
-    def closeEvent(self, a0):
-        if not self.edit_menu.close():
-            a0.ignore()
-            return
-
-        if self.parent_ is not None:
-            self.parent_.show()
-            self.close()
-
-        self.config.edit_menu = None
-        super().closeEvent(a0)
-
-    def update_window(self):
-        if self.config.edit_menu is not None:
-            self.config.edit_menu.clear_prev_item_flags()
-            super().update_window()
-
-            self.config.edit_menu = self.edit_menu
-            self.config.edit_menu.config = self.config
-            self.config.edit_menu.prev_item = None
-            self.config.edit_menu.list_selected.clearSelection()
