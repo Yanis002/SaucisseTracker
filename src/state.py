@@ -71,8 +71,6 @@ class LabelState:
         LabelStateInfos.copy(src.infos, dst.infos)
 
     def export(self):
-        assert self.item is not None, f"inventory item is required for exporting the state ({repr(self.name)})"
-
         data = [
             f"Label #{self.index:02}:",
             f"pos_index = {self.pos_index}",
@@ -93,31 +91,32 @@ class LabelState:
 
         data.append(f"enabled = {self.infos.enabled}")
 
-        if len(self.item.paths) > 1:
-            data.append(f"img_index = {self.infos.img_index}")
+        if self.item is not None:
+            if len(self.item.sources) > 1:
+                data.append(f"img_index = {self.infos.img_index}")
 
-        if self.item.counter is not None:
-            data.extend(
-                [
-                    f"counter_value = {self.infos.counter_value}",
-                    f"counter_show = {self.infos.counter_show}",
-                ]
-            )
+            if self.item.counter is not None:
+                data.extend(
+                    [
+                        f"counter_value = {self.infos.counter_value}",
+                        f"counter_show = {self.infos.counter_show}",
+                    ]
+                )
 
-        if self.item.is_reward:
-            data.append(f"reward_index = {self.infos.reward_index}")
+            if self.item.is_reward:
+                data.append(f"reward_index = {self.infos.reward_index}")
 
-        if self.item.flag_index is not None:
-            data.extend(
-                [
-                    f"flag_index = {self.infos.flag_index}",
-                    f"flag_text_index = {self.infos.flag_text_index}",
-                    f"show_flag = {self.infos.show_flag}",
-                ]
-            )
+            if self.item.flag_index is not None:
+                data.extend(
+                    [
+                        f"flag_index = {self.infos.flag_index}",
+                        f"flag_text_index = {self.infos.flag_text_index}",
+                        f"show_flag = {self.infos.show_flag}",
+                    ]
+                )
 
-        if self.item.extra_index is not None:
-            data.append(f"show_extra_img = {self.infos.show_extra_img}")
+            if self.item.extra_index is not None:
+                data.append(f"show_extra_img = {self.infos.show_extra_img}")
 
         return "\n\t".join(data) + "\n"
 

@@ -2,6 +2,7 @@ import os
 
 from dataclasses import dataclass
 from pathlib import Path
+from shutil import copyfile
 from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal, QAbstractListModel, QObject, QRect, QSignalBlocker, QThread, Qt
@@ -22,8 +23,9 @@ if TYPE_CHECKING:
 
 OS_MENU_OFFSET = 34 if os.name == "nt" else 22
 GLOBAL_HALF_OPACITY = 0.58
-CURRENT_XML_VERSION = (1, 0)
+CURRENT_XML_VERSION = (1, 0, 1)
 CURRENT_STATE_VERSION = (1, 0)
+DEBUG_PRINTS = False
 
 
 class ListViewModel(QAbstractListModel):
@@ -58,20 +60,32 @@ class Rotation(QThread):
         self.setTerminationEnabled(True)
         self.config = config
         self.position = position
-        self.speed = self.config.gomode_settings.rotation_speed
-        self.thread_refresh = self.config.gomode_settings.thread_refresh_rate
+
+        if self.config.gomode_settings is not None:
+            self.speed = self.config.gomode_settings.rotation_speed
+            self.thread_refresh = self.config.gomode_settings.thread_refresh_rate
+        else:
+            self.speed = -70
+            self.thread_refresh = 0.001
+
         self.do_run = True
+        self.pause_update = False
+        self.setObjectName("RotationThread")
 
     def stop(self):
         self.do_run = False
-        self.wait()
         self.quit()
+        self.wait()
 
     def run(self):
         while self.do_run:
-            diff = self.thread_refresh * self.speed
-            self.position = round((self.position + diff) % 360, 2)
-            self.positionChanged.emit(self.position)
+            if self.pause_update:
+                continue
+
+            if self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
+                diff = self.thread_refresh * self.speed
+                self.position = round((self.position + diff) % 360, 2)
+                self.positionChanged.emit(self.position)
             self.msleep(int(self.thread_refresh * 1000))
 
 
@@ -90,6 +104,7 @@ class PixmapItem(QGraphicsPixmapItem):
         default_strength: float,
         state: "LabelState",
         parent: QGraphicsItem = None,
+        create_effect: bool = True,
     ):
         super().__init__(pixmap, parent)
 
@@ -101,16 +116,25 @@ class PixmapItem(QGraphicsPixmapItem):
         self.extra: Optional["PixmapItem"] = None
         self.flag: Optional["OutlinedGraphicsTextItem"] = None
         self.obj_name = obj_name
+        self.initial_scale = self.scale()
 
         # used for the black & white effect, enabled by default
-        self.effect = QGraphicsColorizeEffect()
-        self.effect.setStrength(default_strength)
-        self.effect.setColor(QColor("black"))
-        self.effect.setObjectName(f"{obj_name}_fx")
-        self.setGraphicsEffect(self.effect)
+        if create_effect:
+            self.effect = QGraphicsColorizeEffect()
+            self.effect.setStrength(default_strength)
+            self.effect.setColor(QColor("black"))
+            self.effect.setObjectName(f"{obj_name}_fx")
+            self.setGraphicsEffect(self.effect)
+        else:
+            self.effect = None
 
     def mousePressEvent(self, event):
         """Actions to do when there's a click (left, right or middle). This is the entrypoint of updating items."""
+
+        # editor only, avoid updating the item if it can be moved
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            super().mousePressEvent(event)
+            return
 
         # we need to call the original function in order to get updates through go-mode light working
         # but as a side-effect flags are harder to disable on rewards, so we simply ignore this call if it's a flag
@@ -149,7 +173,7 @@ class PixmapItem(QGraphicsPixmapItem):
                         self.update_gomode()
                     elif item.is_reward:
                         self.next_reward(True)
-                    elif self.extra is not None:
+                    elif self.extra is not None and item.extra_index is not None:
                         self.extra.setVisible(not self.extra.isVisible())
                         self.state.infos.show_extra_img = self.extra.isVisible()
                     else:
@@ -157,37 +181,49 @@ class PixmapItem(QGraphicsPixmapItem):
                     self.config.state_saved = False
 
     def mouseReleaseEvent(self, event):
-        """
-        Completely useless for the end users currently, it prints the position of the item.
-        It's useful when items are set to be moveable.
-        """
+        """Actions to do when the mouse is released, updates the position on the editor"""
 
         super().mouseReleaseEvent(event)
-        print("new pos:", self.pos())
+
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            if self.config.edit_menu is not None:
+                self.config.edit_menu.update_pos(self.pos().toPoint())
+
+    def mouseMoveEvent(self, event):
+        """Actions to do when the mouse is moving, updates the position on the editor"""
+
+        super().mouseMoveEvent(event)
+
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            if self.config.edit_menu is not None:
+                self.config.edit_menu.update_pos(self.pos().toPoint())
 
     def wheelEvent(self, event):
         """Actions to do when the wheel is 'moved'. Used as a fast-cycle feature when enabled in the config."""
 
         super().wheelEvent(event)
 
+        # editor only, avoid updating the item if it can be moved
+        if self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+            return
+
         if self.is_gomode():
             return
 
         if event is not None:
             item = self.config.active_inv.items[self.state.index]
-            rewards = self.config.active_inv.rewards
 
-            if item.use_wheel or rewards.use_wheel:
+            if item.use_wheel:
                 # adapted from https://stackoverflow.com/a/20152809
                 value = 0
                 steps = event.delta() // 120
                 for _ in range(1, abs(steps) + 1):
                     value += steps and steps // abs(steps)  # 0, 1, or -1
                     if value != 0:
-                        if item.use_wheel:
-                            self.update_item(value > 0, False)
-                        elif rewards.use_wheel:
+                        if item.is_reward:
                             self.next_reward(value > 0)
+                        elif item.use_wheel:
+                            self.update_item(value > 0, False)
 
     def shape(self):
         """Override to fix a behavior where you need to click on the texture, which we don't want here"""
@@ -197,7 +233,9 @@ class PixmapItem(QGraphicsPixmapItem):
         return path
 
     def validate_item_index(self):
-        assert self.state.index >= 0, f"Assert triggered on {repr(self.obj_name)}"
+        assert self.state.index >= 0 and self.state.index < len(
+            self.config.active_inv.items
+        ), f"Assert triggered on {repr(self.obj_name)}"
 
     def is_gomode(self):
         return self.state.is_gomode or self.state.is_gomode_light
@@ -212,7 +250,7 @@ class PixmapItem(QGraphicsPixmapItem):
             if self.obj_name.endswith(f"_pos_{i}"):
                 reward = item.reward_map.get(i)
 
-                if reward is not None and reward.item_pixmap is not None:
+                if reward is not None and reward.item_pixmap is not None and reward.isVisible():
                     if increase:
                         self.state.infos.reward_index += 1
 
@@ -229,6 +267,7 @@ class PixmapItem(QGraphicsPixmapItem):
     def update_gomode(self, gomode_visibility: Optional[bool] = None):
         """Shows or hides the go-mode thing depending on the previous state."""
 
+        assert self.effect is not None, "effect is unassigned"
         gomode_settings = self.config.gomode_settings
         cond = gomode_visibility if gomode_visibility is not None else self.effect.strength() > 0.0
 
@@ -242,7 +281,8 @@ class PixmapItem(QGraphicsPixmapItem):
             self.state.infos.gomode_visibility = False
 
         if gomode_visibility is None and self.config.label_gomode_light is not None:
-            self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
+            if gomode_settings.use_light:
+                self.config.label_gomode_light.setVisible(not self.config.label_gomode_light.isVisible())
             self.state.infos.gomode_light_visibility = self.config.label_gomode_light.isVisible()
 
     def update_item_visibility(self):
@@ -253,20 +293,21 @@ class PixmapItem(QGraphicsPixmapItem):
         path_index = 0
 
         if self.state.infos.img_index < 0:
-            self.effect.setStrength(1.0)  # enable filter
+            if self.effect is not None:
+                self.effect.setStrength(1.0)  # enable filter
             self.setOpacity(GLOBAL_HALF_OPACITY)
             path_index = 0
-            item.enabled = False
+            self.state.infos.enabled = False
         else:
-            self.effect.setStrength(0.0)  # disable filter
+            if self.effect is not None:
+                self.effect.setStrength(0.0)  # disable filter
             self.setOpacity(1.0)
             path_index = self.state.infos.img_index
-            item.enabled = True
+            self.state.infos.enabled = True
 
-        self.state.infos.enabled = item.enabled
-        self.setPixmap(QPixmap(str(item.paths[path_index])))
+        self.setPixmap(QPixmap(str(item.sources[path_index].path)))
 
-    def update_flag(self):
+    def update_flag(self, force_is_max: bool = False):
         """
         Updates the flag, flags are special text used (for OoT) to display the H/L on the hookshot or the MQ texts.
         Note: this is just an example of usage, it can be used for other purposes probably.
@@ -275,7 +316,7 @@ class PixmapItem(QGraphicsPixmapItem):
         self.validate_item_index()
         item = self.config.active_inv.items[self.state.index]
 
-        if self.flag is not None and item.flag_index is not None:
+        if self.flag is not None and item.flag_index is not None and len(self.config.flags) > 0:
             flag = self.config.flags[item.flag_index]
             total = len(flag.texts) - 1
 
@@ -285,7 +326,8 @@ class PixmapItem(QGraphicsPixmapItem):
                 self.state.infos.flag_text_index = total
 
             self.flag.setPlainText(flag.texts[self.state.infos.flag_text_index])
-            self.flag.set_text_style(flag.text_settings_index, self.state.infos.flag_text_index == total)
+            is_max = self.state.infos.flag_text_index == total if not force_is_max else False
+            self.flag.set_text_style(flag.text_settings_index, is_max)
 
     def update_item(self, increase: bool, middle_click: bool = False):
         """
@@ -296,7 +338,7 @@ class PixmapItem(QGraphicsPixmapItem):
         item = self.config.active_inv.items[self.state.index]
         self.validate_item_index()
 
-        if not middle_click and len(item.paths) > 1:
+        if not middle_click and len(item.sources) > 1:
             # items using multiple images, like bottles on OoT
             if increase:
                 self.state.infos.img_index += 1
@@ -307,10 +349,10 @@ class PixmapItem(QGraphicsPixmapItem):
 
             self.update_flag()
 
-            if self.state.infos.img_index > len(item.paths) - 1:
+            if self.state.infos.img_index > len(item.sources) - 1:
                 self.state.infos.img_index = -1
             if self.state.infos.img_index < -1:
-                self.state.infos.img_index = len(item.paths) - 1
+                self.state.infos.img_index = len(item.sources) - 1
 
             self.update_item_visibility()
         elif self.label_counter is not None and item.counter is not None:
@@ -321,11 +363,10 @@ class PixmapItem(QGraphicsPixmapItem):
                 item.counter.decr()
 
             item.counter.update(self)
-            item.enabled = item.counter.show
-            self.state.infos.enabled = item.enabled
+            self.state.infos.enabled = item.counter.show
             self.state.infos.counter_show = item.counter.show
             self.state.infos.counter_value = item.counter.value
-        else:
+        elif self.effect is not None:
             # normal items
             if self.effect.strength() > 0.0:
                 self.effect.setStrength(0.0)
@@ -357,6 +398,7 @@ class PixmapItem(QGraphicsPixmapItem):
             if self.state.is_gomode:
                 # go-mode image
                 gomode_settings = self.config.gomode_settings
+                assert self.effect is not None, "effect is unassigned"
 
                 if self.state.infos.gomode_visibility:
                     self.effect.setStrength(0.0)
@@ -366,9 +408,9 @@ class PixmapItem(QGraphicsPixmapItem):
                     self.setOpacity(0.001 if gomode_settings.hide_if_disabled else GLOBAL_HALF_OPACITY)
 
                 # go-mode light
-                if self.config.label_gomode_light is not None:
+                if self.config.label_gomode_light is not None and gomode_settings.use_light:
                     self.config.label_gomode_light.setVisible(self.state.infos.gomode_light_visibility)
-            elif len(item.paths) > 1:
+            elif len(item.sources) > 1:
                 # items using multiple images (like OoT bottles)
                 self.update_flag()
                 self.update_item_visibility()
@@ -383,13 +425,13 @@ class PixmapItem(QGraphicsPixmapItem):
             elif not self.is_gomode():
                 # normal items
                 if self.state.infos.enabled:
-                    self.effect.setStrength(0.0)
+                    if self.effect is not None:
+                        self.effect.setStrength(0.0)
                     self.setOpacity(1.0)
                 else:
-                    self.effect.setStrength(1.0)
+                    if self.effect is not None:
+                        self.effect.setStrength(1.0)
                     self.setOpacity(GLOBAL_HALF_OPACITY)
-
-            item.enabled = self.state.infos.enabled
 
 
 # from https://stackoverflow.com/a/78362730
@@ -482,7 +524,7 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         """
 
         super().mouseReleaseEvent(event)
-        print("new pos:", self.pos())
+        debug_print(f"new pos: {self.pos()}")
 
     def wheelEvent(self, event):
         """See `PixmalItem.wheelEvent`."""
@@ -594,3 +636,22 @@ def show_info(parent: QWidget, text: str):
     """Shows a normal message with an information."""
 
     show_message(parent, "Info", QMessageBox.Icon.Information, text)
+
+
+def move_file_to_config(config: "Config", path: Path):
+    config_folder = config.config_path.parent
+
+    if not path.is_relative_to(config_folder):
+        dest_folder = config_folder / "auto_copied"
+        dest_folder.mkdir(exist_ok=True)
+        dest = dest_folder / f"{path.stem}{path.suffix}"
+        copyfile(path, dest)
+        assert dest.exists(), "unknown file copy failure"
+        path = dest
+
+    return path
+
+
+def debug_print(msg: str):
+    if DEBUG_PRINTS:
+        print(msg)

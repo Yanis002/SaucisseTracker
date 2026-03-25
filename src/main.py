@@ -12,7 +12,6 @@ from typing import Optional
 from zipfile import ZipFile
 
 from PyQt6.QtGui import QAction, QCloseEvent, QGuiApplication, QIcon, QPixmap, QShowEvent
-from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -20,16 +19,17 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QListView,
     QMainWindow,
-    QMenu,
     QMenuBar,
     QMessageBox,
     QPushButton,
     QWidget,
 )
 
-from common import ListViewModel, show_error, show_info, OS_MENU_OFFSET, CURRENT_XML_VERSION
+from common import ListViewModel, show_error, show_info, move_file_to_config, OS_MENU_OFFSET, CURRENT_XML_VERSION
 from config import Config
 from tracker import TrackerWindow
+from editor import TrackerEditor
+from editor_dialogs import ConfigSettingsDialog
 
 TEMP_DIR = Path("temp").resolve()
 TEMP_ICONS_DIR = TEMP_DIR / "icons"
@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
     it handles reading and initializing configurations and going in the sub-modes (editor and tracker).
     """
 
-    def __init__(self, is_debug: bool):
+    def __init__(self, is_debug: bool, is_editor: bool):
         """Creates the widgets of the main menu and binds them to function callbacks when required."""
 
         super().__init__()
@@ -52,12 +52,12 @@ class MainWindow(QMainWindow):
         self.model_cache: list[tuple[bool, str, QPixmap]] = []
         self.tracker_window: Optional[TrackerWindow] = None
         self.is_debug = is_debug
+        self.is_editor = is_editor
         offset = 5 if os.name == "nt" else 0
 
         self.setWindowTitle("SaucisseTracker")
         self.setObjectName("MainWindow")
-        self.setFixedSize(QSize(275, 355 + offset))
-        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/icon.png"
+        icon_path = Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res" / "icon.png"
         self.setWindowIcon(QIcon(str(icon_path)))
 
         self.centralwidget = QWidget(self)
@@ -66,65 +66,62 @@ class MainWindow(QMainWindow):
 
         self.btn_set_config_dir = QPushButton(self.centralwidget)
         self.btn_set_config_dir.setObjectName("btn_set_config_dir")
-        self.btn_set_config_dir.setGeometry(QRect(224, 44 + offset, 41, 23))
+        self.btn_set_config_dir.setGeometry(224, 29 + offset, 41, 23)
         self.btn_set_config_dir.setText("Set")
 
         self.line_edit_config_folder = QLineEdit(self.centralwidget)
         self.line_edit_config_folder.setObjectName("line_edit_config_folder")
-        self.line_edit_config_folder.setGeometry(QRect(10, 45 + offset, 211, 20))
+        self.line_edit_config_folder.setGeometry(10, 30 + offset, 211, 20)
         self.line_edit_config_folder.setReadOnly(True)
 
         self.label_found = QLabel(self.centralwidget)
         self.label_found.setObjectName("label_found")
-        self.label_found.setGeometry(QRect(10, 75 + offset, 130, 16))
+        self.label_found.setGeometry(10, 60 + offset, 251, 16)
         self.label_found.setText("Found configurations")
 
         self.label_config_folder = QLabel(self.centralwidget)
         self.label_config_folder.setObjectName("label_config_folder")
-        self.label_config_folder.setGeometry(QRect(10, 25 + offset, 120, 16))
+        self.label_config_folder.setGeometry(10, 10 + offset, 211, 16)
         self.label_config_folder.setText("Configuration folder")
 
         self.btn_go = QPushButton(self.centralwidget)
         self.btn_go.setObjectName("btn_go")
-        self.btn_go.setGeometry(QRect(10, 295 + offset, 256, 51))
+        self.btn_go.setGeometry(10, 280 + offset, 256, 51)
         self.btn_go.setStyleSheet('font: 75 15pt "MS Shell Dlg 2";')
         self.btn_go.setText("GO!")
 
         self.list_configs = QListView(self.centralwidget)
         self.list_configs.setObjectName("list_configs")
-        self.list_configs.setGeometry(QRect(11, 95 + offset, 253, 192))
+        self.list_configs.setGeometry(11, 80 + offset, 253, 192)
 
         # menu
         self.menu = QMenuBar(parent=self)
         self.menu.setObjectName("menu")
-        self.menu.setGeometry(QRect(0, 0, 275, OS_MENU_OFFSET))
+        self.menu.setGeometry(0, 0, 275, OS_MENU_OFFSET)
 
-        self.menu_file = QMenu(parent=self.menu)
-        self.menu_file.setObjectName("main_menu_file")
-        self.menu_file.setTitle("File")
-
-        self.action_new = QAction(parent=self.menu_file)
+        self.action_new = QAction(parent=self.menu)
         self.action_new.setObjectName("action_new")
         self.action_new.setText("New")
 
-        self.action_edit = QAction(parent=self.menu_file)
+        self.action_edit = QAction(parent=self.menu)
         self.action_edit.setObjectName("action_edit")
         self.action_edit.setText("Edit")
 
-        self.action_duplicate = QAction(parent=self.menu_file)
+        self.action_duplicate = QAction(parent=self.menu)
         self.action_duplicate.setObjectName("action_duplicate")
         self.action_duplicate.setText("Duplicate")
 
-        self.action_delete = QAction(parent=self.menu_file)
+        self.action_delete = QAction(parent=self.menu)
         self.action_delete.setObjectName("action_delete")
         self.action_delete.setText("Delete")
 
-        self.menu_file.addAction(self.action_new)
-        self.menu_file.addAction(self.action_edit)
-        self.menu_file.addAction(self.action_duplicate)
-        self.menu_file.addAction(self.action_delete)
+        self.menu.addAction(self.action_new)
+        self.menu.addAction(self.action_edit)
+        self.menu.addAction(self.action_duplicate)
+        self.menu.addAction(self.action_delete)
 
-        self.menu.addAction(self.menu_file.menuAction())
+        self.setMenuBar(self.menu)
+        self.setFixedSize(275, 350 + offset + self.menu.height())
 
         # connections
         self.btn_set_config_dir.clicked.connect(self.btn_set_config_dir_clicked)
@@ -146,7 +143,10 @@ class MainWindow(QMainWindow):
         self.move(qtRectangle.topLeft())
 
         if is_debug:
-            self.btn_go_clicked()
+            if self.is_editor:
+                self.action_edit_triggered(False, 1)
+            else:
+                self.btn_go_clicked()
 
     def showEvent(self, e: Optional[QShowEvent]):
         """Actions to do when the window is showing."""
@@ -189,8 +189,10 @@ class MainWindow(QMainWindow):
         for path in sorted(dir.rglob("config.*")):
             absolute = path.resolve()
             new_config = Config(self, absolute)
+            config_xml_version = (new_config.xml_version[0], new_config.xml_version[1])
+            cur_xml_version = (CURRENT_XML_VERSION[0], CURRENT_XML_VERSION[1])
 
-            if not self.is_debug and new_config.xml_version < CURRENT_XML_VERSION:
+            if not self.is_debug and config_xml_version < cur_xml_version:
                 # previously the config's name was defined based on the first inventory name
                 show_info(self, f"Ignoring outdated config named '{new_config.active_inv.name}'.")
             else:
@@ -229,7 +231,7 @@ class MainWindow(QMainWindow):
 
             self.get_configs(self.config_dir)
             for config in self.configs.values():
-                if config.icon_path is not None:
+                if config.icon_path is not None and config.icon_path.exists():
                     icon = QPixmap(str(config.icon_path))
                 else:
                     icon = QPixmap(str(config.default_icon_path))
@@ -237,6 +239,7 @@ class MainWindow(QMainWindow):
 
             self.model_cache = [(elem[0], elem[1], elem[2]) for elem in model_items]
             self.list_configs.setModel(ListViewModel(self.model_cache))
+            self.list_configs.setCurrentIndex(self.list_configs.model().index(0, 0))
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
@@ -264,12 +267,35 @@ class MainWindow(QMainWindow):
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
     def action_new_triggered(self):
-        """Not implemented yet. Supposed to be opening the future editor to create a new config from scratch."""
-        pass
+        """Opens the editor to create a new config."""
+        self.config_dir = Path(self.line_edit_config_folder.text()).resolve()
+        new_config = Config(self, None)
 
-    def action_edit_triggered(self):
-        """Not implemented yet. Supposed to be opening the future editor to edit an existing config."""
-        pass
+        def accepted_impl():
+            new_config.config_dir = self.config_dir / new_config.name.replace(" ", "_").lower()
+            new_config.config_dir.mkdir()
+            new_config.config_path = new_config.config_dir / "config.xml"
+
+            if new_config.icon_path is None:
+                new_config.icon_path = move_file_to_config(new_config, new_config.default_icon_path)
+
+            new_config.to_xml()
+            self.update_config_list()
+
+        dialog = ConfigSettingsDialog(new_config, self)
+        dialog.accepted.connect(accepted_impl)
+        dialog.open()
+
+    def action_edit_triggered(self, arg: bool):
+        """Opens the editor to edit an existing config."""
+
+        index = self.list_configs.currentIndex()
+        item_name: str = list(self.list_configs.model().itemData(index).values())[0]
+
+        if len(self.configs) > 0 and not item_name.endswith(".zip"):
+            self.tracker_editor = TrackerEditor(self, copy(self.configs), index.row())
+            self.tracker_editor.show()
+            self.hide()
 
     def action_duplicate_triggered(self):
         """Creates a duplicate of the selected config."""
@@ -277,11 +303,9 @@ class MainWindow(QMainWindow):
         # TODO: rename config
         config = self.get_config()
         new_config_dir = Path(str(config.config_dir))
-        i = -1
 
         while new_config_dir.exists():
             new_config_dir = Path(str(new_config_dir) + "_copy")
-            i += 1
 
         copytree(config.config_dir, new_config_dir)
         self.update_config_list()
@@ -294,7 +318,7 @@ class MainWindow(QMainWindow):
         answer = QMessageBox.question(
             self,
             "Warning",
-            f"Are you sure you want to delete '{config.active_inv.name}'?",
+            f"Are you sure you want to delete '{config.name}'?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
@@ -309,6 +333,7 @@ def main():
     # argument used to display the tracker window directly, saves some time
     parser = argparse.ArgumentParser(description="Yet another randomizer item tracker.")
     parser.add_argument("--debug", "-d", dest="is_debug", action="store_true", help="debug mode")
+    parser.add_argument("--editor", "-e", dest="is_editor", action="store_true", help="editor mode")
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
@@ -330,7 +355,7 @@ def main():
     TEMP_CONFIG_DIR.mkdir()
 
     # create main menu window and show it if applicable
-    main_window = MainWindow(args.is_debug)
+    main_window = MainWindow(args.is_debug, args.is_editor)
     if not args.is_debug:
         main_window.show()
 

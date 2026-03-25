@@ -23,10 +23,10 @@ Available:
 - Auto-saves! Every 5 minutes, if the autosave checkbox from the `File` menu is enabled, the progress will be automatically saved. If no `StatePath` was set in the configuration it will be saved in a folder called `autosaves` where the executable is located. The file will be named `autosave_DATE_TIME.txt`. To restore one, save the state manually then replace the file's content by the autosave's and open the state (TODO: improve this feature)
 - Support zip files for configs, the zip's filename will be what the main menu will show, and it will show an icon if there's a file called `icon.png` at the root of the zip with the config's content. When a zip is chosen on the main menu it will be temporarily extracted inside `temp/config`, inside `temp/icons` there's the icon for any zip file found, the `temp` folder will be located where the program is located, also note the zip file only works with xml config files for now (TODO: improve this feature)
 - Built-in [LiveSplit](https://github.com/LiveSplit/livesplit-core) to keep track of the seed's length! (TODO: save the time in the savestate and add an embedded mode)
+- Editor to create or modify tracker configurations
+- Automatic reload (or Ctrl + R) to apply an updated configuration
 
 Planned:
-- Editor to make configurations easier
-- "Refresh" button to apply an updated configuration
 - Make a global rotation config option (low priority)
 
 ## Keyboard Shortcuts
@@ -37,6 +37,7 @@ Planned:
 - Ctrl + H: toggles the visibility of the menu at the top
 - Ctrl + S: saves the state of the tracker (same as `File -> Save State`)
 - Ctrl + T: show the timer's window
+- Ctrl + R: force a configuration reload
 
 ### Timer Window
 
@@ -53,6 +54,8 @@ Planned:
 * Files:
     - `src/common.py`: hosts classes and functions that can be used in any other file
     - `src/config.py`: handles reading the configuration file and storing the informations in classes
+    - `src/editor.py`: the tracker editor's logic is handled there, this is using the normal tracker window as a base for convenience
+    - `src/editor_dialogs.py`: handles the different dialogs the editor can show
     - `src/livesplit_core.py`: python bindings to use the [LiveSplit library](https://github.com/LiveSplit/livesplit-core)
     - `src/main.py`: the main menu and the starting point of the program
     - `src/state.py`: handles importing and exporting savestates
@@ -67,6 +70,7 @@ Planned:
     - `res/`: the program's resources (packed when building)
     - `temp/`: working folder only used for zip archives, created automatically when the program starts and deleted automatically when it's closing
     - `tools/`: collection of tools made to test features before implementing them in the tracker
+    - `ui/`: unused but the ui files inside are used for convenience when designing an UI
 
 ## State File Structure
 
@@ -119,8 +123,6 @@ The save state file is a plain text file containing informations about how to re
     - `Pos`: can be used set the flag's position (relative to the reward icon)
     - `TextSettings`: the index of the text setting to use for the flag
     - `Hidden`: optional, used to set the default visibility
-    - `Width`: the width of the label
-    - `Height`: the height of the label
 * `<GoMode>`: optional, configurable image to set the "go mode"
 * `<Extras>`: optional, configurable extra image to display on an item, for instance a checkmark on songs for OoT, the image will set the width and height of the label
     - `Index`: the index of the extra image
@@ -145,8 +147,6 @@ The save state file is a plain text file containing informations about how to re
             - `Max`: the highest amount the counter can take
             - `Increment`: how much it's adding/substracting when the item gets updated
             - `Pos`: position of the counter (relative to the item)
-            - `Width`: the width of the counter label
-            - `Height`: the height of the counter label
             - `MiddleIncrement`: optional, secondary increment with the middle click
         * `<Sources>`: optional if using `Source`, list of texture paths
             - `<Item>`: an element of the list
@@ -156,13 +156,10 @@ The save state file is a plain text file containing informations about how to re
                 * `X`: the position on the X axis
                 * `Y`: the position on the Y axis
     - `<Reward>`: dungeon reward settings
-        * `UseWheel`: optional, allows using the mouse wheel to update the reward's name faster (warning: ignored if the reward item is using the wheel)
         * `<Item>`: adds a dungeon entry
             - `Name`: the display name of the dungeon
             - `TextSettings`: the index of the text setting to use for the name
             - `Pos`: position of the reward name (relative to the item)
-            - `Width`: the width of the label
-            - `Height`: the height of the label
 
 ## Creating a configuration
 

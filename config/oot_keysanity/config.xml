@@ -229,53 +229,53 @@
             <Item ExtraIndex="0" Pos="258;352" Name="Prelude of Light" Source="items/songs/prelude.png"/>
 
             <!-- Keys -->
-            <Text Index="0" Pos="288;408" Width="72" Height="12" Rot="90" Content="Dungeons" TextSettings="8"/>
+            <Text Index="0" Pos="288;408" Rot="90" Content="Dungeons" TextSettings="8"/>
             <Item Pos="8;400" Name="Forest Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="1" Pos="12;390" Width="48" Height="12" Rot="0" Content="Forest" TextSettings="7"/>
+                <Text Index="1" Pos="12;390" Rot="0" Content="Forest" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="49;400" Name="Forest Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="90;400" Name="Shadow Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="2" Pos="94;390" Width="54" Height="12" Rot="0" Content="Shadow" TextSettings="7"/>
+                <Text Index="2" Pos="94;390" Rot="0" Content="Shadow" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="131;400" Name="Shadow Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="8;441" Name="Fire Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="3" Pos="12;430" Width="36" Height="12" Rot="0" Content="Fire" TextSettings="7"/>
+                <Text Index="3" Pos="12;430" Rot="0" Content="Fire" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="8" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="49;440" Name="Fire Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="90;441" Name="Spirit Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="4" Pos="94;430" Width="48" Height="12" Rot="0" Content="Spirit" TextSettings="7"/>
+                <Text Index="4" Pos="94;430" Rot="0" Content="Spirit" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="5" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="131;440" Name="Spirit Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="8;481" Name="Water Temple Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="5" Pos="12;470" Width="45" Height="12" Rot="0" Content="Water" TextSettings="7"/>
+                <Text Index="5" Pos="12;470" Rot="0" Content="Water" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="6" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="49;481" Name="Water Temple Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="90;481" Name="Ganon Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="6" Pos="94;470" Width="45" Height="12" Rot="0" Content="Ganon" TextSettings="7"/>
+                <Text Index="6" Pos="94;470" Rot="0" Content="Ganon" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="2" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="132;481" Name="Ganon Boss Key" Source="items/boss_key.png" ScaleContent="True">
             </Item>
             <Item Pos="194;400" Name="BOTW Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="7" Pos="178;390" Width="45" Height="12" Rot="0" Content="BOTW" TextSettings="7"/>
+                <Text Index="7" Pos="178;390" Rot="0" Content="BOTW" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="3" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="194;441" Name="GTG Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="8" Pos="178;430" Width="45" Height="12" Rot="0" Content="GTG" TextSettings="7"/>
+                <Text Index="8" Pos="178;430" Rot="0" Content="GTG" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="9" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
             <Item Pos="194;481" Name="Fortress Small Key" Source="items/small_key.png" ScaleContent="True" UseWheel="True">
-                <Text Index="9" Pos="178;470" Width="72" Height="12" Rot="0" Content="Fortress" TextSettings="7"/>
+                <Text Index="9" Pos="178;470" Rot="0" Content="Fortress" TextSettings="7"/>
                 <Counter TextSettings="6" Min="1" Max="4" Increment="1" Pos="15;15" Width="32" Height="15"/>
             </Item>
         </Inventory>

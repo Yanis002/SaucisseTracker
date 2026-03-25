@@ -1,13 +1,24 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING
 from xml.etree import ElementTree as ET
 from xml.dom import minidom as MD
 
 from PyQt6.QtGui import QFontDatabase, QPixmap
 from PyQt6.QtWidgets import QWidget
 
-from common import Color, OutlinedGraphicsTextItem, PixmapItem, Pos, show_error, GLOBAL_HALF_OPACITY
+from common import (
+    Color,
+    OutlinedGraphicsTextItem,
+    PixmapItem,
+    Pos,
+    show_error,
+    GLOBAL_HALF_OPACITY,
+    CURRENT_XML_VERSION,
+)
+
+if TYPE_CHECKING:
+    from editor import TrackerEditorMenu
 
 active_config_dir: Optional[Path] = None
 
@@ -25,22 +36,24 @@ class Font:
     widget: QWidget
     index: int
     name: str
-    path: Path
+    path: Optional[Path]
 
     def __post_init__(self):
+        self.font_id = -1
+
         if self.name is None:
             show_error(self.widget, "ERROR: the font's name is none")
 
     def to_xml(self, parent: ET.Element, index: int):
-        return ET.SubElement(
-            parent,
-            "Item",
-            {
-                "Index": f"{index}",
-                "Name": f"{self.name}",
-                "Source": f"{self.path.relative_to(active_config_dir)}",
-            },
-        )
+        attrib = {
+            "Index": f"{index}",
+            "Name": f"{self.name}",
+        }
+
+        if self.path is not None:
+            attrib["Source"] = f"{self.path.relative_to(active_config_dir)}"
+
+        return ET.SubElement(parent, "Item", attrib)
 
 
 @dataclass
@@ -81,23 +94,23 @@ class TextSettings:
             show_error(self.widget, "ERROR: the name is none")
 
     def to_xml(self, parent: ET.Element, index: int):
-        return ET.SubElement(
-            parent,
-            "Item",
-            {
-                "Index": f"{index}",
-                "Name": f"{self.name}",
-                "FontIndex": f"{self.font}",
-                "Size": f"{self.size}",
-                "Bold": f"{self.bold}",
-                "Color": f"0x{Color.pack(self.color):06X}",
-                "ColorAlt": f"0x{Color.pack(self.color_alt):06X}",
-                "OutlineThickness": f"{self.outline_thickness}",
-                "IsTimer": f"{self.is_timer}",
-                "UseGradient": f"{self.use_gradient}",
-                "Minimal": f"{self.is_minimal}",
-            },
-        )
+        attrib = {
+            "Index": f"{index}",
+            "Name": f"{self.name}",
+            "FontIndex": f"{self.font}",
+            "Size": f"{self.size}",
+            "Bold": f"{self.bold}",
+            "Color": f"0x{Color.pack(self.color):06X}",
+            "ColorAlt": f"0x{Color.pack(self.color_alt):06X}",
+            "OutlineThickness": f"{self.outline_thickness}",
+        }
+
+        if self.is_timer:
+            attrib["IsTimer"] = f"{self.is_timer}"
+            attrib["UseGradient"] = f"{self.use_gradient}"
+            attrib["Minimal"] = f"{self.is_minimal}"
+
+        return ET.SubElement(parent, "Item", attrib)
 
 
 @dataclass
@@ -115,7 +128,6 @@ class Counter:
 
     * Optional:
         - `middle_click_increment` -> `MiddleIncrement="..."`
-        - `use_wheel` -> `UseWheel="..."`
     """
 
     min: int
@@ -124,9 +136,6 @@ class Counter:
     middle_click_increment: int
     text_settings_index: int
     pos: Pos
-    width: int
-    height: int
-    use_wheel: bool
 
     def __post_init__(self):
         self.value = self.min
@@ -154,22 +163,24 @@ class Counter:
 
     def update(self, pixmap: PixmapItem):
         if pixmap.label_counter is not None:
+            pixmap.label_counter.setVisible(self.show)
+
             if self.show:
-                pixmap.effect.setStrength(0.0)  # disable filter
+                if pixmap.effect is not None:
+                    pixmap.effect.setStrength(0.0)  # disable filter
                 pixmap.setOpacity(1.0)
                 pixmap.label_counter.setPlainText(f"{self.value}")
                 pixmap.label_counter.set_text_style(self.text_settings_index, self.value == self.max)
             else:
-                pixmap.effect.setStrength(1.0)  # enable filter
+                if pixmap.effect is not None:
+                    pixmap.effect.setStrength(1.0)  # enable filter
                 pixmap.setOpacity(GLOBAL_HALF_OPACITY)
-                pixmap.label_counter.setPlainText("")
+                pixmap.label_counter.setPlainText(f"{self.min}")
 
 
 @dataclass
 class RewardItem:
     pos: Pos
-    width: int
-    height: int
     name: str
     text_settings_index: int
 
@@ -179,8 +190,6 @@ class RewardItem:
             "Item",
             {
                 "Pos": self.pos.to_str(),
-                "Width": f"{self.width}",
-                "Height": f"{self.height}",
                 "Name": f"{self.name}",
                 "TextSettings": f"{self.text_settings_index}",
             },
@@ -191,11 +200,10 @@ class RewardItem:
 class TextItem:
     index: int
     pos: Pos
-    width: int
-    height: int
     rotation: int
     content: str
     text_settings_index: int
+    scene_item: Optional[OutlinedGraphicsTextItem] = None
 
     def to_xml(self, parent: ET.Element, index: int):
         return ET.SubElement(
@@ -204,8 +212,6 @@ class TextItem:
             {
                 "Index": f"{self.index}",
                 "Pos": self.pos.to_str(),
-                "Width": f"{self.width}",
-                "Height": f"{self.height}",
                 "Rot": f"{self.rotation}",
                 "Content": self.content,
                 "TextSettings": f"{self.text_settings_index}",
@@ -214,12 +220,19 @@ class TextItem:
 
 
 @dataclass
+class SourceItem:
+    name: str
+    path: Path
+
+
+@dataclass
 class InventoryItem:
     index: int
     name: str
-    paths: list[Path]
+    sources: list[SourceItem]
     counter: Optional[Counter]
     positions: list[Pos]
+    rotation: int
     enabled: bool
     scale_content: bool
     is_reward: bool
@@ -228,6 +241,7 @@ class InventoryItem:
     extra_index: Optional[int]
     static_texts: list[TextItem]
     reward_map: dict[int, OutlinedGraphicsTextItem]
+    pixmap_items: list[PixmapItem] = field(default_factory=list)
 
     def update_reward(self, index: int, reward_info: RewardItem):
         pos = self.reward_map[index].item_pixmap.pos()
@@ -242,14 +256,14 @@ class InventoryItem:
 
         attrib: dict[str, str] = {"Name": self.name}
 
-        if len(self.paths) > 0:
-            if len(self.paths) == 1:
-                attrib["Source"] = str(self.paths[0].relative_to(active_config_dir))
+        if len(self.sources) > 0:
+            if len(self.sources) == 1:
+                attrib["Source"] = str(self.sources[0].path.relative_to(active_config_dir))
             else:
                 sources = ET.SubElement(item, "Sources")
 
-                for path in self.paths:
-                    _ = ET.SubElement(sources, "Item", {"Path": f"{path.relative_to(active_config_dir)}"})
+                for src_item in self.sources:
+                    _ = ET.SubElement(sources, "Item", {"Path": f"{src_item.path.relative_to(active_config_dir)}"})
 
         if len(self.positions) > 0:
             if len(self.positions) == 1:
@@ -260,16 +274,17 @@ class InventoryItem:
                 for pos in self.positions:
                     _ = ET.SubElement(positions, "Item", {"X": f"{pos.x}", "Y": f"{pos.y}"})
 
+        attrib["Rot"] = f"{self.rotation}"
+
         if len(self.static_texts) > 0:
             for label in self.static_texts:
                 _ = ET.SubElement(
                     item,
-                    "Label",
+                    "Text",
                     {
                         "Index": f"{label.index}",
                         "Pos": label.pos.to_str(),
-                        "Width": f"{label.width}",
-                        "Height": f"{label.height}",
+                        "Rot": f"{label.rotation}",
                         "Content": label.content,
                         "TextSettings": f"{label.text_settings_index}",
                     },
@@ -286,9 +301,6 @@ class InventoryItem:
                     "MiddleIncrement": f"{self.counter.middle_click_increment}",
                     "TextSettings": f"{self.counter.text_settings_index}",
                     "Pos": self.counter.pos.to_str(),
-                    "Width": f"{self.counter.width}",
-                    "Height": f"{self.counter.height}",
-                    "UseWheel": f"{self.counter.use_wheel}",
                 },
             )
 
@@ -322,8 +334,6 @@ class FlagItem:
     pos: Pos
     text_settings_index: int
     hidden: bool
-    width: int
-    height: int
 
     def to_xml(self, parent: ET.Element, index: int):
         return ET.SubElement(
@@ -332,8 +342,6 @@ class FlagItem:
             {
                 "Index": f"{self.index}",
                 "Pos": self.pos.to_str(),
-                "Width": f"{self.width}",
-                "Height": f"{self.height}",
                 "Text": f"{';'.join(self.texts)}",
                 "TextSettings": f"{self.text_settings_index}",
                 "Hidden": f"{self.hidden}",
@@ -352,10 +360,9 @@ class Rewards:
     def __init__(self):
         self.index = 0
         self.items: list[RewardItem] = []
-        self.use_wheel = False
 
     def to_xml(self, parent: ET.Element):
-        rewards = ET.SubElement(parent, "Rewards", {"UseWheel": f"{self.use_wheel}"})
+        rewards = ET.SubElement(parent, "Rewards")
 
         for reward in self.items:
             _ = reward.to_xml(rewards)
@@ -409,24 +416,20 @@ class Inventory:
         name: str,
         bg_path: Path,
         bg_color: Color,
-        icon_path: Path,
-        icon: QPixmap,
         static_texts: list[TextItem],
     ):
         self.index = index
         self.name = name
         self.background = bg_path
         self.background_color = bg_color
-        self.icon_path = icon_path
-        self.icon = icon
         self.static_texts = static_texts
 
         self.items: list[InventoryItem] = []
         self.rewards = Rewards()
 
-        # { item_index: { pos_index: data } }
-        # self.label_map: dict[int, dict[int, Label]] = {}
-        self.text_map: dict[int, OutlinedGraphicsTextItem] = {}
+    @staticmethod
+    def empty(index: int):
+        return Inventory(index, f"New Inventory ({index})", None, Color(0, 0, 0), list())
 
     def to_xml(self, parent: ET.Element):
         inventory = ET.SubElement(
@@ -434,7 +437,6 @@ class Inventory:
             "Inventory",
             {
                 "Index": f"{self.index}",
-                "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
                 "Name": f"{self.name}",
                 "Background": f"{self.background.relative_to(active_config_dir)}",
                 "BackgroundColor": f"0x{Color.pack(self.background_color):06X}",
@@ -490,6 +492,16 @@ class Inventory:
                     str_max = text.content
         return str_max
 
+    def remove_item(self, index: int):
+        self.items.pop(index)
+
+        for item in self.items:
+            if item.index > index:
+                item.index -= 1
+
+                for pixmap_item in item.pixmap_items:
+                    pixmap_item.state.index = item.index
+
 
 @dataclass
 class GoModeSettings:
@@ -500,6 +512,7 @@ class GoModeSettings:
     light_pos: Optional[Pos]
     rotation_speed: int
     thread_refresh_rate: float
+    use_light: bool = False
 
     def to_xml(self, parent: ET.Element):
         attrib = {
@@ -509,10 +522,11 @@ class GoModeSettings:
         }
 
         if self.light_path is not None and self.light_pos is not None:
-            attrib["LightPath"] = (f"{self.light_path.relative_to(active_config_dir)}",)
-            attrib["LightPos"] = (self.light_pos.to_str(),)
-            attrib["LightRotSpeed"] = (f"{self.rotation_speed}",)
-            attrib["LightRotRefresh"] = (f"{self.thread_refresh_rate}",)
+            attrib["UseLight"] = f"{self.use_light}"
+            attrib["LightPath"] = f"{self.light_path.relative_to(active_config_dir)}"
+            attrib["LightPos"] = self.light_pos.to_str()
+            attrib["LightRotSpeed"] = f"{self.rotation_speed}"
+            attrib["LightRotRefresh"] = f"{self.thread_refresh_rate}"
 
         return ET.SubElement(parent, "GoMode", attrib)
 
@@ -520,8 +534,6 @@ class GoModeSettings:
 class Config:
     def __init__(self, widget: QWidget, config_path: Path):
         self.widget = widget
-        self.config_path = config_path
-        self.config_dir = self.config_path.parent
 
         self.default_inv = 0
         self.show_timer = False
@@ -535,15 +547,22 @@ class Config:
         self.extras: Optional[Extras] = None
         self.state_saved = False
         self.autosave_enabled = False
-        self.xml_version = (0, 0)
+        self.xml_version = (1, 0, 1)
         self.name = str()
         self.icon_path: Optional[Path] = None
         self.default_icon_path = (
-            Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res/config_icon.png"
+            Path(str(Path(__file__).resolve().parent).removesuffix("src")).resolve() / "res" / "config_icon.png"
         )
 
         self.label_gomode: Optional[PixmapItem] = None
         self.label_gomode_light: Optional[PixmapItem] = None
+        self.edit_menu: Optional["TrackerEditorMenu"] = None
+
+        if config_path is None:
+            return
+
+        self.config_path = config_path
+        self.config_dir = self.config_path.parent
 
         match self.config_path.suffix:
             case ".xml":
@@ -551,14 +570,21 @@ class Config:
             case _:
                 show_error(self.widget, "ERROR: the config file's format isn't supported yet.")
 
-        self.validate()
+        # create default inventory if necessary
+        if len(self.inventories) == 0:
+            self.inventories[0] = Inventory.empty(0)
+        else:
+            # don't validate if the config is new
+            self.validate()
 
         # register external fonts
         for font in self.fonts:
-            if font.path.exists():
-                QFontDatabase.addApplicationFont(str(font.path))
-            else:
-                show_error(self.widget, f"ERROR: this font doesn't exist '{font.path}'")
+            if font.path is not None:
+                if font.path.exists():
+                    font.font_id = QFontDatabase.addApplicationFont(str(font.path))
+                    assert font.font_id != -1, "font cannot be added"
+                else:
+                    show_error(self.widget, f"ERROR: this font doesn't exist '{font.path}'")
 
         # set the active inventory from default value
         self.active_inv = self.inventories[self.default_inv]
@@ -641,19 +667,23 @@ class Config:
         active_config_dir = self.config_dir
         root = ET.Element("Root")
 
-        config = ET.SubElement(
-            root,
-            "Config",
-            {
-                "Version": f"{self.version[0]}.{self.version[1]}",
-                "Name": self.name,
-                "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
-                "DefaultInventory": f"{self.default_inv}",
-                "StatePath": f"{self.state_path.relative_to(active_config_dir)}",
-                "ShowTimer": f"{self.show_timer}",
-                "EmbedTimer": f"{self.embed_timer}",
-            },
-        )
+        attrib = {
+            "XMLVersion": ".".join(f"{elem}" for elem in CURRENT_XML_VERSION),
+            "Name": self.name,
+            "Icon": f"{self.icon_path.relative_to(active_config_dir)}",
+            "DefaultInventory": f"{self.default_inv}",
+            "ShowTimer": f"{self.show_timer}",
+            "EmbedTimer": f"{self.embed_timer}",
+        }
+
+        if self.state_path is not None:
+            state_path = self.state_path
+            if not state_path.is_relative_to(active_config_dir):
+                state_path = self.state_path.relative_to(active_config_dir)
+
+            attrib["StatePath"] = f"{state_path}"
+
+        config = ET.SubElement(root, "Config", attrib)
 
         to_export: dict[str, Any] = {
             "Fonts": self.fonts,
@@ -697,7 +727,7 @@ class Config:
 
         xml_version = config.get("XMLVersion", "0.0").split(".")
 
-        self.xml_version = (int(xml_version[0]), int(xml_version[1]))
+        self.xml_version = tuple([int(elem) for elem in xml_version])
         self.name = config.get("Name", "Unknown Config")
         self.icon_path = self.parse_path(config.get("Icon", self.default_icon_path), "config icon path", False)
         self.default_inv = int(config.get("DefaultInventory", "0"))
@@ -716,7 +746,7 @@ class Config:
                                 self.widget,
                                 int(item.get("Index", "0")),
                                 item.get("Name"),
-                                self.parse_path(item.get("Source"), "font", True),
+                                self.parse_path(item.get("Source"), "font", False),
                             )
                         )
                 case "TextSettings":
@@ -751,8 +781,6 @@ class Config:
                                 self.parse_pos(item.get("Pos"), "flag item", True),
                                 int(item.get("TextSettings", "0")),
                                 self.parse_bool(item.get("Hidden", "True")),
-                                int(item.get("Width", "0")),
-                                int(item.get("Height", "0")),
                             )
                         )
                 case "GoMode":
@@ -765,6 +793,14 @@ class Config:
                         int(elem.get("LightRotSpeed", "-30")),
                         float(elem.get("LightRotRefresh", "0.001")),
                     )
+
+                    if self.xml_version >= (1, 0, 1):
+                        self.gomode_settings.use_light = self.parse_bool(elem.get("UseLight", "False"))
+                    else:
+                        self.gomode_settings.use_light = (
+                            self.gomode_settings.light_path is not None and self.gomode_settings.light_pos is not None
+                        )
+
                 case "Extras":
                     extra_items: list[ExtraItem] = []
                     for item in elem:
@@ -788,8 +824,6 @@ class Config:
                             TextItem(
                                 j,
                                 self.parse_pos(static_label.get("Pos"), "inventory item label", False),
-                                self.parse_int(static_label.get("Width"), True),
-                                self.parse_int(static_label.get("Height"), True),
                                 self.parse_int(static_label.get("Rot", "0")),
                                 static_label.get("Content", "Unset"),
                                 self.parse_int(static_label.get("TextSettings", "0")),
@@ -801,25 +835,24 @@ class Config:
                         elem.get("Name", "Unknown"),
                         self.parse_path(elem.get("Background"), "background", True),
                         Color.unpack(int(elem.get("BackgroundColor", "0x000000"), 0)),
-                        path,
-                        QPixmap(str(path)),
                         text_labels,
                     )
 
                     for i, item in enumerate(elem.iterfind("Item")):
                         name = item.get("Name", "Unknown")
-                        paths: list[Path] = []
+                        src_list: list[SourceItem] = []
                         positions: list[Pos] = []
 
                         path = self.parse_path(item.get("Source"), f"item '{name}'", False)
                         if path is not None:
-                            paths.append(path)
+                            src_list.append(SourceItem(name, path))
                         else:
                             sources = item.find("Sources")
                             for sub_item in sources:
-                                paths.append(self.parse_path(sub_item.get("Path"), f"item '{name}'", True))
+                                path = self.parse_path(sub_item.get("Path"), f"item '{name}'", True)
+                                src_list.append(SourceItem(sub_item.get("Name", f"{path.stem}{path.suffix}"), path))
 
-                        if len(paths) == 0:
+                        if len(src_list) == 0:
                             show_error(self.widget, f"ERROR: Missing paths for item '{name}'")
 
                         pos = self.parse_pos(item.get("Pos"), "inventory item", False)
@@ -843,9 +876,6 @@ class Config:
                                 int(c.get("MiddleIncrement", "0")),
                                 int(c.get("TextSettings", "0")),
                                 self.parse_pos(c.get("Pos"), "counter", True),
-                                int(c.get("Width")),
-                                int(c.get("Height")),
-                                self.parse_bool(c.get("UseWheel", "False")),
                             )
 
                         text_labels: list[TextItem] = []
@@ -854,8 +884,6 @@ class Config:
                                 TextItem(
                                     self.parse_int(static_label.get("Index"), True),
                                     self.parse_pos(static_label.get("Pos"), "inventory item label", False),
-                                    self.parse_int(static_label.get("Width"), True),
-                                    self.parse_int(static_label.get("Height"), True),
                                     self.parse_int(static_label.get("Rot", "0")),
                                     static_label.get("Content", "Unset"),
                                     self.parse_int(static_label.get("TextSettings", "0")),
@@ -866,9 +894,10 @@ class Config:
                             InventoryItem(
                                 i,
                                 name,
-                                paths,
+                                src_list,
                                 counter,
                                 positions,
+                                self.parse_int(item.get("Rot", "0")),
                                 self.parse_bool(item.get("Enabled", "False")),
                                 self.parse_bool(item.get("ScaleContent", "False")),
                                 self.parse_bool(item.get("Reward", "False")),
@@ -886,13 +915,10 @@ class Config:
                             inventory.rewards.items.append(
                                 RewardItem(
                                     self.parse_pos(item.get("Pos"), "reward", True),
-                                    int(item.get("Width", "0")),
-                                    int(item.get("Height", "0")),
                                     item.get("Name", "Unk"),
                                     int(item.get("TextSettings", "0")),
                                 )
                             )
-                        inventory.rewards.use_wheel = self.parse_bool(rewards.get("UseWheel", "False"))
 
                     self.inventories[inventory.index] = inventory
                 case _:
