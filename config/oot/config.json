@@ -1,0 +1,1298 @@
+{
+    "version": "1.0.0",
+    "name": "Ocarina of Time",
+    "icon": "items/ocarina_of_time.png",
+    "default_inventory": 0,
+    "show_timer": true,
+    "embed_timer": false,
+    "state_path": "config/oot/state.txt",
+    "fonts": [
+        {
+            "index": 0,
+            "name": "LEMON MILK Bold",
+            "source": "fonts/LEMONMILK-Bold.otf"
+        },
+        {
+            "index": 1,
+            "name": "Upheaval TT (BRK)",
+            "source": "fonts/upheavtt.ttf"
+        },
+        {
+            "index": 2,
+            "name": "Visitor TT1 BRK",
+            "source": "fonts/visitor1.ttf"
+        },
+        {
+            "index": 3,
+            "name": "Windows Command Prompt",
+            "source": "fonts/windows_command_prompt.ttf"
+        },
+        {
+            "index": 4,
+            "name": "LiveSplit Timer",
+            "source": "fonts/Timer.ttf"
+        }
+    ],
+    "text_settings": [
+        {
+            "index": 0,
+            "name": "Counters",
+            "font_index": 2,
+            "size": 12.3,
+            "bold": true,
+            "color": "0xFFFFFF",
+            "color_alt": "0x00FF00",
+            "outline_thickness": 2.0,
+            "is_timer": false
+        },
+        {
+            "index": 1,
+            "name": "Rewards",
+            "font_index": 3,
+            "size": 10.2,
+            "bold": false,
+            "color": "0xFFFFFF",
+            "color_alt": "0xFFFFFF",
+            "outline_thickness": 1.8,
+            "is_timer": false
+        },
+        {
+            "index": 2,
+            "name": "Skulltula Counter",
+            "font_index": 2,
+            "size": 15.0,
+            "bold": true,
+            "color": "0xFFFFFF",
+            "color_alt": "0x00FF00",
+            "outline_thickness": 2.0,
+            "is_timer": false
+        },
+        {
+            "index": 3,
+            "name": "Dungeon Flag",
+            "font_index": 0,
+            "size": 9.0,
+            "bold": true,
+            "color": "0x00FFFF",
+            "color_alt": "0xFFFFFF",
+            "outline_thickness": 1.8,
+            "is_timer": false
+        },
+        {
+            "index": 4,
+            "name": "Hookshot Flag",
+            "font_index": 0,
+            "size": 10.0,
+            "bold": true,
+            "color": "0xFFFFFF",
+            "color_alt": "0x00FF00",
+            "outline_thickness": 1.8,
+            "is_timer": false
+        },
+        {
+            "index": 5,
+            "name": "LiveSplit",
+            "font_index": 4,
+            "size": 40.0,
+            "bold": true,
+            "color": "0xA0A0A0",
+            "color_alt": "0x000000",
+            "outline_thickness": 0.0,
+            "is_timer": true,
+            "use_gradient": true,
+            "is_minimal": true
+        }
+    ],
+    "flags": [
+        {
+            "index": 0,
+            "pos": "10;-7",
+            "text": "MQ",
+            "txt_settings": 3,
+            "hidden": true
+        },
+        {
+            "index": 1,
+            "pos": "17;16",
+            "text": ";H;L",
+            "txt_settings": 4,
+            "hidden": false
+        },
+        {
+            "index": 2,
+            "pos": "-2;17",
+            "text": ";200;500;999",
+            "txt_settings": 0,
+            "hidden": false
+        }
+    ],
+    "go_mode": {
+        "pos": "129;178",
+        "hide_if_disabled": true,
+        "source": "gomode.png",
+        "use_light": true,
+        "light_path": "light.png",
+        "light_pos": "69;112",
+        "light_rot_speed": -70,
+        "light_rot_refresh": 0.001
+    },
+    "extras": [
+        {
+            "index": 0,
+            "pos": "18;-4",
+            "path": "check.png"
+        }
+    ],
+    "inventories": [
+        {
+            "index": 0,
+            "name": "Ocarina of Time - Keysanity (N64)",
+            "background": "background.png",
+            "background_color": "0x000000",
+            "texts": [],
+            "items": [
+                {
+                    "index": 0,
+                    "name": "Deku Sticks",
+                    "sources": [
+                        "items/deku_stick.png"
+                    ],
+                    "positions": [
+                        "9;9"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "counter": {
+                        "min": 10,
+                        "max": 30,
+                        "incr": 10,
+                        "middle_incr": 0,
+                        "txt_settings": 0,
+                        "pos": "-5;18"
+                    }
+                },
+                {
+                    "index": 1,
+                    "name": "Deku Nuts",
+                    "sources": [
+                        "items/deku_nut.png"
+                    ],
+                    "positions": [
+                        "48;9"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "counter": {
+                        "min": 20,
+                        "max": 40,
+                        "incr": 10,
+                        "middle_incr": 0,
+                        "txt_settings": 0,
+                        "pos": "-5;18"
+                    }
+                },
+                {
+                    "index": 2,
+                    "name": "Bombs",
+                    "sources": [
+                        "items/bomb.png"
+                    ],
+                    "positions": [
+                        "90;9"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "counter": {
+                        "min": 20,
+                        "max": 40,
+                        "incr": 10,
+                        "middle_incr": 0,
+                        "txt_settings": 0,
+                        "pos": "-5;18"
+                    }
+                },
+                {
+                    "index": 3,
+                    "name": "Fairy Bow",
+                    "sources": [
+                        "items/fairy_bow.png"
+                    ],
+                    "positions": [
+                        "131;9"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "counter": {
+                        "min": 30,
+                        "max": 50,
+                        "incr": 10,
+                        "middle_incr": 0,
+                        "txt_settings": 0,
+                        "pos": "-5;18"
+                    }
+                },
+                {
+                    "index": 4,
+                    "name": "Fire Arrow",
+                    "sources": [
+                        "items/fire_arrow.png"
+                    ],
+                    "positions": [
+                        "172;9"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 5,
+                    "name": "Din's Fire",
+                    "sources": [
+                        "items/dins_fire.png"
+                    ],
+                    "positions": [
+                        "213;9"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 6,
+                    "name": "Fairy Slingshot",
+                    "sources": [
+                        "items/fairy_slingshot.png"
+                    ],
+                    "positions": [
+                        "9;48"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "counter": {
+                        "min": 30,
+                        "max": 50,
+                        "incr": 10,
+                        "middle_incr": 0,
+                        "txt_settings": 0,
+                        "pos": "-5;18"
+                    }
+                },
+                {
+                    "index": 7,
+                    "name": "Ocarina",
+                    "sources": [
+                        "items/fairy_ocarina.png",
+                        "items/ocarina_of_time.png"
+                    ],
+                    "positions": [
+                        "48;48"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 8,
+                    "name": "Bombchus",
+                    "sources": [
+                        "items/bombchu.png"
+                    ],
+                    "positions": [
+                        "90;48"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 9,
+                    "name": "Hookshot",
+                    "sources": [
+                        "items/hookshot.png",
+                        "items/longshot.png"
+                    ],
+                    "positions": [
+                        "131;48"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "flag_index": 1
+                },
+                {
+                    "index": 10,
+                    "name": "Ice Arrow",
+                    "sources": [
+                        "items/ice_arrow.png"
+                    ],
+                    "positions": [
+                        "172;48"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 11,
+                    "name": "Farore's Wind",
+                    "sources": [
+                        "items/farores_wind.png"
+                    ],
+                    "positions": [
+                        "213;48"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 12,
+                    "name": "Boomerang",
+                    "sources": [
+                        "items/boomerang.png"
+                    ],
+                    "positions": [
+                        "9;90"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 13,
+                    "name": "Lens of Truth",
+                    "sources": [
+                        "items/lens_of_truth.png"
+                    ],
+                    "positions": [
+                        "49;90"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 14,
+                    "name": "Magic Beans",
+                    "sources": [
+                        "items/magic_beans.png"
+                    ],
+                    "positions": [
+                        "90;90"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 15,
+                    "name": "Megaton Hammer",
+                    "sources": [
+                        "items/hammer.png"
+                    ],
+                    "positions": [
+                        "131;90"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 16,
+                    "name": "Light Arrow",
+                    "sources": [
+                        "items/light_arrow.png"
+                    ],
+                    "positions": [
+                        "172;90"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 17,
+                    "name": "Nayru's Love",
+                    "sources": [
+                        "items/nayrus_love.png"
+                    ],
+                    "positions": [
+                        "213;90"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 18,
+                    "name": "Bottle Slots",
+                    "sources": [
+                        "items/bottles/empty_bottle.png",
+                        "items/bottles/red_potion.png",
+                        "items/bottles/green_potion.png",
+                        "items/bottles/blue_potion.png",
+                        "items/bottles/fairy.png",
+                        "items/bottles/fish.png",
+                        "items/bottles/milk.png",
+                        "items/bottles/rutos_letter.png",
+                        "items/bottles/blue_fire.png",
+                        "items/bottles/bug.png",
+                        "items/bottles/big_poe.png",
+                        "items/bottles/poe.png"
+                    ],
+                    "positions": [
+                        "7;131",
+                        "48;131",
+                        "89;131",
+                        "130;131"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": true
+                },
+                {
+                    "index": 19,
+                    "name": "Trade Adult",
+                    "sources": [
+                        "items/trade_adult/weird_egg.png",
+                        "items/trade_adult/cucco.png",
+                        "items/trade_adult/cojiro.png",
+                        "items/trade_adult/odd_mushroom.png",
+                        "items/trade_adult/odd_potion.png",
+                        "items/trade_adult/poachers_saw.png",
+                        "items/trade_adult/broken_goron_sword.png",
+                        "items/trade_adult/prescription.png",
+                        "items/trade_adult/eyball_frog.png",
+                        "items/trade_adult/eyedrops.png",
+                        "items/trade_adult/claim_check.png"
+                    ],
+                    "positions": [
+                        "172;131"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": true
+                },
+                {
+                    "index": 20,
+                    "name": "Trade Child",
+                    "sources": [
+                        "items/trade_child/weird_egg.png",
+                        "items/trade_child/cucco.png",
+                        "items/trade_child/zeldas_letter.png",
+                        "items/trade_child/keaton_mask.png",
+                        "items/trade_child/skull_mask.png",
+                        "items/trade_child/spooky_mask.png",
+                        "items/trade_child/bunny_hood.png",
+                        "items/trade_child/goron_mask.png",
+                        "items/trade_child/zora_mask.png",
+                        "items/trade_child/gerudo_mask.png",
+                        "items/trade_child/mask_of_truth.png"
+                    ],
+                    "positions": [
+                        "213;131"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": true
+                },
+                {
+                    "index": 21,
+                    "name": "Kokiri Sword",
+                    "sources": [
+                        "items/kokiri_sword.png"
+                    ],
+                    "positions": [
+                        "8;176"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 22,
+                    "name": "Master Sword",
+                    "sources": [
+                        "items/master_sword.png"
+                    ],
+                    "positions": [
+                        "49;176"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 23,
+                    "name": "Biggoron's Sword",
+                    "sources": [
+                        "items/biggoron_sword.png"
+                    ],
+                    "positions": [
+                        "90;176"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 24,
+                    "name": "Deku Shield",
+                    "sources": [
+                        "items/deku_shield.png"
+                    ],
+                    "positions": [
+                        "8;216"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 25,
+                    "name": "Hylian Shield",
+                    "sources": [
+                        "items/hylian_shield.png"
+                    ],
+                    "positions": [
+                        "48;217"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 26,
+                    "name": "Mirror Shield",
+                    "sources": [
+                        "items/mirror_shield.png"
+                    ],
+                    "positions": [
+                        "91;217"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 27,
+                    "name": "Kokiri Tunic",
+                    "sources": [
+                        "items/kokiri_tunic.png"
+                    ],
+                    "positions": [
+                        "8;258"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": true,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 28,
+                    "name": "Goron Tunic",
+                    "sources": [
+                        "items/goron_tunic.png"
+                    ],
+                    "positions": [
+                        "48;258"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 29,
+                    "name": "Zora Tunic",
+                    "sources": [
+                        "items/zora_tunic.png"
+                    ],
+                    "positions": [
+                        "90;258"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 30,
+                    "name": "Kokiri Boots",
+                    "sources": [
+                        "items/kokiri_boots.png"
+                    ],
+                    "positions": [
+                        "8;300"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": true,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 31,
+                    "name": "Iron Boots",
+                    "sources": [
+                        "items/iron_boots.png"
+                    ],
+                    "positions": [
+                        "48;300"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 32,
+                    "name": "Hover Boots",
+                    "sources": [
+                        "items/hover_boots.png"
+                    ],
+                    "positions": [
+                        "90;300"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 33,
+                    "name": "Magic Meter",
+                    "sources": [
+                        "items/magic.png",
+                        "items/double_magic.png"
+                    ],
+                    "positions": [
+                        "131;217"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": true,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 34,
+                    "name": "Wallets",
+                    "sources": [
+                        "items/adults_wallet.png",
+                        "items/giants_wallet.png",
+                        "items/giants_wallet.png"
+                    ],
+                    "positions": [
+                        "172;217"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "flag_index": 2
+                },
+                {
+                    "index": 35,
+                    "name": "Gerudo Card",
+                    "sources": [
+                        "items/gerudo_card.png"
+                    ],
+                    "positions": [
+                        "213;217"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": true,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 36,
+                    "name": "Stone of Agony",
+                    "sources": [
+                        "items/stone_of_agony.png"
+                    ],
+                    "positions": [
+                        "131;259"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 37,
+                    "name": "Zora Scales",
+                    "sources": [
+                        "items/silver_scale.png",
+                        "items/gold_scale.png"
+                    ],
+                    "positions": [
+                        "172;258"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 38,
+                    "name": "Strengths",
+                    "sources": [
+                        "items/goron_bracelet.png",
+                        "items/silver_gauntlets.png",
+                        "items/golden_gauntlets.png"
+                    ],
+                    "positions": [
+                        "213;258"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false
+                },
+                {
+                    "index": 39,
+                    "name": "Gold Skulltulas",
+                    "sources": [
+                        "items/gold_skulltula.png"
+                    ],
+                    "positions": [
+                        "172;176"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": true,
+                    "is_reward": false,
+                    "use_wheel": true,
+                    "counter": {
+                        "min": 1,
+                        "max": 100,
+                        "incr": 1,
+                        "middle_incr": 10,
+                        "txt_settings": 2,
+                        "pos": "32;4"
+                    }
+                },
+                {
+                    "index": 40,
+                    "name": "Kokiri Emerald",
+                    "sources": [
+                        "items/rewards/kokiri_emerald.png"
+                    ],
+                    "positions": [
+                        "131;300"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 41,
+                    "name": "Goron Ruby",
+                    "sources": [
+                        "items/rewards/goron_ruby.png"
+                    ],
+                    "positions": [
+                        "172;300"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 42,
+                    "name": "Zora Sapphire",
+                    "sources": [
+                        "items/rewards/zora_sapphire.png"
+                    ],
+                    "positions": [
+                        "213;300"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 43,
+                    "name": "Forest Medallion",
+                    "sources": [
+                        "items/rewards/forest_medallion.png"
+                    ],
+                    "positions": [
+                        "8;345"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 44,
+                    "name": "Fire Medallion",
+                    "sources": [
+                        "items/rewards/fire_medallion.png"
+                    ],
+                    "positions": [
+                        "48;345"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 45,
+                    "name": "Water Medallion",
+                    "sources": [
+                        "items/rewards/water_medallion.png"
+                    ],
+                    "positions": [
+                        "90;345"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 46,
+                    "name": "Shadow Medallion",
+                    "sources": [
+                        "items/rewards/shadow_medallion.png"
+                    ],
+                    "positions": [
+                        "131;345"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 47,
+                    "name": "Spirit Medallion",
+                    "sources": [
+                        "items/rewards/spirit_medallion.png"
+                    ],
+                    "positions": [
+                        "172;345"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 48,
+                    "name": "Light Medallion",
+                    "sources": [
+                        "items/rewards/light_medallion.png"
+                    ],
+                    "positions": [
+                        "213;345"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": true,
+                    "use_wheel": false,
+                    "flag_index": 0
+                },
+                {
+                    "index": 49,
+                    "name": "Zelda's Lullaby",
+                    "sources": [
+                        "items/songs/lullaby.png"
+                    ],
+                    "positions": [
+                        "258;8"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 50,
+                    "name": "Epona's Song",
+                    "sources": [
+                        "items/songs/epona.png"
+                    ],
+                    "positions": [
+                        "258;39"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 51,
+                    "name": "Saria's Song",
+                    "sources": [
+                        "items/songs/saria.png"
+                    ],
+                    "positions": [
+                        "258;71"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 52,
+                    "name": "Sun's Song",
+                    "sources": [
+                        "items/songs/sun.png"
+                    ],
+                    "positions": [
+                        "258;103"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 53,
+                    "name": "Song of Time",
+                    "sources": [
+                        "items/songs/time.png"
+                    ],
+                    "positions": [
+                        "258;135"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 54,
+                    "name": "Song of Storms",
+                    "sources": [
+                        "items/songs/storms.png"
+                    ],
+                    "positions": [
+                        "258;165"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 55,
+                    "name": "Minuet of Forest",
+                    "sources": [
+                        "items/songs/minuet.png"
+                    ],
+                    "positions": [
+                        "258;196"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 56,
+                    "name": "Bolero of Fire",
+                    "sources": [
+                        "items/songs/bolero.png"
+                    ],
+                    "positions": [
+                        "258;228"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 57,
+                    "name": "Serenade of Water",
+                    "sources": [
+                        "items/songs/serenade.png"
+                    ],
+                    "positions": [
+                        "259;258"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 58,
+                    "name": "Requiem of Spirit",
+                    "sources": [
+                        "items/songs/requiem.png"
+                    ],
+                    "positions": [
+                        "259;288"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 59,
+                    "name": "Nocturne of Shadow",
+                    "sources": [
+                        "items/songs/nocturne.png"
+                    ],
+                    "positions": [
+                        "258;318"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                },
+                {
+                    "index": 60,
+                    "name": "Prelude of Light",
+                    "sources": [
+                        "items/songs/prelude.png"
+                    ],
+                    "positions": [
+                        "258;352"
+                    ],
+                    "rot": 0,
+                    "texts": [],
+                    "enabled": false,
+                    "scale_content": false,
+                    "is_reward": false,
+                    "use_wheel": false,
+                    "extra_index": 0
+                }
+            ],
+            "rewards": [
+                {
+                    "pos": "-6;29",
+                    "name": "????",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "FREE",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "DEKU",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "DC",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "JABU",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "FOREST",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "FIRE",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "WATER",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "SHADOW",
+                    "txt_settings": 1
+                },
+                {
+                    "pos": "-6;29",
+                    "name": "SPIRIT",
+                    "txt_settings": 1
+                }
+            ]
+        }
+    ]
+}

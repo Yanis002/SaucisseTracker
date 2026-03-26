@@ -83,14 +83,19 @@ class Rotation(QThread):
             if self.pause_update:
                 continue
 
-            if (
-                self.do_run
-                and self.config.label_gomode_light is not None
-                and self.config.label_gomode_light.isVisible()
-            ):
-                diff = self.thread_refresh * self.speed
-                self.position = round((self.position + diff) % 360, 2)
-                self.positionChanged.emit(self.position)
+            try:
+                if (
+                    self.do_run
+                    and self.config.label_gomode_light is not None
+                    and self.config.label_gomode_light.isVisible()
+                ):
+                    diff = self.thread_refresh * self.speed
+                    self.position = round((self.position + diff) % 360, 2)
+                    self.positionChanged.emit(self.position)
+            except Exception as e:
+                print(e.with_traceback())
+                show_error(self, "The unknown error in the rotation thread happened.")
+
             self.msleep(int(self.thread_refresh * 1000))
 
 
@@ -612,6 +617,11 @@ class Pos:
         """Format of the `Pos` attribute used by the config"""
 
         return f"{self.x};{self.y}"
+
+    @staticmethod
+    def from_str(data: str):
+        split = data.split(";")
+        return Pos(int(split[0]), int(split[1]))
 
 
 def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str):

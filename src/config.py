@@ -69,6 +69,10 @@ class Font:
 
         return data
 
+    @staticmethod
+    def from_json(config_dir: Path, widget: QWidget, data: dict):
+        return Font(widget, data["index"], data["name"], config_dir / data["source"] if "source" in data else None)
+
 
 @dataclass
 class TextSettings:
@@ -145,6 +149,23 @@ class TextSettings:
 
         return data
 
+    @staticmethod
+    def from_json(widget: QWidget, data: dict):
+        return TextSettings(
+            widget,
+            data["index"],
+            data["name"],
+            data["font_index"],
+            data["size"],
+            data["bold"],
+            Color.unpack(int(data["color"], base=16)),
+            Color.unpack(int(data["color_alt"], base=16)),
+            data["outline_thickness"],
+            data["is_timer"],
+            data["use_gradient"] if "use_gradient" in data else False,
+            data["is_minimal"] if "is_minimal" in data else False,
+        )
+
 
 @dataclass
 class Counter:
@@ -173,6 +194,17 @@ class Counter:
     def __post_init__(self):
         self.value = self.min
         self.show = False
+
+    @staticmethod
+    def from_json(data: dict):
+        return Counter(
+            data["min"],
+            data["max"],
+            data["incr"],
+            data["middle_incr"],
+            data["txt_settings"],
+            Pos.from_str(data["pos"]),
+        )
 
     def incr(self, middle_click: bool):
         if self.show:
@@ -235,6 +267,10 @@ class RewardItem:
             "txt_settings": self.text_settings_index,
         }
 
+    @staticmethod
+    def from_json(data: dict):
+        return RewardItem(Pos.from_str(data["pos"]), data["name"], data["txt_settings"])
+
 
 @dataclass
 class TextItem:
@@ -266,6 +302,16 @@ class TextItem:
             "content": self.content,
             "txt_settings": self.text_settings_index,
         }
+
+    @staticmethod
+    def from_json(data: dict):
+        return TextItem(
+            data["index"],
+            Pos.from_str(data["pos"]),
+            data["rot"],
+            data["content"],
+            data["txt_settings"],
+        )
 
 
 @dataclass
@@ -409,6 +455,7 @@ class InventoryItem:
                 )
 
         item = {
+            "index": self.index,
             "name": self.name,
             "sources": sources,
             "positions": positions,
@@ -437,6 +484,25 @@ class InventoryItem:
             item["extra_index"] = self.extra_index
 
         return item
+
+    @staticmethod
+    def from_json(config_dir: Path, data: dict):
+        return InventoryItem(
+            data["index"],
+            data["name"],
+            [SourceItem(Path(path).stem, config_dir / path) for path in data["sources"]],
+            Counter.from_json(data["counter"]) if "counter" in data else None,
+            [Pos.from_str(pos) for pos in data["positions"]],
+            data["rot"],
+            data["enabled"],
+            data["scale_content"],
+            data["is_reward"],
+            data["flag_index"] if "flag_index" in data else None,
+            data["use_wheel"],
+            data["extra_index"] if "extra_index" in data else None,
+            [TextItem.from_json(elem) for elem in data["texts"]],
+            dict(),
+        )
 
 
 @dataclass
@@ -469,6 +535,12 @@ class FlagItem:
             "hidden": self.hidden,
         }
 
+    @staticmethod
+    def from_json(data: dict):
+        return FlagItem(
+            data["index"], str(data["text"]).split(";"), Pos.from_str(data["pos"]), data["txt_settings"], data["hidden"]
+        )
+
     def get_longest_flag(self):
         str_max = ""
         for txt in self.texts:
@@ -495,6 +567,15 @@ class Rewards:
 
         for reward in self.items:
             rewards.append(reward.to_json())
+
+        return rewards
+
+    @staticmethod
+    def from_json(elems: list):
+        rewards = Rewards()
+
+        for data in elems:
+            rewards.items.append(RewardItem.from_json(data))
 
         return rewards
 
@@ -530,6 +611,10 @@ class ExtraItem:
             "path": f"{self.path.relative_to(active_config_dir)}",
         }
 
+    @staticmethod
+    def from_json(config_dir: Path, data: dict):
+        return ExtraItem(data["index"], Pos.from_str(data["pos"]), config_dir / data["path"])
+
 
 @dataclass
 class Extras:
@@ -552,6 +637,15 @@ class Extras:
                 extras.append(item.to_json())
 
         return extras
+
+    @staticmethod
+    def from_json(config_dir: Path, elems: list):
+        items = []
+
+        for data in elems:
+            items.append(ExtraItem.from_json(config_dir, data))
+
+        return Extras(items)
 
 
 class Inventory:
@@ -620,6 +714,22 @@ class Inventory:
             "items": items,
             "rewards": self.rewards.to_json(),
         }
+
+    @staticmethod
+    def from_json(config_dir: Path, data: dict):
+        inventory = Inventory(
+            data["index"],
+            data["name"],
+            config_dir / data["background"],
+            Color.unpack(int(data["background_color"], base=16)),
+            [TextItem.from_json(elem) for elem in data["texts"]],
+        )
+
+        if "rewards" in data:
+            inventory.rewards = Rewards.from_json(data["rewards"])
+
+        inventory.items = [InventoryItem.from_json(config_dir, elem) for elem in data["items"]]
+        return inventory
 
     def find_item_by_index(self, index: int):
         for item in self.items:
@@ -699,7 +809,7 @@ class GoModeSettings:
     def to_json(self):
         data = {
             "pos": self.pos.to_str(),
-            "hide_if_disabled": f"{self.hide_if_disabled}",
+            "hide_if_disabled": self.hide_if_disabled,
             "source": f"{self.path.relative_to(active_config_dir)}",
             "use_light": self.use_light,
         }
@@ -711,6 +821,19 @@ class GoModeSettings:
             data["light_rot_refresh"] = self.thread_refresh_rate
 
         return data
+
+    @staticmethod
+    def from_json(config_dir: Path, data: dict):
+        return GoModeSettings(
+            Pos.from_str(data["pos"]),
+            data["hide_if_disabled"],
+            config_dir / data["source"],
+            data["light_path"] if "light_path" in data else None,
+            Pos.from_str(data["light_pos"]) if "light_pos" in data else None,
+            data["light_rot_speed"] if "light_rot_speed" in data else None,
+            data["light_rot_refresh"] if "light_rot_refresh" in data else None,
+            data["use_light"],
+        )
 
 
 class Config:
@@ -749,6 +872,8 @@ class Config:
         match self.config_path.suffix:
             case ".xml":
                 self.from_xml()
+            case ".json":
+                self.from_json()
             case _:
                 show_error(self.widget, "ERROR: the config file's format isn't supported yet.")
 
@@ -1158,6 +1283,31 @@ class Config:
 
         with self.config_path.with_suffix(".json").open("w") as f:
             json.dump(root, f, indent=4)
+
+    def from_json(self):
+        try:
+            root = json.loads(self.config_path.read_text())
+        except:
+            show_error(self.widget, f"ERROR: File '{self.config_path}' is missing or malformed.")
+            return
+
+        self.xml_version = tuple([int(elem) for elem in str(root["version"]).split(".")])
+        self.name = root["name"]
+        self.icon_path = self.parse_path(root["icon"], "config icon path", False)
+        self.default_inv = root["default_inventory"]
+        self.show_timer = root["show_timer"]
+        self.embed_timer = root["embed_timer"]
+        self.state_path = Path(root["state_path"]).resolve() if "state_path" in root is not None else None
+        self.fonts = [Font.from_json(self.config_dir, self.widget, data) for data in root["fonts"]]
+        self.gomode_settings = GoModeSettings.from_json(self.config_dir, root["go_mode"]) if "go_mode" in root else None
+        self.extras = Extras.from_json(self.config_dir, root["extras"]) if "extras" in root else None
+        self.inventories = {i: Inventory.from_json(self.config_dir, data) for i, data in enumerate(root["inventories"])}
+
+        if "text_settings" in root:
+            self.text_settings = [TextSettings.from_json(self.widget, data) for data in root["text_settings"]]
+
+        if "flags" in root:
+            self.flags = [FlagItem.from_json(data) for data in root["flags"]]
 
     def validate(self):
         if len(self.fonts) == 0:
