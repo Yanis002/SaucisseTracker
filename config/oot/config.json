@@ -4,7 +4,7 @@
     "icon": "items/ocarina_of_time.png",
     "default_inventory": 0,
     "show_timer": true,
-    "embed_timer": false,
+    "embed_timer": true,
     "state_path": "config/oot/state.txt",
     "fonts": [
         {
