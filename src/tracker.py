@@ -695,7 +695,7 @@ class TrackerWindow(QWidget):
             self,
             "About",
             QMessageBox.Icon.Information,
-            "Made with ♥ by Yanis.\n" + "Version 0.1.0.\n\n" + "Licensed under GNU General Public License v3.0.",
+            "Made with ♥ by Yanis.\n" + "Version 0.2.0.\n\n" + "Licensed under GNU General Public License v3.0.",
         )
 
     def task_rotation_position_changed(self, pos):
