@@ -17,9 +17,10 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QMessageBox,
     QFrame,
+    QComboBox,
 )
 
-from common import ListViewModel, Color, Pos, move_file_to_config, show_info, debug_print
+from common import ListViewModel, Color, Pos, move_file_to_config, show_info, show_error, debug_print
 from config import Config, InventoryItem, Counter, SourceItem
 from tracker import TrackerWindow
 
@@ -338,6 +339,19 @@ class TrackerEditorMenu(QWidget):
         self.btn_open_item_static_txt = QPushButton("Static Texts", self.group_misc_items)
         self.btn_open_item_static_txt.setGeometry(9, 80, 103, 31)
         self.btn_open_item_static_txt.pressed.connect(self.open_item_static_text_settings)
+
+        self.combo_file_format = QComboBox(self)
+        self.combo_file_format.setGeometry(670, 600, 111, 33)
+        self.combo_file_format.addItem("Save as JSON")
+        self.combo_file_format.addItem("Save as XML")
+
+        match self.config.config_path.suffix:
+            case ".json":
+                self.combo_file_format.setCurrentIndex(0)
+            case ".xml":
+                self.combo_file_format.setCurrentIndex(1)
+            case _:
+                print("unexpected suffix")
 
         self.btn_open_cfg_settings = QPushButton("Config Settings", self)
         self.btn_open_cfg_settings.setGeometry(790, 600, 101, 33)
@@ -669,8 +683,28 @@ class TrackerEditorMenu(QWidget):
         item.rotation = value
 
     def save_config(self):
-        self.config.to_xml()
-        show_info(self, "Configuration saved successfully!")
+        try:
+            format = self.combo_file_format.currentText().lower()
+
+            if "xml" in format:
+                if self.config.config_path.suffix != ".xml":
+                    self.config.config_path.unlink()
+                    self.config.config_path = self.config.config_path.with_suffix(".xml")
+
+                self.config.to_xml()
+            elif "json" in format:
+                if self.config.config_path.suffix != ".json":
+                    self.config.config_path.unlink()
+                    self.config.config_path = self.config.config_path.with_suffix(".json")
+
+                self.config.to_json()
+            else:
+                raise ValueError(f"ERROR: unexpected file format ({format}).")
+
+            show_info(self, "Configuration saved successfully!")
+        except Exception as e:
+            print(e.with_traceback())
+            show_error(self, "An error occurred.")
 
     def add_item(self):
         scene = self.tracker.scene

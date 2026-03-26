@@ -828,7 +828,7 @@ class GoModeSettings:
             Pos.from_str(data["pos"]),
             data["hide_if_disabled"],
             config_dir / data["source"],
-            data["light_path"] if "light_path" in data else None,
+            config_dir / data["light_path"] if "light_path" in data else None,
             Pos.from_str(data["light_pos"]) if "light_pos" in data else None,
             data["light_rot_speed"] if "light_rot_speed" in data else None,
             data["light_rot_refresh"] if "light_rot_refresh" in data else None,
