@@ -1,3 +1,5 @@
+import json
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Any, TYPE_CHECKING
@@ -15,6 +17,7 @@ from common import (
     show_error,
     GLOBAL_HALF_OPACITY,
     CURRENT_XML_VERSION,
+    CURRENT_JSON_VERSION,
 )
 
 if TYPE_CHECKING:
@@ -54,6 +57,17 @@ class Font:
             attrib["Source"] = f"{self.path.relative_to(active_config_dir)}"
 
         return ET.SubElement(parent, "Item", attrib)
+
+    def to_json(self):
+        data = {
+            "index": self.index,
+            "name": self.name,
+        }
+
+        if self.path is not None:
+            data["source"] = f"{self.path.relative_to(active_config_dir)}"
+
+        return data
 
 
 @dataclass
@@ -111,6 +125,25 @@ class TextSettings:
             attrib["Minimal"] = f"{self.is_minimal}"
 
         return ET.SubElement(parent, "Item", attrib)
+
+    def to_json(self):
+        data = {
+            "index": self.index,
+            "name": self.name,
+            "font_index": self.font,
+            "size": self.size,
+            "bold": self.bold,
+            "color": f"0x{Color.pack(self.color):06X}",
+            "color_alt": f"0x{Color.pack(self.color_alt):06X}",
+            "outline_thickness": self.outline_thickness,
+            "is_timer": self.is_timer,
+        }
+
+        if self.is_timer:
+            data["use_gradient"] = self.use_gradient
+            data["is_minimal"] = self.is_minimal
+
+        return data
 
 
 @dataclass
@@ -195,6 +228,13 @@ class RewardItem:
             },
         )
 
+    def to_json(self):
+        return {
+            "pos": self.pos.to_str(),
+            "name": self.name,
+            "txt_settings": self.text_settings_index,
+        }
+
 
 @dataclass
 class TextItem:
@@ -217,6 +257,15 @@ class TextItem:
                 "TextSettings": f"{self.text_settings_index}",
             },
         )
+
+    def to_json(self):
+        return {
+            "index": self.index,
+            "pos": self.pos.to_str(),
+            "rot": f"{self.rotation}",
+            "content": self.content,
+            "txt_settings": self.text_settings_index,
+        }
 
 
 @dataclass
@@ -326,6 +375,69 @@ class InventoryItem:
 
         return item
 
+    def to_json(self, index: int):
+        if index != self.index:
+            print(f"WARNING: '{self.__class__.__name__}' index mismatch (expected: {self.index}, current: {index})")
+
+        sources = []
+        if len(self.sources) > 0:
+            if len(self.sources) == 1:
+                sources = [str(self.sources[0].path.relative_to(active_config_dir))]
+            else:
+                for src_item in self.sources:
+                    sources.append(f"{src_item.path.relative_to(active_config_dir)}")
+
+        positions = []
+        if len(self.positions) > 0:
+            if len(self.positions) == 1:
+                positions = [self.positions[0].to_str()]
+            else:
+                for pos in self.positions:
+                    positions.append(pos.to_str())
+
+        texts = []
+        if len(self.static_texts) > 0:
+            for label in self.static_texts:
+                texts.append(
+                    {
+                        "index": label.index,
+                        "pos": label.pos.to_str(),
+                        "tot": label.rotation,
+                        "content": label.content,
+                        "txt_settings": label.text_settings_index,
+                    },
+                )
+
+        item = {
+            "name": self.name,
+            "sources": sources,
+            "positions": positions,
+            "rot": self.rotation,
+            "texts": texts,
+            "enabled": self.enabled,
+            "scale_content": self.scale_content,
+            "is_reward": self.is_reward,
+            "use_wheel": self.use_wheel,
+        }
+
+        if self.counter is not None:
+            item["counter"] = {
+                "min": self.counter.min,
+                "max": self.counter.max,
+                "incr": self.counter.increment,
+                "middle_incr": self.counter.middle_click_increment,
+                "txt_settings": self.counter.text_settings_index,
+                "pos": self.counter.pos.to_str(),
+            }
+
+        if self.flag_index is not None:
+            item["flag_index"] = self.flag_index
+
+        if self.extra_index is not None:
+            item["extra_index"] = self.extra_index
+
+        return item
+
 
 @dataclass
 class FlagItem:
@@ -348,6 +460,15 @@ class FlagItem:
             },
         )
 
+    def to_json(self):
+        return {
+            "index": self.index,
+            "pos": self.pos.to_str(),
+            "text": f"{';'.join(self.texts)}",
+            "txt_settings": self.text_settings_index,
+            "hidden": self.hidden,
+        }
+
     def get_longest_flag(self):
         str_max = ""
         for txt in self.texts:
@@ -366,6 +487,14 @@ class Rewards:
 
         for reward in self.items:
             _ = reward.to_xml(rewards)
+
+        return rewards
+
+    def to_json(self):
+        rewards = []
+
+        for reward in self.items:
+            rewards.append(reward.to_json())
 
         return rewards
 
@@ -394,6 +523,13 @@ class ExtraItem:
             },
         )
 
+    def to_json(self):
+        return {
+            "index": self.index,
+            "pos": self.pos.to_str(),
+            "path": f"{self.path.relative_to(active_config_dir)}",
+        }
+
 
 @dataclass
 class Extras:
@@ -405,6 +541,15 @@ class Extras:
         if len(self.items) > 0:
             for i, item in enumerate(self.items):
                 _ = item.to_xml(extras)
+
+        return extras
+
+    def to_json(self):
+        extras = []
+
+        if len(self.items) > 0:
+            for item in self.items:
+                extras.append(item.to_json())
 
         return extras
 
@@ -454,6 +599,27 @@ class Inventory:
         _ = self.rewards.to_xml(inventory)
 
         return inventory
+
+    def to_json(self):
+        texts = []
+        if len(self.static_texts) > 0:
+            for text in self.static_texts:
+                texts.append(text.to_json())
+
+        items = []
+        if len(self.items) > 0:
+            for i, item in enumerate(self.items):
+                items.append(item.to_json(i))
+
+        return {
+            "index": self.index,
+            "name": self.name,
+            "background": f"{self.background.relative_to(active_config_dir)}",
+            "background_color": f"0x{Color.pack(self.background_color):06X}",
+            "texts": texts,
+            "items": items,
+            "rewards": self.rewards.to_json(),
+        }
 
     def find_item_by_index(self, index: int):
         for item in self.items:
@@ -529,6 +695,22 @@ class GoModeSettings:
             attrib["LightRotRefresh"] = f"{self.thread_refresh_rate}"
 
         return ET.SubElement(parent, "GoMode", attrib)
+
+    def to_json(self):
+        data = {
+            "pos": self.pos.to_str(),
+            "hide_if_disabled": f"{self.hide_if_disabled}",
+            "source": f"{self.path.relative_to(active_config_dir)}",
+            "use_light": self.use_light,
+        }
+
+        if self.light_path is not None and self.light_pos is not None:
+            data["light_path"] = f"{self.light_path.relative_to(active_config_dir)}"
+            data["light_pos"] = self.light_pos.to_str()
+            data["light_rot_speed"] = self.rotation_speed
+            data["light_rot_refresh"] = self.thread_refresh_rate
+
+        return data
 
 
 class Config:
@@ -923,6 +1105,59 @@ class Config:
                     self.inventories[inventory.index] = inventory
                 case _:
                     show_error(self.widget, f"ERROR: unknown configuration tag: '{elem.tag}'")
+
+    def to_json(self):
+        global active_config_dir
+
+        active_config_dir = self.config_dir
+        root = {
+            "version": ".".join(f"{elem}" for elem in CURRENT_JSON_VERSION),
+            "name": self.name,
+            "icon": f"{self.icon_path.relative_to(active_config_dir)}",
+            "default_inventory": self.default_inv,
+            "show_timer": self.show_timer,
+            "embed_timer": self.embed_timer,
+        }
+
+        if self.state_path is not None:
+            state_path = self.state_path
+            if not state_path.is_relative_to(active_config_dir):
+                state_path = self.state_path.relative_to(active_config_dir)
+
+            root["state_path"] = f"{state_path}"
+
+        to_export: dict[str, Any] = {
+            "fonts": self.fonts,
+            "text_settings": self.text_settings,
+            "flags": self.flags,
+            "go_mode": self.gomode_settings,
+            "extras": self.extras,
+        }
+
+        for tag, data in to_export.items():
+            if isinstance(data, list):
+                if len(data) > 0:
+                    elems = []
+
+                    for i, item in enumerate(data):
+                        if i != item.index:
+                            print(
+                                f"WARNING: '{item.__class__.__name__}' index mismatch (expected: {item.index}, current: {i})"
+                            )
+
+                        elems.append(item.to_json())
+
+                    root[tag] = elems
+            elif data is not None:
+                root[tag] = data.to_json()
+
+        inventories = []
+        for inventory in self.inventories.values():
+            inventories.append(inventory.to_json())
+        root["inventories"] = inventories
+
+        with self.config_path.with_suffix(".json").open("w") as f:
+            json.dump(root, f, indent=4)
 
     def validate(self):
         if len(self.fonts) == 0:

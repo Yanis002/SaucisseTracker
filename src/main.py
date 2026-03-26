@@ -25,7 +25,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from common import ListViewModel, show_error, show_info, move_file_to_config, OS_MENU_OFFSET, CURRENT_XML_VERSION
+from common import (
+    ListViewModel,
+    show_error,
+    show_info,
+    move_file_to_config,
+    OS_MENU_OFFSET,
+    CURRENT_XML_VERSION,
+    CURRENT_JSON_VERSION,
+)
 from config import Config
 from tracker import MainTrackerWindow
 from editor import TrackerEditorMenu
@@ -190,10 +198,18 @@ class MainWindow(QMainWindow):
         for path in sorted(dir.rglob("config.*")):
             absolute = path.resolve()
             new_config = Config(self, absolute)
-            config_xml_version = (new_config.xml_version[0], new_config.xml_version[1])
-            cur_xml_version = (CURRENT_XML_VERSION[0], CURRENT_XML_VERSION[1])
+            config_version = (new_config.xml_version[0], new_config.xml_version[1])
 
-            if not self.is_debug and config_xml_version < cur_xml_version:
+            match path.suffix:
+                case ".xml":
+                    cur_version = (CURRENT_XML_VERSION[0], CURRENT_XML_VERSION[1])
+                case ".json":
+                    cur_version = (CURRENT_JSON_VERSION[0], CURRENT_JSON_VERSION[1])
+                case _:
+                    show_error(self, f"ERROR: unexpected path suffix ('{path.suffix}').")
+                    continue
+
+            if not self.is_debug and config_version < cur_version:
                 # previously the config's name was defined based on the first inventory name
                 show_info(self, f"Ignoring outdated config named '{new_config.active_inv.name}'.")
             else:
