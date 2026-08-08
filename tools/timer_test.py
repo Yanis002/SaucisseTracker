@@ -136,9 +136,7 @@ class LiveSplit(QMainWindow):
 
         self.centralwidget = QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
-        self.centralwidget.setStyleSheet(
-            f"background-color: rgb({self.bg_color.r}, {self.bg_color.g}, {self.bg_color.b});"
-        )
+        self.centralwidget.setStyleSheet(f"background-color: rgb({self.bg_color.r}, {self.bg_color.g}, {self.bg_color.b});")
         self.setCentralWidget(self.centralwidget)
 
         self.menu = QMenuBar(parent=self)
@@ -213,12 +211,12 @@ class LiveSplit(QMainWindow):
         # top color
         h, s, v = colorsys.rgb_to_hsv(self.timer_color.r / 255, self.timer_color.g / 255, self.timer_color.b / 255)
         r, g, b = colorsys.hsv_to_rgb(h, s * 0.5, min((1.5 * v + 0.1), 0.8))
-        col2 = Color(r * 255, g * 255, b * 255)
+        col2 = Color(round(r * 255), round(g * 255), round(b * 255))
 
         # bottom color
         h, s, v = colorsys.rgb_to_hsv(self.timer_color.r / 255, self.timer_color.g / 255, self.timer_color.b / 255)
         r, g, b = colorsys.hsv_to_rgb(h, s, v * 0.9)
-        col1 = Color(r * 255, g * 255, b * 255)
+        col1 = Color(round(r * 255), round(g * 255), round(b * 255))
 
         if self.use_gradient:
             self.time_lbl.setStyleSheet(
@@ -252,14 +250,15 @@ class LiveSplit(QMainWindow):
         super().closeEvent(a0)
         self.ls_thread.stop()
 
-    def keyPressEvent(self, event: QKeyEvent):
-        super().keyPressEvent(event)
+    def keyPressEvent(self, a0: QKeyEvent | None):
+        super().keyPressEvent(a0)
+        assert a0 is not None
 
-        if event.key() == Qt.Key.Key_Escape:
+        if a0.key() == Qt.Key.Key_Escape:
             self.update_menu_visibility(False)
-        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+        elif a0.modifiers() == Qt.KeyboardModifier.ControlModifier:
             # Ctrl + ...
-            match event.key():
+            match a0.key():
                 case Qt.Key.Key_S:
                     self.start_timer()
                 case Qt.Key.Key_P:

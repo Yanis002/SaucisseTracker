@@ -146,20 +146,23 @@ class MainWindow(QMainWindow):
 
         # start centered
         qtRectangle = self.frameGeometry()
-        centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
-        qtRectangle.moveCenter(centerPoint)
-        self.move(qtRectangle.topLeft())
+        screen = QGuiApplication.primaryScreen()
+
+        if screen is not None:
+            centerPoint = screen.availableGeometry().center()
+            qtRectangle.moveCenter(centerPoint)
+            self.move(qtRectangle.topLeft())
 
         if is_debug:
             if self.is_editor:
-                self.action_edit_triggered(False, 1)
+                self.action_edit_triggered(False)
             else:
                 self.btn_go_clicked()
 
-    def showEvent(self, e: Optional[QShowEvent]):
+    def showEvent(self, a0: Optional[QShowEvent]):
         """Actions to do when the window is showing."""
 
-        super(QMainWindow, self).showEvent(e)
+        super(QMainWindow, self).showEvent(a0)
 
         # if the folder isn't empty
         if any(TEMP_CONFIG_DIR.iterdir()):
@@ -171,10 +174,10 @@ class MainWindow(QMainWindow):
             self.tracker_window.deleteLater()
             self.tracker_window = None
 
-    def closeEvent(self, e: Optional[QCloseEvent]):
+    def closeEvent(self, a0: Optional[QCloseEvent]):
         """Actions to do when the window is closing (not hiding)."""
 
-        super(QMainWindow, self).closeEvent(e)
+        super(QMainWindow, self).closeEvent(a0)
 
         # delete the temporary folder
         rmtree(TEMP_DIR)
@@ -256,7 +259,10 @@ class MainWindow(QMainWindow):
 
             self.model_cache = [(elem[0], elem[1], elem[2]) for elem in model_items]
             self.list_configs.setModel(ListViewModel(self.model_cache))
-            self.list_configs.setCurrentIndex(self.list_configs.model().index(0, 0))
+
+            model = self.list_configs.model()
+            assert model is not None, "model is None"
+            self.list_configs.setCurrentIndex(model.index(0, 0))
         except Exception:
             show_error(self, f"An error occurred\n\n{traceback.format_exc()}")
 
@@ -265,8 +271,10 @@ class MainWindow(QMainWindow):
 
         try:
             # get selected list item infos
+            model = self.list_configs.model()
+            assert model is not None, "model is None"
             index = self.list_configs.currentIndex()
-            item_name: str = list(self.list_configs.model().itemData(index).values())[0]
+            item_name: str = list(model.itemData(index).values())[0]
 
             # extract the zip if we chose one
             if item_name.endswith(".zip"):
@@ -307,7 +315,9 @@ class MainWindow(QMainWindow):
         """Opens the editor to edit an existing config."""
 
         index = self.list_configs.currentIndex()
-        item_name: str = list(self.list_configs.model().itemData(index).values())[0]
+        model = self.list_configs.model()
+        assert model is not None, "model is None"
+        item_name: str = list(model.itemData(index).values())[0]
 
         if len(self.configs) > 0 and not item_name.endswith(".zip"):
             self.tracker_editor = TrackerEditorMenu(self, copy(self.configs), index.row())

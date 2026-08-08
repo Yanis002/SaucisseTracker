@@ -6,7 +6,7 @@ from typing import Optional, Any, TYPE_CHECKING
 from xml.etree import ElementTree as ET
 from xml.dom import minidom as MD
 
-from PyQt6.QtGui import QFontDatabase, QPixmap
+from PyQt6.QtGui import QFontDatabase
 from PyQt6.QtWidgets import QWidget
 
 from common import (
@@ -53,7 +53,7 @@ class Font:
             "Name": f"{self.name}",
         }
 
-        if self.path is not None:
+        if self.path is not None and active_config_dir is not None:
             attrib["Source"] = f"{self.path.relative_to(active_config_dir)}"
 
         return ET.SubElement(parent, "Item", attrib)
@@ -64,7 +64,7 @@ class Font:
             "name": self.name,
         }
 
-        if self.path is not None:
+        if self.path is not None and active_config_dir is not None:
             data["source"] = f"{self.path.relative_to(active_config_dir)}"
 
         return data
@@ -339,7 +339,9 @@ class InventoryItem:
     pixmap_items: list[PixmapItem] = field(default_factory=list)
 
     def update_reward(self, index: int, reward_info: RewardItem):
-        pos = self.reward_map[index].item_pixmap.pos()
+        pixmap = self.reward_map[index].item_pixmap
+        assert pixmap is not None, "pixmap is None"
+        pos = pixmap.pos()
         self.reward_map[index].setPlainText(reward_info.name)
         self.reward_map[index].setPos(pos.x() + reward_info.pos.x, pos.y() + reward_info.pos.y)
 
@@ -351,7 +353,7 @@ class InventoryItem:
 
         attrib: dict[str, str] = {"Name": self.name}
 
-        if len(self.sources) > 0:
+        if len(self.sources) > 0 and active_config_dir is not None:
             if len(self.sources) == 1:
                 attrib["Source"] = str(self.sources[0].path.relative_to(active_config_dir))
             else:
@@ -426,7 +428,7 @@ class InventoryItem:
             print(f"WARNING: '{self.__class__.__name__}' index mismatch (expected: {self.index}, current: {index})")
 
         sources = []
-        if len(self.sources) > 0:
+        if len(self.sources) > 0 and active_config_dir is not None:
             if len(self.sources) == 1:
                 sources = [str(self.sources[0].path.relative_to(active_config_dir))]
             else:
@@ -594,6 +596,7 @@ class ExtraItem:
     path: Path
 
     def to_xml(self, parent: ET.Element):
+        assert active_config_dir is not None, "active_config_dir is None"
         return ET.SubElement(
             parent,
             "Item",
@@ -605,6 +608,7 @@ class ExtraItem:
         )
 
     def to_json(self):
+        assert active_config_dir is not None, "active_config_dir is None"
         return {
             "index": self.index,
             "pos": self.pos.to_str(),
@@ -653,7 +657,7 @@ class Inventory:
         self,
         index: int,
         name: str,
-        bg_path: Path,
+        bg_path: Path | None,
         bg_color: Color,
         static_texts: list[TextItem],
     ):
@@ -671,6 +675,9 @@ class Inventory:
         return Inventory(index, f"New Inventory ({index})", None, Color(0, 0, 0), list())
 
     def to_xml(self, parent: ET.Element):
+        assert active_config_dir is not None, "active_config_dir is None"
+        assert self.background is not None, "self.background is None"
+
         inventory = ET.SubElement(
             parent,
             "Inventory",
@@ -695,6 +702,9 @@ class Inventory:
         return inventory
 
     def to_json(self):
+        assert active_config_dir is not None, "active_config_dir is None"
+        assert self.background is not None, "self.background is None"
+
         texts = []
         if len(self.static_texts) > 0:
             for text in self.static_texts:
@@ -786,11 +796,13 @@ class GoModeSettings:
     path: Path
     light_path: Optional[Path]
     light_pos: Optional[Pos]
-    rotation_speed: int
-    thread_refresh_rate: float
+    rotation_speed: int | None
+    thread_refresh_rate: float | None
     use_light: bool = False
 
     def to_xml(self, parent: ET.Element):
+        assert active_config_dir is not None, "active_config_dir is None"
+
         attrib = {
             "Pos": self.pos.to_str(),
             "HideIfDisabled": f"{self.hide_if_disabled}",
@@ -807,6 +819,8 @@ class GoModeSettings:
         return ET.SubElement(parent, "GoMode", attrib)
 
     def to_json(self):
+        assert active_config_dir is not None, "active_config_dir is None"
+
         data = {
             "pos": self.pos.to_str(),
             "hide_if_disabled": self.hide_if_disabled,
@@ -823,21 +837,21 @@ class GoModeSettings:
         return data
 
     @staticmethod
-    def from_json(config_dir: Path, data: dict):
+    def from_json(config_dir: Path, data: dict[Any, Any]):
         return GoModeSettings(
             Pos.from_str(data["pos"]),
             data["hide_if_disabled"],
             config_dir / data["source"],
             config_dir / data["light_path"] if "light_path" in data else None,
             Pos.from_str(data["light_pos"]) if "light_pos" in data else None,
-            data["light_rot_speed"] if "light_rot_speed" in data else None,
-            data["light_rot_refresh"] if "light_rot_refresh" in data else None,
+            int(data["light_rot_speed"]) if "light_rot_speed" in data else None,
+            float(data["light_rot_refresh"]) if "light_rot_refresh" in data else None,
             data["use_light"],
         )
 
 
 class Config:
-    def __init__(self, widget: QWidget, config_path: Path):
+    def __init__(self, widget: QWidget, config_path: Path | None):
         self.widget = widget
 
         self.default_inv = 0
@@ -930,7 +944,7 @@ class Config:
         if value is not None:
             return int(value, 0)
         elif raise_error:
-            show_error(self.widget, f"ERROR: there's a missing attribute.")
+            show_error(self.widget, "ERROR: there's a missing attribute.")
 
         return None
 
@@ -974,6 +988,7 @@ class Config:
         active_config_dir = self.config_dir
         root = ET.Element("Root")
 
+        assert self.icon_path is not None, "self.icon_path is None"
         attrib = {
             "XMLVersion": ".".join(f"{elem}" for elem in CURRENT_XML_VERSION),
             "Name": self.name,
@@ -1024,13 +1039,14 @@ class Config:
     def from_xml(self):
         try:
             root = ET.parse(self.config_path).getroot()
-        except:
+        except Exception as _:
             show_error(self.widget, f"ERROR: File '{self.config_path}' is missing or malformed.")
             return
 
         config = root.find("Config")
         if config is None:
             show_error(self.widget, "ERROR: config settings not found")
+            return
 
         xml_version = config.get("XMLVersion", "0.0").split(".")
 
@@ -1052,7 +1068,7 @@ class Config:
                             Font(
                                 self.widget,
                                 int(item.get("Index", "0")),
-                                item.get("Name"),
+                                item.get("Name", "Unknown Name"),
                                 self.parse_path(item.get("Source"), "font", False),
                             )
                         )
@@ -1062,7 +1078,7 @@ class Config:
                             TextSettings(
                                 self.widget,
                                 int(item.get("Index", "0")),
-                                item.get("Name"),
+                                item.get("Name", "Unknown Name"),
                                 int(item.get("FontIndex", "0")),
                                 float(item.get("Size", "10")),
                                 self.parse_bool(item.get("Bold", "False")),
@@ -1079,7 +1095,8 @@ class Config:
                         text = item.get("Text")
 
                         if text is None:
-                            show_error(self.widget, f"ERROR: Missing texts for the flag")
+                            show_error(self.widget, "ERROR: Missing texts for the flag")
+                            return
 
                         self.flags.append(
                             FlagItem(
@@ -1155,6 +1172,7 @@ class Config:
                             src_list.append(SourceItem(name, path))
                         else:
                             sources = item.find("Sources")
+                            assert sources is not None, "sources is None"
                             for sub_item in sources:
                                 path = self.parse_path(sub_item.get("Path"), f"item '{name}'", True)
                                 src_list.append(SourceItem(sub_item.get("Name", f"{path.stem}{path.suffix}"), path))
@@ -1167,6 +1185,7 @@ class Config:
                             positions.append(pos)
                         else:
                             pos_node = item.find("Positions")
+                            assert pos_node is not None, "pos_node is None"
                             for sub_item in pos_node:
                                 positions.append(Pos(int(sub_item.get("X", "0")), int(sub_item.get("Y", "0"))))
 
@@ -1233,6 +1252,7 @@ class Config:
 
     def to_json(self):
         global active_config_dir
+        assert self.icon_path is not None, "self.icon_path is None"
 
         active_config_dir = self.config_dir
         root = {
@@ -1287,7 +1307,7 @@ class Config:
     def from_json(self):
         try:
             root = json.loads(self.config_path.read_text())
-        except:
+        except Exception as _:
             show_error(self.widget, f"ERROR: File '{self.config_path}' is missing or malformed.")
             return
 

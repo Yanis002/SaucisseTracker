@@ -5,6 +5,10 @@ temp/
 # specific files
 config/**/items/**
 config/test/
+
+# temp
+config/spirit_tracks/
+
 state.txt
 *.zip
 

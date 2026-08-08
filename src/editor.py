@@ -38,7 +38,7 @@ from editor_dialogs import (
 
 class TrackerEditor(TrackerWindow):
     def __init__(
-        self, edit_menu: "TrackerEditorMenu", parent: Optional[QWidget], configs: dict[Path, Config], config_index: int
+        self, edit_menu: "TrackerEditorMenu", parent: Optional[QWidget], configs: dict[str, Config], config_index: int
     ):
         super().__init__(edit_menu, configs, config_index, True)
 
@@ -56,7 +56,7 @@ class TrackerEditor(TrackerWindow):
 
 
 class TrackerEditorMenu(QWidget):
-    def __init__(self, parent: Optional[QWidget], configs: dict[Path, Config], config_index: int):
+    def __init__(self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int):
         super().__init__()
         self.main_menu = parent
         self.tracker = TrackerEditor(self, parent, configs, config_index)
@@ -154,7 +154,9 @@ class TrackerEditorMenu(QWidget):
             for src_item in first_item.sources:
                 self.model_cache_sources.append((True, str(src_item.path), QPixmap(str(src_item.path))))
         self.reset_model_cache_sources()
-        self.list_sources.setCurrentIndex(self.list_sources.model().index(0, 0))
+        model = self.list_sources.model()
+        assert model is not None, "model is None"
+        self.list_sources.setCurrentIndex(model.index(0, 0))
 
         self.btn_sources_add = QPushButton("Add", self.group_sources)
         self.btn_sources_add.setGeometry(9, 480, 71, 21)
@@ -277,9 +279,7 @@ class TrackerEditorMenu(QWidget):
         self.group_bg = QGroupBox("Background Settings", self)
         self.group_bg.setGeometry(410, 380, 251, 141)
 
-        self.label_bg_color = QLabel(
-            f"BG Color: #{Color.pack(self.config.active_inv.background_color):06X}", self.group_bg
-        )
+        self.label_bg_color = QLabel(f"BG Color: #{Color.pack(self.config.active_inv.background_color):06X}", self.group_bg)
         self.label_bg_color.setGeometry(10, 35, 161, 18)
         self.btn_bg_color = QPushButton("Set BG Color", self.group_bg)
         self.btn_bg_color.setGeometry(130, 28, 111, 32)
@@ -392,15 +392,18 @@ class TrackerEditorMenu(QWidget):
 
         # start centered
         qtRectangle = self.frameGeometry()
-        centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
-        qtRectangle.moveCenter(centerPoint)
-        self.move(qtRectangle.topLeft())
+        screen = QGuiApplication.primaryScreen()
+
+        if screen is not None:
+            centerPoint = screen.availableGeometry().center()
+            qtRectangle.moveCenter(centerPoint)
+            self.move(qtRectangle.topLeft())
 
     def closeEvent(self, a0):
         answer = QMessageBox.question(
             self,
             "Warning",
-            f"Are you sure you want quit? Changes won't be saved!",
+            "Are you sure you want quit? Changes won't be saved!",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
@@ -415,6 +418,7 @@ class TrackerEditorMenu(QWidget):
             a0.ignore()
 
     def adjust_window_size(self):
+        assert self.tracker.background is not None, "self.tracker.background is None"
         bg_size = self.tracker.background.pixmap().size()
 
         width = self.initial_width
@@ -433,22 +437,30 @@ class TrackerEditorMenu(QWidget):
     def reset_model_cache(self):
         self.list_selected.setModel(ListViewModel(self.model_cache))
         self.model = self.list_selected.selectionModel()
+        assert self.model is not None, "self.model is None"
         self.model.currentChanged.connect(self.selection_changed)
         self.list_selected.update()
-        self.list_selected.viewport().update()
+        viewport = self.list_selected.viewport()
+        assert viewport is not None, "viewport is None"
+        viewport.update()
 
     def reset_model_cache_sources(self):
         self.list_sources.setModel(ListViewModel(self.model_cache_sources))
         self.model_sources = self.list_sources.selectionModel()
+        assert self.model_sources is not None, "self.model_sources is None"
         self.model_sources.currentChanged.connect(self.sources_selection_update)
         self.list_sources.update()
-        self.list_sources.viewport().update()
+        viewport = self.list_sources.viewport()
+        assert viewport is not None, "viewport is None"
+        viewport.update()
 
     def select_item(self, item_index: int):
-        self.list_selected.setCurrentIndex(self.list_selected.model().index(item_index, 0))
-        assert (
-            self.list_selected.currentIndex().row() == item_index
-        ), f"wrong item index ({self.list_selected.currentIndex().row()} vs {item_index})"
+        model = self.list_selected.model()
+        assert model is not None, "model is None"
+        self.list_selected.setCurrentIndex(model.index(item_index, 0))
+        assert self.list_selected.currentIndex().row() == item_index, (
+            f"wrong item index ({self.list_selected.currentIndex().row()} vs {item_index})"
+        )
 
     def get_item(self):
         return self.config.active_inv.items[self.list_selected.currentIndex().row()]
@@ -509,8 +521,10 @@ class TrackerEditorMenu(QWidget):
         # update sources listview
         self.model_cache_sources.clear()
         for src_item in item.sources:
+            model = self.list_sources.model()
+            assert model is not None, "model is None"
             self.model_cache_sources.append((True, str(src_item.path), QPixmap(str(src_item.path))))
-        self.list_sources.model().deleteLater()
+        model.deleteLater()
         self.reset_model_cache_sources()
 
         # update counters table
@@ -556,7 +570,7 @@ class TrackerEditorMenu(QWidget):
 
         def toggle_all(target_item: InventoryItem, enabled: bool):
             for pixmap_item in target_item.pixmap_items:
-                if target_item.counter is not None:
+                if target_item.counter is not None and pixmap_item.label_counter is not None:
                     pixmap_item.label_counter.setVisible(enabled)
 
                 if pixmap_item.extra is not None:
@@ -628,7 +642,7 @@ class TrackerEditorMenu(QWidget):
             pos.y += flag.pos.y
             item.pixmap_items[index].flag.setPos(float(pos.x), float(pos.y))
 
-        if item.extra_index is not None and item.pixmap_items[index].extra is not None:
+        if item.extra_index is not None and item.pixmap_items[index].extra is not None and self.config.extras is not None:
             extra = self.config.extras.items[item.extra_index]
             pos = Pos(item.positions[index].x + offset, item.positions[index].y + offset)
             pos.x += extra.pos.x
@@ -703,7 +717,7 @@ class TrackerEditorMenu(QWidget):
 
             show_info(self, "Configuration saved successfully!")
         except Exception as e:
-            print(e.with_traceback())
+            print(e.with_traceback(None))
             show_error(self, "An error occurred.")
 
     def add_item(self):
@@ -807,7 +821,9 @@ class TrackerEditorMenu(QWidget):
         model_item = self.model_cache[index]
         model_item = (model_item[0], item.name, model_item[2])
         self.model_cache[index] = model_item
-        self.list_selected.viewport().update()
+        viewport = self.list_selected.viewport()
+        assert viewport is not None, "viewport is None"
+        viewport.update()
 
     def update_counter_info(self, new_value: int):
         if self.pause_update:
@@ -1043,7 +1059,9 @@ class TrackerEditorMenu(QWidget):
         if index >= 0:
             item.sources.pop(index)
             self.model_cache_sources.pop(index)
-            self.list_sources.setCurrentIndex(self.list_sources.model().index(index - 1, 0))
+            model = self.list_sources.model()
+            assert model is not None, "model is None"
+            self.list_sources.setCurrentIndex(model.index(index - 1, 0))
             self.reset_model_cache_sources()
 
             for pixmap_item in item.pixmap_items:
@@ -1082,7 +1100,9 @@ class TrackerEditorMenu(QWidget):
             self.model_cache_sources[index] = prev_elem
             self.model_cache_sources[index - 1] = cur_elem
             self.list_sources.update()
-            self.list_sources.viewport().update()
+            viewport = self.list_sources.viewport()
+            assert viewport is not None, "viewport is None"
+            viewport.update()
 
         if index - 1 >= 0:
             prev_elem = item.sources[index - 1]
@@ -1105,7 +1125,9 @@ class TrackerEditorMenu(QWidget):
             self.model_cache_sources[index] = next_elem
             self.model_cache_sources[index + 1] = cur_elem
             self.list_sources.update()
-            self.list_sources.viewport().update()
+            viewport = self.list_sources.viewport()
+            assert viewport is not None, "viewport is None"
+            viewport.update()
 
         if index + 1 < len(item.sources):
             cur_elem = item.sources[index]

@@ -1,6 +1,6 @@
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PyQt6.QtCore import QSize, QThread, pyqtSignal
+from PyQt6.QtGui import QPixmap, QTransform, QPainter
+from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication
 
 
 # to test rotating stuff easily
@@ -29,7 +29,7 @@ class RotationWidget(QWidget):
         self.position = pos
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, a0):
         qp = QPainter(self)
         qp.setRenderHint(QPainter.RenderHint.Antialiasing)
         qp.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)

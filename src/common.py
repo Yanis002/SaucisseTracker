@@ -5,8 +5,8 @@ from pathlib import Path
 from shutil import copyfile
 from typing import Optional, TYPE_CHECKING
 
-from PyQt6.QtCore import pyqtSignal, QAbstractListModel, QObject, QRect, QSignalBlocker, QThread, Qt
-from PyQt6.QtGui import QColor, QGuiApplication, QFont, QPainterPath, QPen, QPixmap, QTextCharFormat, QTextCursor
+from PyQt6.QtCore import pyqtSignal, QAbstractListModel, QObject, QRect, QSignalBlocker, QThread, Qt, QModelIndex
+from PyQt6.QtGui import QColor, QGuiApplication, QFont, QPainterPath, QPen, QPixmap, QTextCharFormat, QTextCursor, QBrush
 from PyQt6.QtWidgets import (
     QGraphicsColorizeEffect,
     QGraphicsItem,
@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 
 if TYPE_CHECKING:
     from config import Config
-    from state import LabelState, State
+    from state import LabelState
 
 
 OS_MENU_OFFSET = 34 if os.name == "nt" else 22
@@ -32,12 +32,13 @@ DEBUG_PRINTS = False
 class ListViewModel(QAbstractListModel):
     """Widget that handles a list where each entry can have both a name and an image."""
 
-    def __init__(self, items: list[tuple[bool, str, Path]]):
+    def __init__(self, items: list[tuple[bool, str, QPixmap]]):
         super(ListViewModel, self).__init__()
         self.items = items
 
-    def data(self, index, role):
+    def data(self, index: QModelIndex, role: int | None = None):
         status, text, img = self.items[index.row()]
+        assert role is not None
 
         if role == Qt.ItemDataRole.DisplayRole:
             return text
@@ -46,7 +47,7 @@ class ListViewModel(QAbstractListModel):
             if status:
                 return img
 
-    def rowCount(self, index):
+    def rowCount(self, parent: QModelIndex | None = None):
         return len(self.items)
 
 
@@ -83,18 +84,17 @@ class Rotation(QThread):
             if self.pause_update:
                 continue
 
+            assert self.thread_refresh is not None, "thread_refresh is None"
+            assert self.speed is not None, "speed is None"
+
             try:
-                if (
-                    self.do_run
-                    and self.config.label_gomode_light is not None
-                    and self.config.label_gomode_light.isVisible()
-                ):
+                if self.do_run and self.config.label_gomode_light is not None and self.config.label_gomode_light.isVisible():
                     diff = self.thread_refresh * self.speed
                     self.position = round((self.position + diff) % 360, 2)
                     self.positionChanged.emit(self.position)
             except Exception as e:
-                print(e.with_traceback())
-                show_error(self, "The unknown error in the rotation thread happened.")
+                print(e.with_traceback(None))
+                show_error(self, "The unknown error in the rotation thread happened.")  # ty: ignore[invalid-argument-type]
 
             self.msleep(int(self.thread_refresh * 1000))
 
@@ -113,7 +113,7 @@ class PixmapItem(QGraphicsPixmapItem):
         obj_name: str,
         default_strength: float,
         state: "LabelState",
-        parent: QGraphicsItem = None,
+        parent: QGraphicsItem | None = None,
         create_effect: bool = True,
     ):
         super().__init__(pixmap, parent)
@@ -243,9 +243,9 @@ class PixmapItem(QGraphicsPixmapItem):
         return path
 
     def validate_item_index(self):
-        assert self.state.index >= 0 and self.state.index < len(
-            self.config.active_inv.items
-        ), f"Assert triggered on {repr(self.obj_name)}"
+        assert self.state.index >= 0 and self.state.index < len(self.config.active_inv.items), (
+            f"Assert triggered on {repr(self.obj_name)}"
+        )
 
     def is_gomode(self):
         return self.state.is_gomode or self.state.is_gomode_light
@@ -279,6 +279,7 @@ class PixmapItem(QGraphicsPixmapItem):
 
         assert self.effect is not None, "effect is unassigned"
         gomode_settings = self.config.gomode_settings
+        assert gomode_settings is not None, "gomode_settings is None"
         cond = gomode_visibility if gomode_visibility is not None else self.effect.strength() > 0.0
 
         if cond:
@@ -408,6 +409,7 @@ class PixmapItem(QGraphicsPixmapItem):
             if self.state.is_gomode:
                 # go-mode image
                 gomode_settings = self.config.gomode_settings
+                assert gomode_settings is not None, "gomode_settings is None"
                 assert self.effect is not None, "effect is unassigned"
 
                 if self.state.infos.gomode_visibility:
@@ -469,7 +471,8 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
             self.setPlainText(self.toPlainText())
 
         for obj in children:
-            if obj.metaObject().className() == "QWidgetTextControl":
+            meta = obj.metaObject()
+            if meta is not None and meta.className() == "QWidgetTextControl":
                 self.textControl = obj
                 break
 
@@ -498,11 +501,12 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         self.setPlainText(string)
 
         doc = self.document()
-        self.setTextWidth(doc.size().width())
-        option = doc.defaultTextOption()
-        option.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        doc.setDefaultTextOption(option)
-        self.setDocument(doc)
+        if doc is not None:
+            self.setTextWidth(doc.size().width())
+            option = doc.defaultTextOption()
+            option.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            doc.setDefaultTextOption(option)
+            self.setDocument(doc)
 
         self.setPlainText(prev)
 
@@ -542,7 +546,7 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         if event is not None and self.item_pixmap is not None:
             self.item_pixmap.wheelEvent(event)
 
-    def update_format(self, font: QFont, color: QColor):
+    def update_format(self, font: QFont, color: QColor | QBrush):
         """Sets the font and the color of the text."""
 
         self.outlineFormat.setTextOutline(
@@ -568,9 +572,7 @@ class OutlinedGraphicsTextItem(QGraphicsTextItem):
         font = self.config.get_font(text_settings)
         color = self.config.get_color(text_settings, is_max)
         self.outline_size = text_settings.outline_thickness * 2
-        self.update_format(
-            QFont(font.name, int(text_settings.size), 75 if text_settings.bold else 1), Color.convert(color)
-        )
+        self.update_format(QFont(font.name, int(text_settings.size), 75 if text_settings.bold else 1), Color.convert(color))
 
 
 class Color:
@@ -634,9 +636,12 @@ def show_message(parent: QWidget, title: str, icon: QMessageBox.Icon, text: str)
 
     # correct position
     qtRectangle = message_box.frameGeometry()
-    centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
-    qtRectangle.moveCenter(centerPoint)
-    message_box.move(qtRectangle.topLeft())
+    screen = QGuiApplication.primaryScreen()
+
+    if screen is not None:
+        centerPoint = screen.availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        message_box.move(qtRectangle.topLeft())
 
     message_box.show()
 

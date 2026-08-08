@@ -1,0 +1,45 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-case-conflict
+        exclude: ^(config|tools|\.vscode)/
+      - id: check-executables-have-shebangs
+        exclude: ^(config|tools|\.vscode)/
+      - id: check-illegal-windows-names
+        exclude: ^(config|tools|\.vscode)/
+      - id: check-json
+        exclude: ^(config|tools|\.vscode)/
+      - id: check-merge-conflict
+        exclude: ^(config|tools|\.vscode)/
+      - id: check-yaml
+        exclude: ^(config|tools|\.vscode)/
+        args:
+          - --allow-multiple-documents
+      - id: debug-statements
+        exclude: ^(config|tools|\.vscode)/
+      - id: destroyed-symlinks
+        exclude: ^(config|tools|\.vscode)/
+      - id: mixed-line-ending
+        exclude: ^(config|tools|\.vscode)/
+      - id: requirements-txt-fixer
+        exclude: ^(config|tools|\.vscode)/
+      - id: trailing-whitespace
+        exclude: ^(config|tools|\.vscode)/
+        args:
+          - --markdown-linebreak-ext=md
+
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.5
+    hooks:
+      - id: clang-format
+        exclude: ^(config|tools|\.vscode)/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.16.1
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+      # Run the formatter.
+      - id: ruff-format

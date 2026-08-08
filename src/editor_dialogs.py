@@ -322,9 +322,7 @@ class TextSettingsDialog(QDialog):
     def set_color(self):
         index = self.item_index.value() - 1
 
-        picked_qcolor = QColorDialog.getColor(
-            Color.convert(self.config.text_settings[index].color), self, "Color Picker"
-        )
+        picked_qcolor = QColorDialog.getColor(Color.convert(self.config.text_settings[index].color), self, "Color Picker")
         self.config.text_settings[index].color.r = picked_qcolor.red()
         self.config.text_settings[index].color.g = picked_qcolor.green()
         self.config.text_settings[index].color.b = picked_qcolor.blue()
@@ -448,6 +446,8 @@ class GoModeSettingsDialog(QDialog):
             self.light_pos_y.setValue(self.config.gomode_settings.light_pos.y)
         self.light_path.setText(str(self.config.gomode_settings.light_path))
 
+        assert self.config.gomode_settings.rotation_speed is not None, "rotation_speed is None"
+        assert self.config.gomode_settings.thread_refresh_rate is not None, "thread_refresh_rate is None"
         self.rot_speed.setValue(self.config.gomode_settings.rotation_speed)
         self.rot_refresh.setValue(self.config.gomode_settings.thread_refresh_rate)
 
@@ -457,6 +457,10 @@ class GoModeSettingsDialog(QDialog):
         self.setWindowIcon(self.editor.windowIcon())
 
     def update_scene(self):
+        assert self.editor.tracker.task_rotation is not None, "task_rotation is none"
+        assert self.config.gomode_settings is not None, "gomode_settings is None"
+        assert self.config.gomode_settings.rotation_speed is not None, "rotation_speed is None"
+        assert self.config.gomode_settings.thread_refresh_rate is not None, "thread_refresh_rate is None"
         self.editor.tracker.task_rotation.position = 0
         self.editor.tracker.task_rotation.speed = self.config.gomode_settings.rotation_speed
         self.editor.tracker.task_rotation.thread_refresh = self.config.gomode_settings.thread_refresh_rate
@@ -475,6 +479,7 @@ class GoModeSettingsDialog(QDialog):
         if self.pause_update:
             return
 
+        assert self.config.gomode_settings is not None, "gomode_settings is None"
         self.config.gomode_settings.pos.x = self.icon_pos_x.value()
         self.config.gomode_settings.pos.y = self.icon_pos_y.value()
 
@@ -482,6 +487,8 @@ class GoModeSettingsDialog(QDialog):
             self.config.label_gomode.setPos(self.icon_pos_x.value(), self.icon_pos_y.value())
 
     def open_icon_path(self):
+        assert self.config.gomode_settings is not None, "gomode_settings is None"
+
         path_str = QFileDialog.getOpenFileName(
             self, "Open Go Mode Icon", str(self.config.gomode_settings.path.parent), "*.png"
         )[0]
@@ -501,6 +508,7 @@ class GoModeSettingsDialog(QDialog):
         if self.pause_update:
             return
 
+        assert self.config.gomode_settings is not None, "gomode_settings is None"
         self.config.gomode_settings.use_light = self.group_light.isChecked()
 
         if self.config.label_gomode_light is not None:
@@ -515,6 +523,8 @@ class GoModeSettingsDialog(QDialog):
         if self.pause_update:
             return
 
+        assert self.config.gomode_settings is not None, "gomode_settings is None"
+        assert self.config.gomode_settings.light_pos is not None, "light_pos is None"
         self.config.gomode_settings.light_pos.x = self.light_pos_x.value()
         self.config.gomode_settings.light_pos.y = self.light_pos_y.value()
 
@@ -522,6 +532,8 @@ class GoModeSettingsDialog(QDialog):
             self.config.label_gomode_light.setPos(self.light_pos_x.value(), self.light_pos_y.value())
 
     def open_light_img_path(self):
+        assert self.config.gomode_settings is not None, "gomode_settings is None"
+
         p = Path() if self.config.gomode_settings.light_path is None else self.config.gomode_settings.light_path.parent
         path_str = QFileDialog.getOpenFileName(self, "Open Go Mode Light Image", str(p), "*.png")[0]
 
@@ -541,6 +553,9 @@ class GoModeSettingsDialog(QDialog):
         if self.pause_update:
             return
 
+        assert self.config.gomode_settings is not None, "gomode_settings is None"
+        assert self.config.gomode_settings.rotation_speed is not None, "rotation_speed is None"
+        assert self.config.gomode_settings.thread_refresh_rate is not None, "thread_refresh_rate is None"
         self.config.gomode_settings.rotation_speed = self.rot_speed.value()
         self.config.gomode_settings.thread_refresh_rate = self.rot_refresh.value()
 
@@ -780,6 +795,7 @@ class ExtraSettingsDialog(QDialog):
             self.group_item_settings.setEnabled(False)
             return
 
+        assert self.config.extras is not None, "extras is None"
         self.group_item_settings.setTitle(f"Item Settings ({index} / {len(self.config.extras.items)})")
         self.pause_update = True
         extra = self.config.extras.items[index - 1]
@@ -820,11 +836,14 @@ class ExtraSettingsDialog(QDialog):
         if self.pause_update:
             return
 
+        assert self.config.extras is not None, "extras is None"
         self.config.extras.items[index - 1].pos.x = self.item_pos_x.value()
         self.config.extras.items[index - 1].pos.y = self.item_pos_y.value()
         self.update_scene()
 
     def set_icon_path(self):
+        assert self.config.extras is not None, "extras is None"
+
         index = self.item_index.value() - 1
         path_str = QFileDialog.getOpenFileName(
             self, "Select Image File", str(self.config.extras.items[index].path.parent), "Images (*.png)"
@@ -1123,7 +1142,9 @@ class FontSettingsDialog(QDialog):
 
     def set_font_path(self):
         index = self.item_index.value() - 1
-        font_dir = self.config.fonts[index].path.parent if self.config.fonts[index].path is not None else Path()
+        path = self.config.fonts[index].path
+        assert path is not None, "path is None"
+        font_dir = path.parent if path is not None else Path()
         path_str = QFileDialog.getOpenFileName(self, "Select Font File", str(font_dir), "Font files (*.otf *.ttf)")[0]
 
         if len(path_str) == 0:
@@ -1157,10 +1178,11 @@ class FontSettingsDialog(QDialog):
 
         index = self.item_index.value() - 1
 
-        if self.is_custom.isChecked():
-            self.config.fonts[index].name = QFontDatabase.applicationFontFamilies(self.config.fonts[index].font_id)[0]
-        else:
-            self.config.fonts[index].name = self.combo_font.currentFont().family()
+        if index >= 0 and index < len(self.config.fonts):
+            if self.is_custom.isChecked():
+                self.config.fonts[index].name = QFontDatabase.applicationFontFamilies(self.config.fonts[index].font_id)[0]
+            else:
+                self.config.fonts[index].name = self.combo_font.currentFont().family()
 
         update_scene(self.config)
 
@@ -1408,11 +1430,11 @@ class StaticTextSettingsDialog(QDialog):
 
 
 class ConfigSettingsDialog(QDialog):
-    def __init__(self, config: Config, parent: "TrackerEditorMenu"):
+    def __init__(self, config: Config, parent: QWidget):
         super().__init__(parent)
 
         self.config = config
-        self.editor = parent
+        self.main_window = parent
         self.pause_update = True
 
         self.label_name = QLabel("Name", self)
@@ -1462,7 +1484,7 @@ class ConfigSettingsDialog(QDialog):
         self.pause_update = False
         self.setFixedSize(400, 220)
         self.setWindowTitle("Config Settings")
-        self.setWindowIcon(self.editor.windowIcon())
+        self.setWindowIcon(self.main_window.windowIcon())
 
     def update_name(self, text: str):
         if self.pause_update:
@@ -1481,7 +1503,9 @@ class ConfigSettingsDialog(QDialog):
         if self.pause_update:
             return
 
-        path_str = QFileDialog.getOpenFileName(self, "Open Icon Path", str(self.config.icon_path.parent), "*.png")[0]
+        icon_path = self.config.icon_path
+        assert icon_path is not None, "icon_path is None"
+        path_str = QFileDialog.getOpenFileName(self, "Open Icon Path", str(icon_path.parent), "*.png")[0]
 
         if len(path_str) == 0:
             return
@@ -1497,7 +1521,9 @@ class ConfigSettingsDialog(QDialog):
         if self.pause_update:
             return
 
-        path_str = QFileDialog.getSaveFileName(self, "Open State Path", str(self.config.state_path.parent), "*.txt")[0]
+        state_path = self.config.state_path
+        assert state_path is not None, "state_path is None"
+        path_str = QFileDialog.getSaveFileName(self, "Open State Path", str(state_path.parent), "*.txt")[0]
 
         if len(path_str) == 0:
             return

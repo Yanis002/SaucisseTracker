@@ -85,9 +85,7 @@ class AutosaveThread(QThread):
 class TrackerWindow(QWidget):
     keyPressed = pyqtSignal()
 
-    def __init__(
-        self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False
-    ):
+    def __init__(self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False):
         super().__init__(parent)
 
         self.parent_ = parent
@@ -152,20 +150,25 @@ class TrackerWindow(QWidget):
 
         # start centered
         qtRectangle = self.frameGeometry()
-        centerPoint = QGuiApplication.primaryScreen().availableGeometry().center()
-        qtRectangle.moveCenter(centerPoint)
-        self.move(qtRectangle.topLeft())
+        screen = QGuiApplication.primaryScreen()
+
+        if screen is not None:
+            centerPoint = screen.availableGeometry().center()
+            qtRectangle.moveCenter(centerPoint)
+            self.move(qtRectangle.topLeft())
 
         # load the state if existing
         if self.config.state_path is not None:
             self.file_open_triggered()
             self.config.state_saved = True
 
-        if not self.is_editor and self.config.show_timer:
+        if not self.is_editor and self.config.show_timer and self.timer is not None:
             self.timer.show()
 
     def update_timer_embed(self, update_geo: bool, force: bool = False):
-        if not self.is_editor:
+        if not self.is_editor and self.timer is not None and self.timer_proxy is not None:
+            assert self.background is not None, "self.background is None"
+
             if force:
                 self.timer.is_separate = not self.timer.is_separate
                 self.action_timer_embed.setChecked(self.timer.is_separate)
@@ -186,6 +189,7 @@ class TrackerWindow(QWidget):
             self.update_window_geometry()
 
     def update_window_geometry(self, is_init: bool = False):
+        assert self.background is not None, "self.background is None"
         bg_size = self.background.pixmap().size()
 
         if self.is_editor:
@@ -202,9 +206,7 @@ class TrackerWindow(QWidget):
         offset = 1 if os.name == "nt" else 0
 
         # set background color and remove border
-        self.view.setStyleSheet(
-            f"background-color: {Color.to_css(self.config.active_inv.background_color)}; border: 0px;"
-        )
+        self.view.setStyleSheet(f"background-color: {Color.to_css(self.config.active_inv.background_color)}; border: 0px;")
 
         # update scene geometry and ze layout's geometry
         self.scene.setSceneRect(0, 0, bg_size.width(), bg_size.height() + timer_height)
@@ -221,7 +223,9 @@ class TrackerWindow(QWidget):
             self.parent_.setWindowTitle("Reloading configuration...")
         self.state_file_opensave_abort = True
         self.file_save_triggered()  # trigger a save
-        self.task_rotation.pause_update = True
+
+        if self.task_rotation is not None:
+            self.task_rotation.pause_update = True
 
         if not self.is_editor:
             debug_print("parsing config...")
@@ -229,7 +233,7 @@ class TrackerWindow(QWidget):
             self.configs[str(self.config.config_path)] = Config(self.config.widget, self.config.config_path)
             self.config = list(self.configs.values())[self.config_index]
 
-        if not self.config.active_inv.background.exists():
+        if self.config.active_inv.background is not None and not self.config.active_inv.background.exists():
             show_error(self, f"ERROR: the following background path does not exist: {repr(self.bg_path)}")
             self.state_file_opensave_abort = False
             return
@@ -261,8 +265,11 @@ class TrackerWindow(QWidget):
         # update geometry
         debug_print("final tasks...")
         self.update_window_geometry()
-        self.task_rotation.config = self.config
-        self.task_rotation.pause_update = False
+
+        if self.task_rotation is not None:
+            self.task_rotation.config = self.config
+            self.task_rotation.pause_update = False
+
         debug_print("config reloaded!")
         self.file_open_triggered()  # restore the save
         self.state_file_opensave_abort = False
@@ -274,9 +281,7 @@ class TrackerWindow(QWidget):
         # TODO: unset flags
         for item in self.scene.items():
             if item is not self.background:
-                item.setFlags(
-                    QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable
-                )
+                item.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def set_selectable(self):
         # TODO: unset flags
@@ -319,17 +324,15 @@ class TrackerWindow(QWidget):
         rotation: int = 0,
         parent: Optional[QGraphicsItem] = None,
     ):
-        new_item = OutlinedGraphicsTextItem.new(
-            self.config, obj_name, geometry, text, text_settings_index, rotation, parent
-        )
+        new_item = OutlinedGraphicsTextItem.new(self.config, obj_name, geometry, text, text_settings_index, rotation, parent)
         self.scene.addItem(new_item)
         return new_item
 
     def create_extra(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
-        if item.extra_index is not None:
+        if item.extra_index is not None and self.config.extras is not None:
             extra = self.config.extras.items[item.extra_index]
             n = f"{obj_name}_extra_img"
-            item.pixmap_items[index].extra = self.add_pixmap(
+            extra_elem = self.add_pixmap(
                 QPixmap(str(extra.path)),
                 item.index,
                 n,
@@ -337,21 +340,23 @@ class TrackerWindow(QWidget):
                 LabelState(item.index, index, n, item),
                 create_effect=False,
             )
-            item.pixmap_items[index].extra.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
-            item.pixmap_items[index].extra.setVisible(False)
+            extra_elem.setPos(pos.x + extra.pos.x, pos.y + extra.pos.y)
+            extra_elem.setVisible(False)
+            item.pixmap_items[index].extra = extra_elem
 
     def create_flag(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
         if item.flag_index is not None:
             flag = self.config.flags[item.flag_index]
-            item.pixmap_items[index].flag = self.add_outline_text(
+            flag_elem = self.add_outline_text(
                 f"{obj_name}_flag",
                 QRect(pos.x + flag.pos.x, pos.y + flag.pos.y, 0, 0),
                 flag.texts[item.pixmap_items[index].state.infos.flag_text_index],
                 flag.text_settings_index,
             )
-            item.pixmap_items[index].flag.setVisible(not flag.hidden)
-            item.pixmap_items[index].flag.item_pixmap = item.pixmap_items[index]
-            item.pixmap_items[index].flag.set_max_width(flag.get_longest_flag())
+            flag_elem.setVisible(not flag.hidden)
+            flag_elem.item_pixmap = item.pixmap_items[index]
+            flag_elem.set_max_width(flag.get_longest_flag())
+            item.pixmap_items[index] = flag_elem
 
     def create_reward(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
         active_inv = self.config.active_inv
@@ -372,14 +377,15 @@ class TrackerWindow(QWidget):
 
     def create_counter(self, item: InventoryItem, index: int, obj_name: str, pos: Pos):
         if item.counter is not None:
-            item.pixmap_items[index].label_counter = self.add_outline_text(
+            label_counter = self.add_outline_text(
                 f"{obj_name}_counter",
                 QRect(pos.x + item.counter.pos.x, pos.y + item.counter.pos.y, 0, 0),
                 "",
                 item.counter.text_settings_index,
             )
-            item.pixmap_items[index].label_counter.item_pixmap = item.pixmap_items[index]
-            item.pixmap_items[index].label_counter.set_max_width(f"{item.counter.max}")
+            label_counter.item_pixmap = item.pixmap_items[index]
+            label_counter.set_max_width(f"{item.counter.max}")
+            item.pixmap_items[index] = label_counter
 
     def get_item_os_offset(self):
         return -1 if os.name == "nt" else 0
@@ -500,12 +506,13 @@ class TrackerWindow(QWidget):
         else:
             debug_print(f"change detected but autoreload is disabled ({path})")
 
-    def keyPressEvent(self, event: QKeyEvent):
-        super().keyPressEvent(event)
+    def keyPressEvent(self, a0: QKeyEvent | None):
+        super().keyPressEvent(a0)
+        assert a0 is not None, "event is None"
 
-        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+        if a0.modifiers() == Qt.KeyboardModifier.ControlModifier:
             # Ctrl + ...
-            match event.key():
+            match a0.key():
                 case Qt.Key.Key_S:
                     # kinda hacky but whatever
                     self.file_save_triggered()
@@ -676,7 +683,9 @@ class TrackerWindow(QWidget):
 
     def file_autosave_triggered(self):
         self.config.autosave_enabled = self.action_autosave.isChecked()
-        self.task_autosave.run_ = self.config.autosave_enabled
+
+        if self.task_autosave is not None:
+            self.task_autosave.do_run = self.config.autosave_enabled
 
     def file_autoreload_triggered(self):
         self.autoreload_enabled = self.action_autosave.isChecked()
@@ -711,10 +720,13 @@ class TrackerWindow(QWidget):
             self.timer.close()
 
         # terminate and remove the threads
-        self.task_autosave.stop()
-        self.task_rotation.stop()
-        self.task_autosave = None
-        self.task_rotation = None
+        if self.task_autosave is not None:
+            self.task_autosave.stop()
+            self.task_autosave = None
+
+        if self.task_rotation is not None:
+            self.task_rotation.stop()
+            self.task_rotation = None
 
         def clear_static_texts(item_list: list[TextItem]):
             for item in item_list:
@@ -732,9 +744,7 @@ class TrackerWindow(QWidget):
 
 
 class MainTrackerWindow(QMainWindow):
-    def __init__(
-        self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False
-    ):
+    def __init__(self, parent: Optional[QWidget], configs: dict[str, Config], config_index: int, is_editor: bool = False):
         super().__init__(parent)
         self.parent_ = parent
         self.tracker = TrackerWindow(self, configs, config_index, is_editor)
@@ -743,18 +753,21 @@ class MainTrackerWindow(QMainWindow):
         self.setWindowTitle("SaucisseTracker")
         self.show()
 
-    def keyPressEvent(self, event: QKeyEvent):
-        super().keyPressEvent(event)
+    def keyPressEvent(self, a0: QKeyEvent | None):
+        super().keyPressEvent(a0)
+        assert a0 is not None, "event is None"
 
-        if event.key() == Qt.Key.Key_Escape:
+        if a0.key() == Qt.Key.Key_Escape:
             self.close()
-        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+        elif a0.modifiers() == Qt.KeyboardModifier.ControlModifier:
             # Ctrl + ...
-            match event.key():
+            match a0.key():
                 case Qt.Key.Key_H:
                     self.tracker.update_menu_visibility(not self.tracker.menu.isHidden())
 
-    def closeEvent(self, e: Optional[QCloseEvent]):
+    def closeEvent(self, a0: Optional[QCloseEvent]):
+        assert a0 is not None, "event is None"
+
         if not self.tracker.config.state_saved and not self.tracker.is_editor:
             answer = QMessageBox.question(
                 self.tracker,
@@ -764,7 +777,7 @@ class MainTrackerWindow(QMainWindow):
             )
 
             if answer == QMessageBox.StandardButton.No:
-                e.ignore()
+                a0.ignore()
                 return
 
         self.tracker.clean_up()
@@ -773,4 +786,4 @@ class MainTrackerWindow(QMainWindow):
             self.parent_.show()
             self.close()
 
-        super().closeEvent(e)
+        super().closeEvent(a0)

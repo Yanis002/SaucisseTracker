@@ -2200,9 +2200,9 @@ class HotkeyConfigRefMut(HotkeyConfigRef):
 
     def set_value(self, index, value):
         """Sets a setting's value by its index to the given value.
-        
+
         False is returned if a hotkey is already in use by a different action.
-        
+
         This panics if the type of the value to be set is not compatible with the
         type of the setting's value. A panic can also occur if the index of the
         setting provided is out of bounds.
@@ -2764,7 +2764,7 @@ class LayoutEditorRefMut(LayoutEditorRef):
     def set_component_settings_value(self, index, value):
         """Sets a setting's value of the selected component by its setting index
         to the given value.
-        
+
         This panics if the type of the value to be set is not compatible with
         the type of the setting's value. A panic can also occur if the index of
         the setting provided is out of bounds.
@@ -2779,7 +2779,7 @@ class LayoutEditorRefMut(LayoutEditorRef):
     def set_general_settings_value(self, index, value):
         """Sets a setting's value of the general settings by its setting index to
         the given value.
-        
+
         This panics if the type of the value to be set is not compatible with
         the type of the setting's value. A panic can also occur if the index of
         the setting provided is out of bounds.
@@ -2864,9 +2864,9 @@ class LayoutEditorStateRef:
 
     def buttons(self):
         """Returns a bitfield corresponding to which buttons are active.
-        
+
         The bits are as follows:
-        
+
         * `0x04` - Can remove the current component
         * `0x02` - Can move the current component up
         * `0x01` - Can move the current component down
@@ -2886,7 +2886,7 @@ class LayoutEditorStateRef:
 
     def field_len(self, component_settings):
         """Returns the number of fields in the layout's settings.
-        
+
         Set `component_settings` to true to use the selected component's settings instead.
         """
         if self.ptr == None:
@@ -2896,7 +2896,7 @@ class LayoutEditorStateRef:
 
     def field_text(self, component_settings, index):
         """Returns the name of the layout's setting at the specified index.
-        
+
         Set `component_settings` to true to use the selected component's settings instead.
         """
         if self.ptr == None:
@@ -2906,7 +2906,7 @@ class LayoutEditorStateRef:
 
     def field_value(self, component_settings, index):
         """Returns the value of the layout's setting at the specified index.
-        
+
         Set `component_settings` to true to use the selected component's settings instead.
         """
         if self.ptr == None:
@@ -2948,9 +2948,9 @@ class LayoutEditorState(LayoutEditorStateRefMut):
 class LayoutStateRef:
     """The state object describes the information to visualize for an entire
     layout. Use this with care, as invalid usage will result in a panic.
-    
+
     Specifically, you should avoid doing the following:
-    
+
     - Using out of bounds indices.
     - Using the wrong getter function on the wrong type of component.
     """
@@ -3059,9 +3059,9 @@ class LayoutStateRef:
 class LayoutStateRefMut(LayoutStateRef):
     """The state object describes the information to visualize for an entire
     layout. Use this with care, as invalid usage will result in a panic.
-    
+
     Specifically, you should avoid doing the following:
-    
+
     - Using out of bounds indices.
     - Using the wrong getter function on the wrong type of component.
     """
@@ -3072,9 +3072,9 @@ class LayoutStateRefMut(LayoutStateRef):
 class LayoutState(LayoutStateRefMut):
     """The state object describes the information to visualize for an entire
     layout. Use this with care, as invalid usage will result in a panic.
-    
+
     Specifically, you should avoid doing the following:
-    
+
     - Using out of bounds indices.
     - Using the wrong getter function on the wrong type of component.
     """
@@ -3532,9 +3532,9 @@ class RunRef:
     def extended_file_name(self, use_extended_category_name):
         """Returns a file name (without the extension) suitable for this Run that
         is built the following way:
-        
+
         Game Name - Category Name
-        
+
         If either is empty, the dash is omitted. Special characters that cause
         problems in file names are also omitted. If an extended category name is
         used, the variables of the category are appended in a parenthesis.
@@ -3546,9 +3546,9 @@ class RunRef:
 
     def extended_name(self, use_extended_category_name):
         """Returns a name suitable for this Run that is built the following way:
-        
+
         Game Name - Category Name
-        
+
         If either is empty, the dash is omitted. If an extended category name is
         used, the variables of the category are appended in a parenthesis.
         """
@@ -3561,7 +3561,7 @@ class RunRef:
         """Returns an extended category name that possibly includes the region,
         platform and variables, depending on the arguments provided. An extended
         category name may look like this:
-        
+
         Any% (No Tuner, JPN, Wii Emulator)
         """
         if self.ptr == None:
@@ -3832,7 +3832,7 @@ class RunEditorRefMut(RunEditorRef):
         """In addition to the segments that are already selected, the segment with
         the given index is being selected. The segment chosen also becomes the
         active segment.
-        
+
         This panics if the index of the segment provided is out of bounds.
         """
         if self.ptr == None:
@@ -3842,7 +3842,7 @@ class RunEditorRefMut(RunEditorRef):
     def select_only(self, index):
         """Selects the segment with the given index. All other segments are
         unselected. The segment chosen also becomes the active segment.
-        
+
         This panics if the index of the segment provided is out of bounds.
         """
         if self.ptr == None:
@@ -6415,9 +6415,9 @@ class TimerRefMut(TimerRef):
         attempt is paused, it also resumes that attempt. Additionally, if the
         attempt is finished, the final split time is adjusted to not include the
         pause times as well.
-        
+
         # Warning
-        
+
         This behavior is not entirely optimal, as generally only the final split
         time is modified, while all other split times are left unmodified, which
         may not be what actually happened during the run.

@@ -149,7 +149,7 @@ class State:
                 return item
         return None
 
-    def get_states_from_file(self, filedata: str):
+    def get_states_from_file(self, filedata: list[str]):
         new_state = None
         items: list[LabelState] = []
 
