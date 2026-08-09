@@ -764,20 +764,6 @@ class Inventory:
 
         return None
 
-    def get_longest_static_text(self, is_items: bool):
-        str_max = ""
-
-        if is_items:
-            for item in self.items:
-                for text in item.static_texts:
-                    if len(str_max) < len(text.content):
-                        str_max = text.content
-        else:
-            for text in self.static_texts:
-                if len(str_max) < len(text.content):
-                    str_max = text.content
-        return str_max
-
     def remove_item(self, index: int):
         self.items.pop(index)
 

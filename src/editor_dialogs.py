@@ -85,17 +85,17 @@ def update_scene(config: Config):
     update_scene_flags(config)
 
     # update static texts
-    def update_static(item_list: list[TextItem], is_items: bool):
+    def update_static(item_list: list[TextItem], item_index: int | None):
         for item in item_list:
             if item.scene_item is not None:
                 item.scene_item.set_text_style(item.text_settings_index, False)
-                item.scene_item.set_max_width(config.active_inv.get_longest_static_text(is_items))
+                item.scene_item.set_max_width(item.content)
 
-    update_static(config.active_inv.static_texts, False)
+    update_static(config.active_inv.static_texts, None)
 
     # update counters
     for item in config.active_inv.items:
-        update_static(item.static_texts, True)
+        update_static(item.static_texts, item.index)
 
         for pixmap_item in item.pixmap_items:
             if pixmap_item.label_counter is not None and item.counter is not None:

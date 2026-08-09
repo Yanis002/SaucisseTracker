@@ -427,7 +427,7 @@ class TrackerEditorMenu(QWidget):
 
         height = self.initial_height
         if bg_size.height() > height:
-            height += bg_size.height()
+            height = bg_size.height() + 15
 
         sep_pos = self.group_sources.pos().x() + self.group_sources.width() - 5
         self.separator_1.setGeometry(sep_pos, 10, 20, height - 17)

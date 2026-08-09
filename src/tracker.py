@@ -385,7 +385,7 @@ class TrackerWindow(QWidget):
             )
             label_counter.item_pixmap = item.pixmap_items[index]
             label_counter.set_max_width(f"{item.counter.max}")
-            item.pixmap_items[index] = label_counter
+            item.pixmap_items[index].label_counter = label_counter
 
     def get_item_os_offset(self):
         return -1 if os.name == "nt" else 0
@@ -471,7 +471,7 @@ class TrackerWindow(QWidget):
             static_text.text_settings_index,
             static_text.rotation,
         )
-        static_text.scene_item.set_max_width(self.config.active_inv.get_longest_static_text(kind == "item"))
+        static_text.scene_item.set_max_width(static_text.content)
 
     def create_items(self):
         # the order the scene items are created defines the "priority",
@@ -488,8 +488,8 @@ class TrackerWindow(QWidget):
                 self.create_item(item, j, item_pos)
 
         for item in active_inv.items:
-            for static_text in item.static_texts:
-                self.create_static_text(static_text, "item", item.index)
+            for i, static_text in enumerate(item.static_texts):
+                self.create_static_text(static_text, "item", i)
 
         for static_text in active_inv.static_texts:
             self.create_static_text(static_text, "inventory", active_inv.index)
