@@ -4,10 +4,14 @@ temp/
 
 # specific files
 config/**/items/**
+config/spirit_tracks/fire.png
+config/spirit_tracks/snow.png
+config/spirit_tracks/forest.png
+config/spirit_tracks/tower.png
+config/spirit_tracks/water.png
+config/spirit_tracks/worldmap.png
+config/spirit_tracks/tracks*
 config/test/
-
-# temp
-config/spirit_tracks/
 
 state.txt
 *.zip
