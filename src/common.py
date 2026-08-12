@@ -127,6 +127,8 @@ class PixmapItem(QGraphicsPixmapItem):
         self.flag: Optional["OutlinedGraphicsTextItem"] = None
         self.obj_name = obj_name
         self.initial_scale = self.scale()
+        self.use_default_shape = self.config.active_inv.items[item_index].use_default_shape
+        self.default_shape = None
 
         # used for the black & white effect, enabled by default
         if create_effect:
@@ -238,9 +240,15 @@ class PixmapItem(QGraphicsPixmapItem):
     def shape(self):
         """Override to fix a behavior where you need to click on the texture, which we don't want here"""
 
-        path = QPainterPath()
-        path.addRect(self.boundingRect())
-        return path
+        if self.default_shape is None:
+            self.default_shape = super().shape()
+
+        if not self.use_default_shape:
+            path = QPainterPath()
+            path.addRect(self.boundingRect())
+            return path
+
+        return self.default_shape
 
     def validate_item_index(self):
         assert self.state.index >= 0 and self.state.index < len(self.config.active_inv.items), (

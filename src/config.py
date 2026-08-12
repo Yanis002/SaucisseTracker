@@ -329,13 +329,14 @@ class InventoryItem:
     positions: list[Pos]
     rotation: int
     enabled: bool
-    scale_content: bool
+    scale_content: list[int]
     is_reward: bool
     flag_index: Optional[int]
     use_wheel: bool
     extra_index: Optional[int]
     static_texts: list[TextItem]
     reward_map: dict[int, OutlinedGraphicsTextItem]
+    use_default_shape: bool = False
     pixmap_items: list[PixmapItem] = field(default_factory=list)
 
     def update_reward(self, index: int, reward_info: RewardItem):
@@ -404,8 +405,11 @@ class InventoryItem:
         if self.enabled:
             attrib["Enabled"] = "True"
 
-        if self.scale_content:
-            attrib["ScaleContent"] = "True"
+        if -1 not in self.scale_content:
+            attrib["ScaleContent"] = f"{self.scale_content[0]};{self.scale_content[1]}"
+
+        if self.use_default_shape:
+            attrib["UseDefaultShape"] = "True"
 
         if self.is_reward:
             attrib["Reward"] = "True"
@@ -465,6 +469,7 @@ class InventoryItem:
             "texts": texts,
             "enabled": self.enabled,
             "scale_content": self.scale_content,
+            "use_default_shape": self.use_default_shape,
             "is_reward": self.is_reward,
             "use_wheel": self.use_wheel,
         }
@@ -504,6 +509,7 @@ class InventoryItem:
             data["extra_index"] if "extra_index" in data else None,
             [TextItem.from_json(elem) for elem in data["texts"]],
             dict(),
+            data.get("use_default_shape", "False"),
         )
 
 
@@ -1202,6 +1208,21 @@ class Config:
                                 )
                             )
 
+                        value = item.get("ScaleContent")
+
+                        width = "-1"
+                        height = "-1"
+                        scale_content = [-1, -1]
+                        if value is not None:
+                            if value == "True":
+                                width = "32"
+                                height = "32"
+                            elif ";" in value:
+                                width, height = value.split(";")
+                    
+                        if "-1" not in width and "-1" not in height:
+                            scale_content = [int(width), int(height)]
+
                         inventory.items.append(
                             InventoryItem(
                                 i,
@@ -1211,13 +1232,14 @@ class Config:
                                 positions,
                                 self.parse_int(item.get("Rot", "0")),
                                 self.parse_bool(item.get("Enabled", "False")),
-                                self.parse_bool(item.get("ScaleContent", "False")),
+                                scale_content,
                                 self.parse_bool(item.get("Reward", "False")),
                                 self.parse_int(item.get("FlagIndex")),
                                 self.parse_bool(item.get("UseWheel", "False")),
                                 self.parse_int(item.get("ExtraIndex")),
                                 text_labels,
                                 dict(),
+                                self.parse_bool(item.get("UseDefaultShape", "False")),
                             )
                         )
 

@@ -147,7 +147,7 @@ class TrackerEditorMenu(QWidget):
         self.group_sources.setGeometry(670, 10, 331, 511)
 
         self.list_sources = QListView(self.group_sources)
-        self.list_sources.setGeometry(10, 30, 311, 441)
+        self.list_sources.setGeometry(10, 30, 311, 391)
 
         self.model_cache_sources: list[tuple[bool, str, QPixmap]] = []
         if first_item is not None:
@@ -157,6 +157,28 @@ class TrackerEditorMenu(QWidget):
         model = self.list_sources.model()
         assert model is not None, "model is None"
         self.list_sources.setCurrentIndex(model.index(0, 0))
+
+        self.label_scale_width = QLabel("Width", self.group_sources)
+        self.label_scale_width.setGeometry(17, 422, 41, 18)
+        self.scale_width = QSpinBox(self.group_sources)
+        self.scale_width.setGeometry(10, 440, 51, 31)
+        self.scale_width.setMinimum(-1)
+        self.scale_width.setMaximum(9999)
+        self.scale_width.setValue(-1)
+        self.scale_width.valueChanged.connect(self.update_scale_content)
+
+        self.label_scale_height = QLabel("Height", self.group_sources)
+        self.label_scale_height.setGeometry(74, 422, 51, 18)
+        self.scale_height = QSpinBox(self.group_sources)
+        self.scale_height.setGeometry(70, 440, 51, 31)
+        self.scale_height.setMinimum(-1)
+        self.scale_height.setMaximum(9999)
+        self.scale_height.setValue(-1)
+        self.scale_height.valueChanged.connect(self.update_scale_content)
+
+        self.use_default_shape = QCheckBox("Default Shape", self.group_sources)
+        self.use_default_shape.setGeometry(210, 423, 111, 22)
+        self.use_default_shape.checkStateChanged.connect(self.update_default_shape)
 
         self.btn_sources_add = QPushButton("Add", self.group_sources)
         self.btn_sources_add.setGeometry(9, 480, 71, 21)
@@ -324,20 +346,16 @@ class TrackerEditorMenu(QWidget):
         self.group_misc_items.setGeometry(280, 510, 120, 121)
 
         self.default_enable = QCheckBox("Def. Enable", self.group_misc_items)
-        self.default_enable.setGeometry(8, 23, 111, 22)
+        self.default_enable.setGeometry(8, 26, 111, 22)
         self.default_enable.setToolTip("Enable the item by default")
         self.default_enable.checkStateChanged.connect(self.update_default_enable)
 
         self.use_wheel = QCheckBox("Use Wheel", self.group_misc_items)
-        self.use_wheel.setGeometry(8, 41, 101, 22)
+        self.use_wheel.setGeometry(8, 48, 101, 22)
         self.use_wheel.checkStateChanged.connect(self.update_use_wheel)
 
-        self.scale_content = QCheckBox("Re-scale Icon", self.group_misc_items)
-        self.scale_content.setGeometry(8, 59, 111, 22)
-        self.scale_content.checkStateChanged.connect(self.update_scale_content)
-
         self.btn_open_item_static_txt = QPushButton("Static Texts", self.group_misc_items)
-        self.btn_open_item_static_txt.setGeometry(9, 80, 103, 31)
+        self.btn_open_item_static_txt.setGeometry(9, 70, 103, 41)
         self.btn_open_item_static_txt.pressed.connect(self.open_item_static_text_settings)
 
         self.combo_file_format = QComboBox(self)
@@ -527,6 +545,12 @@ class TrackerEditorMenu(QWidget):
         model.deleteLater()
         self.reset_model_cache_sources()
 
+        self.scale_width.setValue(item.scale_content[0])
+        self.scale_height.setValue(item.scale_content[1])
+        self.use_default_shape.setChecked(item.use_default_shape)
+        for pixmap_item in item.pixmap_items:
+            pixmap_item.use_default_shape = item.use_default_shape
+
         # update counters table
         self.group_counters.setChecked(item.counter is not None)
         if item.counter is not None:
@@ -566,7 +590,6 @@ class TrackerEditorMenu(QWidget):
         # update misc item settings
         self.default_enable.setChecked(item.enabled)
         self.use_wheel.setChecked(item.use_wheel)
-        self.scale_content.setChecked(item.scale_content)
 
         def toggle_all(target_item: InventoryItem, enabled: bool):
             for pixmap_item in target_item.pixmap_items:
@@ -744,7 +767,7 @@ class TrackerEditorMenu(QWidget):
                 [Pos(0, 0)],
                 0,
                 False,
-                pixmap.width() != 32 or pixmap.height() != 32,
+                [pixmap.width(), pixmap.height()],
                 False,
                 None,
                 False,
@@ -897,19 +920,34 @@ class TrackerEditorMenu(QWidget):
 
         item.use_wheel = self.use_wheel.isChecked()
 
-    def update_scale_content(self, state):
+    def update_scale_content(self, value):
         item = self.get_item()
 
         if self.pause_update:
             return
 
-        item.scale_content = self.scale_content.isChecked()
+        item.scale_content = [self.scale_width.value(), self.scale_height.value()]
 
         # TODO: see todo from create_item
         for pixmap_item in item.pixmap_items:
             p = pixmap_item.pixmap()
-            new_scale = min(32 / p.width(), 32 / p.height()) if item.scale_content else pixmap_item.initial_scale
+            new_scale = (
+                min(item.scale_content[0] / p.width(), item.scale_content[1] / p.height())
+                if item.scale_content
+                else pixmap_item.initial_scale
+            )
             pixmap_item.setScale(new_scale)
+    
+    def update_default_shape(self, state):
+        item = self.get_item()
+
+        if self.pause_update:
+            return
+
+        item.use_default_shape = self.use_default_shape.isChecked()
+
+        for pixmap_item in item.pixmap_items:
+            pixmap_item.use_default_shape = item.use_default_shape
 
     def update_bg_color(self):
         picked_qcolor = QColorDialog.getColor(

@@ -408,11 +408,11 @@ class TrackerWindow(QWidget):
         item.pixmap_items[index].setRotation(item.rotation)
         item.pixmap_items[index].state.infos.enabled = item.enabled
 
-        # rescale to 32x32 if necessary
+        # rescale to the provided size if necessary
         # TODO: allow custom values in config files?
-        if item.scale_content:
+        if -1 not in item.scale_content:
             p = item.pixmap_items[index].pixmap()
-            item.pixmap_items[index].setScale(min(32 / p.width(), 32 / p.height()))
+            item.pixmap_items[index].setScale(min(item.scale_content[0] / p.width(), item.scale_content[1] / p.height()))
 
         self.create_counter(item, index, obj_name, pos)
         self.create_reward(item, index, obj_name, pos)

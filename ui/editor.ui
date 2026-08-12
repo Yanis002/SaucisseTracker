@@ -181,7 +181,7 @@
       <x>10</x>
       <y>30</y>
       <width>311</width>
-      <height>441</height>
+      <height>391</height>
      </rect>
     </property>
    </widget>
@@ -257,6 +257,83 @@
     </property>
     <property name="icon">
      <iconset theme="QIcon::ThemeIcon::GoDown"/>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="spinBox_8">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>440</y>
+      <width>51</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>-1</number>
+    </property>
+    <property name="maximum">
+     <number>999</number>
+    </property>
+    <property name="value">
+     <number>-1</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>17</x>
+      <y>422</y>
+      <width>41</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Width</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="spinBox_14">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>440</y>
+      <width>51</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>-1</number>
+    </property>
+    <property name="maximum">
+     <number>999</number>
+    </property>
+    <property name="value">
+     <number>-1</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_11">
+    <property name="geometry">
+     <rect>
+      <x>74</x>
+      <y>422</y>
+      <width>51</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Height</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_3">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>423</y>
+      <width>111</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Default Shape</string>
     </property>
    </widget>
   </widget>
@@ -849,33 +926,20 @@
     <property name="geometry">
      <rect>
       <x>9</x>
-      <y>80</y>
+      <y>70</y>
       <width>103</width>
-      <height>31</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
      <string>Static Texts</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_3">
-    <property name="geometry">
-     <rect>
-      <x>8</x>
-      <y>59</y>
-      <width>111</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Re-scale Icon</string>
-    </property>
-   </widget>
    <widget class="QCheckBox" name="checkBox_4">
     <property name="geometry">
      <rect>
       <x>8</x>
-      <y>41</y>
+      <y>48</y>
       <width>101</width>
       <height>22</height>
      </rect>
@@ -888,7 +952,7 @@
     <property name="geometry">
      <rect>
       <x>8</x>
-      <y>23</y>
+      <y>26</y>
       <width>111</width>
       <height>22</height>
      </rect>
