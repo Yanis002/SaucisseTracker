@@ -19,31 +19,32 @@
         </Extras>
         <Inventory Index="0" Name="New Inventory (0)" Background="background.png" BackgroundColor="0x000000">
             <Text Index="0" Pos="414;757" Rot="90" Content="Tower Items" TextSettings="1"/>
-            <Text Index="1" Pos="7;494" Rot="0" Content="Forest Temple" TextSettings="2"/>
-            <Text Index="2" Pos="140;494" Rot="0" Content="Snow Temple" TextSettings="2"/>
+            <Text Index="1" Pos="7;494" Rot="0" Content="Wooded Temple" TextSettings="2"/>
+            <Text Index="2" Pos="126;494" Rot="0" Content="Blizzard Temple" TextSettings="2"/>
             <Text Index="3" Pos="257;494" Rot="0" Content="Marine Temple" TextSettings="2"/>
             <Text Index="4" Pos="61;536" Rot="0" Content="Mountain Temple" TextSettings="2"/>
-            <Text Index="5" Pos="205;536" Rot="0" Content="Sand Temple" TextSettings="2"/>
-            <Text Index="6" Pos="10;771" Rot="0" Content="Sec. 1" TextSettings="3"/>
-            <Text Index="7" Pos="10;814" Rot="0" Content="Sec. 2" TextSettings="3"/>
-            <Text Index="8" Pos="10;858" Rot="0" Content="Sec. 3" TextSettings="3"/>
-            <Text Index="9" Pos="132;771" Rot="0" Content="Sec. 4" TextSettings="3"/>
-            <Text Index="10" Pos="132;814" Rot="0" Content="Sec. 5" TextSettings="3"/>
-            <Text Index="11" Pos="132;858" Rot="0" Content="Sec. 6" TextSettings="3"/>
-            <Text Index="12" Pos="138;590" Rot="0" Content="Train Parts" TextSettings="2"/>
-            <Text Index="13" Pos="370;-1" Rot="0" Content="Letters" TextSettings="2"/>
-            <Text Index="14" Pos="372;358" Rot="0" Content="Stamps" TextSettings="2"/>
-            <Item Name="glyph_forest" Source="items/glyphs/glyph_forest.png" Pos="21;13" Rot="0" Enabled="True" ScaleContent="True"/>
-            <Item Name="glyph_snow" Source="items/glyphs/glyph_snow.png" Pos="120;13" Rot="0" ScaleContent="True"/>
-            <Item Name="glyph_ocean" Source="items/glyphs/glyph_ocean.png" Pos="220;11" Rot="0" ScaleContent="True"/>
-            <Item Name="glyph_fire" Source="items/glyphs/glyph_fire.png" Pos="309;12" Rot="0" ScaleContent="True"/>
-            <Item Name="song_awakening" Source="items/songs/song_awakening.png" Pos="20;322" Rot="0" ScaleContent="True" ExtraIndex="0"/>
-            <Item Name="song_healing" Source="items/songs/song_healing.png" Pos="94;322" Rot="0" ScaleContent="True" ExtraIndex="0"/>
-            <Item Name="song_birds" Source="items/songs/song_birds.png" Pos="167;322" Rot="0" ScaleContent="True" ExtraIndex="0"/>
-            <Item Name="song_light" Source="items/songs/song_light.png" Pos="241;322" Rot="0" ScaleContent="True" ExtraIndex="0"/>
-            <Item Name="song_discovery" Source="items/songs/song_discovery.png" Pos="312;322" Rot="0" ScaleContent="True" ExtraIndex="0"/>
-            <Item Name="Whirlwind" Source="items/menubar/Whirlwind.png" Pos="43;370" Rot="0" ScaleContent="True"/>
-            <Item Name="Boomerang" Source="items/menubar/Boomerang.png" Pos="84;372" Rot="0" ScaleContent="True"/>
+            <Text Index="5" Pos="195;536" Rot="0" Content="Desert Temple" TextSettings="2"/>
+            <Text Index="6" Pos="298;536" Rot="0" Content="Tunnel" TextSettings="2"/>
+            <Text Index="7" Pos="10;771" Rot="0" Content="Sec. 1" TextSettings="3"/>
+            <Text Index="8" Pos="10;814" Rot="0" Content="Sec. 2" TextSettings="3"/>
+            <Text Index="9" Pos="10;858" Rot="0" Content="Sec. 3" TextSettings="3"/>
+            <Text Index="10" Pos="132;771" Rot="0" Content="Sec. 4" TextSettings="3"/>
+            <Text Index="11" Pos="132;814" Rot="0" Content="Sec. 5" TextSettings="3"/>
+            <Text Index="12" Pos="132;858" Rot="0" Content="Sec. 6" TextSettings="3"/>
+            <Text Index="13" Pos="138;590" Rot="0" Content="Train Parts" TextSettings="2"/>
+            <Text Index="14" Pos="370;-1" Rot="0" Content="Letters" TextSettings="2"/>
+            <Text Index="15" Pos="372;358" Rot="0" Content="Stamps" TextSettings="2"/>
+            <Item Name="glyph_forest" Source="items/glyphs/glyph_forest.png" Pos="21;13" Rot="0" Enabled="True" ScaleContent="32;32"/>
+            <Item Name="glyph_snow" Source="items/glyphs/glyph_snow.png" Pos="120;13" Rot="0" ScaleContent="32;32"/>
+            <Item Name="glyph_ocean" Source="items/glyphs/glyph_ocean.png" Pos="220;11" Rot="0" ScaleContent="32;32"/>
+            <Item Name="glyph_fire" Source="items/glyphs/glyph_fire.png" Pos="309;12" Rot="0" ScaleContent="32;32"/>
+            <Item Name="song_awakening" Source="items/songs/song_awakening.png" Pos="20;322" Rot="0" ScaleContent="32;32" ExtraIndex="0"/>
+            <Item Name="song_healing" Source="items/songs/song_healing.png" Pos="94;322" Rot="0" ScaleContent="32;32" ExtraIndex="0"/>
+            <Item Name="song_birds" Source="items/songs/song_birds.png" Pos="167;322" Rot="0" ScaleContent="32;32" ExtraIndex="0"/>
+            <Item Name="song_light" Source="items/songs/song_light.png" Pos="241;322" Rot="0" ScaleContent="32;32" ExtraIndex="0"/>
+            <Item Name="song_discovery" Source="items/songs/song_discovery.png" Pos="312;322" Rot="0" ScaleContent="32;32" ExtraIndex="0"/>
+            <Item Name="Whirlwind" Source="items/menubar/Whirlwind.png" Pos="43;370" Rot="0" ScaleContent="32;32"/>
+            <Item Name="Boomerang" Source="items/menubar/Boomerang.png" Pos="84;372" Rot="0" ScaleContent="32;32"/>
             <Item Name="Whip" Source="items/menubar/Whip.png" Pos="122;372" Rot="0"/>
             <Item Name="Bow" Pos="162;371" Rot="0">
                 <Sources>
@@ -55,32 +56,32 @@
             <Item Name="Bomb" Source="items/menubar/Bomb.png" Pos="200;370" Rot="0">
                 <Counter Min="10" Max="30" Increment="10" MiddleIncrement="10" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="rod" Source="items/menubar/rod.png" Pos="242;369" Rot="0" ScaleContent="True"/>
-            <Item Name="flute" Source="items/menubar/flute.png" Pos="277;375" Rot="0" ScaleContent="True"/>
-            <Item Name="sword_recruit" Pos="44;408" Rot="0" ScaleContent="True">
+            <Item Name="rod" Source="items/menubar/rod.png" Pos="242;369" Rot="0" ScaleContent="32;32"/>
+            <Item Name="flute" Source="items/menubar/flute.png" Pos="277;375" Rot="0" ScaleContent="32;32"/>
+            <Item Name="sword_recruit" Pos="44;408" Rot="0" ScaleContent="32;32">
                 <Sources>
                     <Item Path="items/collection/sword_recruit.png"/>
                     <Item Path="items/collection/sword_lokomo.png"/>
                 </Sources>
             </Item>
-            <Item Name="shield_normal" Pos="83;407" Rot="0" ScaleContent="True">
+            <Item Name="shield_normal" Pos="83;407" Rot="0" ScaleContent="32;32">
                 <Sources>
                     <Item Path="items/collection/shield_normal.png"/>
                     <Item Path="items/collection/shield_ancient.png"/>
                 </Sources>
             </Item>
-            <Item Name="clothes_uniform" Pos="122;410" Rot="0" Enabled="True" ScaleContent="True">
+            <Item Name="clothes_uniform" Pos="122;410" Rot="0" Enabled="True" ScaleContent="32;32">
                 <Sources>
                     <Item Path="items/collection/clothes_uniform.png"/>
                     <Item Path="items/collection/clothes_engineer.png"/>
                 </Sources>
             </Item>
-            <Item Name="certificate" Source="items/collection/certificate.png" Pos="161;409" Rot="0" ScaleContent="True"/>
-            <Item Name="compass" Source="items/collection/compass.png" Pos="200;409" Rot="0" ScaleContent="True"/>
-            <Item Name="contest" Source="items/collection/contest.png" Pos="240;411" Rot="0" ScaleContent="True" UseWheel="True">
+            <Item Name="certificate" Source="items/collection/certificate.png" Pos="161;409" Rot="0" ScaleContent="32;32"/>
+            <Item Name="compass" Source="items/collection/compass.png" Pos="200;409" Rot="0" ScaleContent="32;32"/>
+            <Item Name="contest" Source="items/collection/contest.png" Pos="240;411" Rot="0" ScaleContent="32;32" UseWheel="True">
                 <Counter Min="0" Max="99" Increment="1" MiddleIncrement="10" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="beedle_1" Pos="279;409" Rot="0" ScaleContent="True" UseWheel="True">
+            <Item Name="beedle_1" Pos="279;409" Rot="0" ScaleContent="32;32" UseWheel="True">
                 <Sources>
                     <Item Path="items/collection/beedle_1.png"/>
                     <Item Path="items/collection/beedle_2.png"/>
@@ -91,174 +92,251 @@
                     <Item Path="items/collection/beedle_7.png"/>
                 </Sources>
             </Item>
-            <Item Name="Rabbit Net" Source="items/rabbits/Rabbit Net.png" Pos="68;451" Rot="0" ScaleContent="True"/>
-            <Item Name="Grass Rabbits" Source="items/rabbits/Grass Rabbits.png" Pos="106;451" Rot="0" ScaleContent="True" UseWheel="True">
+            <Item Name="Rabbit Net" Source="items/rabbits/Rabbit Net.png" Pos="68;451" Rot="0" ScaleContent="32;32"/>
+            <Item Name="Grass Rabbits" Source="items/rabbits/Grass Rabbits.png" Pos="106;451" Rot="0" ScaleContent="32;32" UseWheel="True">
                 <Counter Min="1" Max="10" Increment="1" MiddleIncrement="5" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="Snow Rabbits" Source="items/rabbits/Snow Rabbits.png" Pos="146;451" Rot="0" ScaleContent="True" UseWheel="True">
+            <Item Name="Snow Rabbits" Source="items/rabbits/Snow Rabbits.png" Pos="146;451" Rot="0" ScaleContent="32;32" UseWheel="True">
                 <Counter Min="1" Max="10" Increment="1" MiddleIncrement="5" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="Ocean Rabbits" Source="items/rabbits/Ocean Rabbits.png" Pos="185;451" Rot="0" ScaleContent="True" UseWheel="True">
+            <Item Name="Ocean Rabbits" Source="items/rabbits/Ocean Rabbits.png" Pos="185;451" Rot="0" ScaleContent="32;32" UseWheel="True">
                 <Counter Min="1" Max="10" Increment="1" MiddleIncrement="5" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="Mountain Rabbits" Source="items/rabbits/Mountain Rabbits.png" Pos="224;451" Rot="0" ScaleContent="True" UseWheel="True">
+            <Item Name="Mountain Rabbits" Source="items/rabbits/Mountain Rabbits.png" Pos="224;451" Rot="0" ScaleContent="32;32" UseWheel="True">
                 <Counter Min="1" Max="10" Increment="1" MiddleIncrement="5" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="Sand Rabbits" Source="items/rabbits/Sand Rabbits.png" Pos="263;451" Rot="0" ScaleContent="True" UseWheel="True">
+            <Item Name="Sand Rabbits" Source="items/rabbits/Sand Rabbits.png" Pos="263;451" Rot="0" ScaleContent="32;32" UseWheel="True">
                 <Counter Min="1" Max="10" Increment="1" MiddleIncrement="5" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="key1" Source="items/dungeons/key.png" Pos="11;508" Rot="0" ScaleContent="True">
+            <Item Name="key1" Source="items/dungeons/key.png" Pos="11;508" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="2" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="bk1" Source="items/dungeons/bk.png" Pos="40;508" Rot="0" ScaleContent="True"/>
-            <Item Name="forest" Source="items/dungeons/forest.png" Pos="74;508" Rot="0" ScaleContent="True"/>
-            <Item Name="key2" Source="items/dungeons/key.png" Pos="136;508" Rot="0" ScaleContent="True">
+            <Item Name="bk1" Source="items/dungeons/bk.png" Pos="40;508" Rot="0" ScaleContent="32;32"/>
+            <Item Name="forest" Source="items/dungeons/forest.png" Pos="74;508" Rot="0" ScaleContent="32;32"/>
+            <Item Name="key2" Source="items/dungeons/key.png" Pos="136;508" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="1" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="bk2" Source="items/dungeons/bk.png" Pos="165;508" Rot="0" ScaleContent="True"/>
-            <Item Name="snow" Source="items/dungeons/snow.png" Pos="200;508" Rot="0" ScaleContent="True"/>
-            <Item Name="key3" Source="items/dungeons/key.png" Pos="260;508" Rot="0" ScaleContent="True">
+            <Item Name="bk2" Source="items/dungeons/bk.png" Pos="165;508" Rot="0" ScaleContent="32;32"/>
+            <Item Name="snow" Source="items/dungeons/snow.png" Pos="200;508" Rot="0" ScaleContent="32;32"/>
+            <Item Name="key3" Source="items/dungeons/key.png" Pos="260;508" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="2" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="bk3" Source="items/dungeons/bk.png" Pos="289;508" Rot="0" ScaleContent="True"/>
-            <Item Name="ocean" Source="items/dungeons/ocean.png" Pos="326;508" Rot="0" ScaleContent="True"/>
-            <Item Name="key4" Source="items/dungeons/key.png" Pos="73;550" Rot="0" ScaleContent="True">
+            <Item Name="bk3" Source="items/dungeons/bk.png" Pos="289;508" Rot="0" ScaleContent="32;32"/>
+            <Item Name="ocean" Source="items/dungeons/ocean.png" Pos="326;508" Rot="0" ScaleContent="32;32"/>
+            <Item Name="key4" Source="items/dungeons/key.png" Pos="73;550" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="bk4" Source="items/dungeons/bk.png" Pos="102;550" Rot="0" ScaleContent="True"/>
-            <Item Name="fire" Source="items/dungeons/fire.png" Pos="139;550" Rot="0" ScaleContent="True"/>
-            <Item Name="key5" Source="items/dungeons/key.png" Pos="199;550" Rot="0" ScaleContent="True">
+            <Item Name="bk4" Source="items/dungeons/bk.png" Pos="102;550" Rot="0" ScaleContent="32;32"/>
+            <Item Name="fire" Source="items/dungeons/fire.png" Pos="139;550" Rot="0" ScaleContent="32;32"/>
+            <Item Name="key5" Source="items/dungeons/key.png" Pos="199;550" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="2" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="bk5" Source="items/dungeons/bk.png" Pos="228;550" Rot="0" ScaleContent="True"/>
-            <Item Name="sand" Source="items/dungeons/sand.png" Pos="264;550" Rot="0" ScaleContent="True"/>
-            <Item Name="snurglar" Source="items/dungeons/snurglar.png" Pos="26;552" Rot="0" ScaleContent="True">
+            <Item Name="bk5" Source="items/dungeons/bk.png" Pos="228;550" Rot="0" ScaleContent="32;32"/>
+            <Item Name="sand" Source="items/dungeons/sand.png" Pos="264;550" Rot="0" ScaleContent="32;32"/>
+            <Item Name="snurglar" Source="items/dungeons/snurglar.png" Pos="26;552" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="15;14"/>
             </Item>
-            <Item Name="key_tunnel" Source="items/dungeons/key.png" Pos="312;550" Rot="0" ScaleContent="True">
+            <Item Name="key_tunnel" Source="items/dungeons/key.png" Pos="312;550" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="1" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
             <Item Name="engine_spirit" Source="items/train/engine_spirit.png" Pos="21;605" Rot="0"/>
-            <Item Name="canon_spirit" Source="items/train/canon_spirit.png" Pos="27;642" Rot="0" ScaleContent="True"/>
-            <Item Name="car_spirit" Source="items/train/car_spirit.png" Pos="21;681" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_spirit" Source="items/train/wagon_spirit.png" Pos="22;717" Rot="0" ScaleContent="True"/>
+            <Item Name="canon_spirit" Source="items/train/canon_spirit.png" Pos="27;642" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_spirit" Source="items/train/car_spirit.png" Pos="21;681" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_spirit" Source="items/train/wagon_spirit.png" Pos="22;717" Rot="0" ScaleContent="32;32"/>
             <Item Name="engine_wooden" Source="items/train/engine_wooden.png" Pos="64;605" Rot="0"/>
-            <Item Name="canon_wooden" Source="items/train/canon_wooden.png" Pos="68;642" Rot="0" ScaleContent="True"/>
-            <Item Name="car_wooden" Source="items/train/car_wooden.png" Pos="61;683" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_wooden" Source="items/train/wagon_wooden.png" Pos="62;721" Rot="0" ScaleContent="True"/>
+            <Item Name="canon_wooden" Source="items/train/canon_wooden.png" Pos="68;642" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_wooden" Source="items/train/car_wooden.png" Pos="61;683" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_wooden" Source="items/train/wagon_wooden.png" Pos="62;721" Rot="0" ScaleContent="32;32"/>
             <Item Name="engine_iron" Source="items/train/engine_iron.png" Pos="103;607" Rot="0"/>
-            <Item Name="canon_iron" Source="items/train/canon_iron.png" Pos="106;642" Rot="0" ScaleContent="True"/>
-            <Item Name="car_iron" Source="items/train/car_iron.png" Pos="103;678" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_iron" Source="items/train/wagon_iron.png" Pos="103;716" Rot="0" ScaleContent="True"/>
+            <Item Name="canon_iron" Source="items/train/canon_iron.png" Pos="106;642" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_iron" Source="items/train/car_iron.png" Pos="103;678" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_iron" Source="items/train/wagon_iron.png" Pos="103;716" Rot="0" ScaleContent="32;32"/>
             <Item Name="engine_skull" Source="items/train/engine_skull.png" Pos="146;605" Rot="0"/>
-            <Item Name="canon_skull" Source="items/train/canon_skull.png" Pos="149;642" Rot="0" ScaleContent="True"/>
-            <Item Name="car_skull" Source="items/train/car_skull.png" Pos="146;677" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_skull" Source="items/train/wagon_skull.png" Pos="144;722" Rot="0" ScaleContent="True"/>
+            <Item Name="canon_skull" Source="items/train/canon_skull.png" Pos="149;642" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_skull" Source="items/train/car_skull.png" Pos="146;677" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_skull" Source="items/train/wagon_skull.png" Pos="144;722" Rot="0" ScaleContent="32;32"/>
             <Item Name="engine_stagecoach" Source="items/train/engine_stagecoach.png" Pos="184;607" Rot="0"/>
-            <Item Name="canon_tower" Source="items/train/canon_tower.png" Pos="193;641" Rot="0" ScaleContent="True"/>
-            <Item Name="car_quaint" Source="items/train/car_quaint.png" Pos="186;678" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_garden" Source="items/train/wagon_garden.png" Pos="185;716" Rot="0" ScaleContent="True"/>
+            <Item Name="canon_tower" Source="items/train/canon_tower.png" Pos="193;641" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_quaint" Source="items/train/car_quaint.png" Pos="186;678" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_garden" Source="items/train/wagon_garden.png" Pos="185;716" Rot="0" ScaleContent="32;32"/>
             <Item Name="engine_dragon" Source="items/train/engine_dragon.png" Pos="228;605" Rot="0"/>
-            <Item Name="canon_dragon" Source="items/train/canon_dragon.png" Pos="230;642" Rot="0" ScaleContent="True"/>
-            <Item Name="car_dragon" Source="items/train/car_dragon.png" Pos="225;678" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_dragon" Source="items/train/wagon_dragon.png" Pos="227;713" Rot="0" ScaleContent="True"/>
+            <Item Name="canon_dragon" Source="items/train/canon_dragon.png" Pos="230;642" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_dragon" Source="items/train/car_dragon.png" Pos="225;678" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_dragon" Source="items/train/wagon_dragon.png" Pos="227;713" Rot="0" ScaleContent="32;32"/>
             <Item Name="engine_sweet" Source="items/train/engine_sweet.png" Pos="272;605" Rot="0"/>
-            <Item Name="canon_honey" Source="items/train/canon_honey.png" Pos="271;642" Rot="0" ScaleContent="True"/>
-            <Item Name="car_cake" Source="items/train/car_cake.png" Pos="269;678" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_pie" Source="items/train/wagon_pie.png" Pos="268;711" Rot="0" ScaleContent="True"/>
+            <Item Name="canon_honey" Source="items/train/canon_honey.png" Pos="271;642" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_cake" Source="items/train/car_cake.png" Pos="269;678" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_pie" Source="items/train/wagon_pie.png" Pos="268;711" Rot="0" ScaleContent="32;32"/>
             <Item Name="engine_golden" Source="items/train/engine_golden.png" Pos="308;605" Rot="0"/>
-            <Item Name="canon_golden" Source="items/train/canon_golden.png" Pos="313;642" Rot="0" ScaleContent="True"/>
-            <Item Name="car_golden" Source="items/train/car_golden.png" Pos="310;676" Rot="0" ScaleContent="True"/>
-            <Item Name="wagon_golden" Source="items/train/wagon_golden.png" Pos="306;717" Rot="0" ScaleContent="True"/>
-            <Item Name="tear_s1" Source="items/dungeons/tear.png" Pos="64;765" Rot="0" ScaleContent="True">
+            <Item Name="canon_golden" Source="items/train/canon_golden.png" Pos="313;642" Rot="0" ScaleContent="32;32"/>
+            <Item Name="car_golden" Source="items/train/car_golden.png" Pos="310;676" Rot="0" ScaleContent="32;32"/>
+            <Item Name="wagon_golden" Source="items/train/wagon_golden.png" Pos="306;717" Rot="0" ScaleContent="32;32"/>
+            <Item Name="tear_s1" Source="items/dungeons/tear.png" Pos="64;765" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="tear_s2" Source="items/dungeons/tear.png" Pos="64;808" Rot="0" ScaleContent="True">
+            <Item Name="tear_s2" Source="items/dungeons/tear.png" Pos="64;808" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="key_s2" Source="items/dungeons/key.png" Pos="106;808" Rot="0" ScaleContent="True">
+            <Item Name="key_s2" Source="items/dungeons/key.png" Pos="106;808" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="2" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="tear_s3" Source="items/dungeons/tear.png" Pos="64;853" Rot="0" ScaleContent="True">
+            <Item Name="tear_s3" Source="items/dungeons/tear.png" Pos="64;853" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="bk_s3" Source="items/dungeons/bk.png" Pos="102;853" Rot="0" ScaleContent="True"/>
-            <Item Name="tear_s4" Source="items/dungeons/tear.png" Pos="186;765" Rot="0" ScaleContent="True">
+            <Item Name="bk_s3" Source="items/dungeons/bk.png" Pos="102;853" Rot="0" ScaleContent="32;32"/>
+            <Item Name="tear_s4" Source="items/dungeons/tear.png" Pos="186;765" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="key_s4" Source="items/dungeons/key.png" Pos="228;765" Rot="0" ScaleContent="True">
+            <Item Name="key_s4" Source="items/dungeons/key.png" Pos="228;765" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="tear_s5" Source="items/dungeons/tear.png" Pos="186;808" Rot="0" ScaleContent="True">
+            <Item Name="tear_s5" Source="items/dungeons/tear.png" Pos="186;808" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="key_s5" Source="items/dungeons/key.png" Pos="228;808" Rot="0" ScaleContent="True">
+            <Item Name="key_s5" Source="items/dungeons/key.png" Pos="228;808" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="2" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="bk_s5" Source="items/dungeons/bk.png" Pos="264;808" Rot="0" ScaleContent="True"/>
-            <Item Name="tear" Source="items/dungeons/tear.png" Pos="186;854" Rot="0" ScaleContent="True">
+            <Item Name="bk_s5" Source="items/dungeons/bk.png" Pos="264;808" Rot="0" ScaleContent="32;32"/>
+            <Item Name="tear" Source="items/dungeons/tear.png" Pos="186;854" Rot="0" ScaleContent="32;32">
                 <Counter Min="1" Max="3" Increment="1" MiddleIncrement="1" TextSettings="0" Pos="11;17"/>
             </Item>
-            <Item Name="book" Source="items/stamps/book.png" Pos="381;376" Rot="0" ScaleContent="True"/>
-            <Item Name="stamp_tos" Source="items/stamps/stamp_tos.png" Pos="366;408" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="book" Source="items/stamps/book.png" Pos="381;376" Rot="0" ScaleContent="32;32"/>
+            <Item Name="stamp_tos" Source="items/stamps/stamp_tos.png" Pos="366;408" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="15" Pos="367;427" Rot="0" Content="TOS" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_castle_town" Source="items/stamps/stamp_castle_town.png" Pos="399;408" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_castle_town" Source="items/stamps/stamp_castle_town.png" Pos="399;408" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="16" Pos="397;427" Rot="0" Content="CSTW" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_outset" Source="items/stamps/stamp_outset.png" Pos="366;442" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_outset" Source="items/stamps/stamp_outset.png" Pos="366;442" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="17" Pos="369;461" Rot="0" Content="OUT" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_mayscore" Source="items/stamps/stamp_mayscore.png" Pos="400;442" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_mayscore" Source="items/stamps/stamp_mayscore.png" Pos="400;442" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="18" Pos="401;461" Rot="0" Content="MAY" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_woodland_sanc" Source="items/stamps/stamp_woodland_sanc.png" Pos="366;476" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_woodland_sanc" Source="items/stamps/stamp_woodland_sanc.png" Pos="366;476" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="19" Pos="359;497" Rot="0" Content="WSANC" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_anouki" Source="items/stamps/stamp_anouki.png" Pos="399;477" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_anouki" Source="items/stamps/stamp_anouki.png" Pos="399;477" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="20" Pos="401;497" Rot="0" Content="ANO" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_snowfall_sanc" Source="items/stamps/stamp_snowfall_sanc.png" Pos="366;512" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_snowfall_sanc" Source="items/stamps/stamp_snowfall_sanc.png" Pos="366;512" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="21" Pos="359;528" Rot="0" Content="SSANC" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_papuzia" Source="items/stamps/stamp_papuzia.png" Pos="400;510" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_papuzia" Source="items/stamps/stamp_papuzia.png" Pos="400;510" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="22" Pos="402;528" Rot="0" Content="PAP" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_island_sanc" Source="items/stamps/stamp_island_sanc.png" Pos="366;543" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_island_sanc" Source="items/stamps/stamp_island_sanc.png" Pos="366;543" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="23" Pos="359;563" Rot="0" Content="ISANC" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_goron" Source="items/stamps/stamp_goron.png" Pos="399;544" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_goron" Source="items/stamps/stamp_goron.png" Pos="399;544" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="24" Pos="402;563" Rot="0" Content="GOR" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_valley_sanc" Source="items/stamps/stamp_valley_sanc.png" Pos="366;578" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_valley_sanc" Source="items/stamps/stamp_valley_sanc.png" Pos="366;578" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="25" Pos="359;596" Rot="0" Content="VSANC" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_dune_sanc" Source="items/stamps/stamp_dune_sanc.png" Pos="399;579" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_dune_sanc" Source="items/stamps/stamp_dune_sanc.png" Pos="399;579" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="26" Pos="399;596" Rot="0" Content="DUNE" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_forest_temple" Source="items/stamps/stamp_forest_temple.png" Pos="366;610" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_forest_temple" Source="items/stamps/stamp_forest_temple.png" Pos="366;610" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="27" Pos="364;632" Rot="0" Content="WOOD" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_blizzard_temple" Source="items/stamps/stamp_blizzard_temple.png" Pos="400;611" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_blizzard_temple" Source="items/stamps/stamp_blizzard_temple.png" Pos="400;611" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="28" Pos="398;632" Rot="0" Content="BLIZ" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_marine_temple" Source="items/stamps/stamp_marine_temple.png" Pos="366;647" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_marine_temple" Source="items/stamps/stamp_marine_temple.png" Pos="366;647" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="29" Pos="359;666" Rot="0" Content="MARIN" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_fire_temple" Source="items/stamps/stamp_fire_temple.png" Pos="400;646" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_fire_temple" Source="items/stamps/stamp_fire_temple.png" Pos="400;646" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="30" Pos="399;666" Rot="0" Content="MOUN" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_desert_temple" Source="items/stamps/stamp_desert_temple.png" Pos="366;679" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_desert_temple" Source="items/stamps/stamp_desert_temple.png" Pos="366;679" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="31" Pos="364;700" Rot="0" Content="DESE" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_pirate" Source="items/stamps/stamp_pirate.png" Pos="399;681" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_pirate" Source="items/stamps/stamp_pirate.png" Pos="399;681" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="32" Pos="398;700" Rot="0" Content="HIDE" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_trading" Source="items/stamps/stamp_trading.png" Pos="366;714" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_trading" Source="items/stamps/stamp_trading.png" Pos="366;714" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="33" Pos="365;738" Rot="0" Content="POST" TextSettings="4"/>
             </Item>
-            <Item Name="stamp_ferrus" Source="items/stamps/stamp_ferrus.png" Pos="401;714" Rot="0" ScaleContent="True" ExtraIndex="0">
+            <Item Name="stamp_ferrus" Source="items/stamps/stamp_ferrus.png" Pos="401;714" Rot="0" ScaleContent="32;32" ExtraIndex="0">
                 <Text Index="34" Pos="401;738" Rot="0" Content="ICY" TextSettings="4"/>
+            </Item>
+            <Item Name="tracks_snowfire-glyph-fire" Source="tracks/snowfire-glyph-fire.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_snowfire-gem36" Source="tracks/snowfire-gem36.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_snow-start" Source="tracks/snow-start.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_snow-source" Source="tracks/snow-source.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_snow-song" Source="tracks/snow-song.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_snow-gem55" Source="tracks/snow-gem55.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_snow-gem54" Source="tracks/snow-gem54.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_snow-gem52" Source="tracks/snow-gem52.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_oceanfire-song" Source="tracks/oceanfire-song.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_oceanfire-gem20" Source="tracks/oceanfire-gem20.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_ocean-start" Source="tracks/ocean-start.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_ocean-source" Source="tracks/ocean-source.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_ocean-song" Source="tracks/ocean-song.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_ocean-gem57" Source="tracks/ocean-gem57.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_ocean-gem56" Source="tracks/ocean-gem56.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_ocean-gem19" Source="tracks/ocean-gem19.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_ocean-gem18" Source="tracks/ocean-gem18.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forestsnow-glyph-snow" Source="tracks/forestsnow-glyph-snow.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forestsnow-gem53" Source="tracks/forestsnow-gem53.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forestsnow-gem51" Source="tracks/forestsnow-gem51.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forestsnow-gem50" Source="tracks/forestsnow-gem50.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forestocean-glyph-ocean" Source="tracks/forestocean-glyph-ocean.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forestocean-gem43" Source="tracks/forestocean-gem43.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-start" Source="tracks/forest-start.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-source" Source="tracks/forest-source.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-song" Source="tracks/forest-song.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-glyph-forest" Source="tracks/forest-glyph-forest.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-gem49" Source="tracks/forest-gem49.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-gem48" Source="tracks/forest-gem48.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-gem47" Source="tracks/forest-gem47.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-gem45" Source="tracks/forest-gem45.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-gem44" Source="tracks/forest-gem44.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_forest-compass" Source="tracks/forest-compass.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_fire-start" Source="tracks/fire-start.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_fire-source" Source="tracks/fire-source.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_fire-song" Source="tracks/fire-song.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_fire-gem46" Source="tracks/fire-gem46.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_fire-gem37" Source="tracks/fire-gem37.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="tracks_fire-gem35" Source="tracks/fire-gem35.png" Pos="0;47" Rot="0" ScaleContent="360;360" UseDefaultShape="True"/>
+            <Item Name="letters" Source="items/collection/letter.png" Rot="0" ScaleContent="32;32">
+                <Positions>
+                    <Item X="365" Y="52"/>
+                    <Item X="365" Y="85"/>
+                    <Item X="365" Y="120"/>
+                    <Item X="365" Y="154"/>
+                    <Item X="365" Y="188"/>
+                    <Item X="365" Y="221"/>
+                    <Item X="365" Y="256"/>
+                    <Item X="365" Y="290"/>
+                    <Item X="399" Y="52"/>
+                    <Item X="399" Y="85"/>
+                    <Item X="399" Y="120"/>
+                    <Item X="399" Y="154"/>
+                    <Item X="399" Y="188"/>
+                    <Item X="399" Y="221"/>
+                    <Item X="399" Y="256"/>
+                    <Item X="399" Y="290"/>
+                    <Item X="382" Y="325"/>
+                </Positions>
+                <Text Index="0" Pos="358;66" Rot="0" Content="First" TextSettings="2"/>
+                <Text Index="1" Pos="395;66" Rot="0" Content="Zelda" TextSettings="2"/>
+                <Text Index="2" Pos="358;100" Rot="0" Content="Alfon" TextSettings="2"/>
+                <Text Index="3" Pos="397;100" Rot="0" Content="Russ." TextSettings="2"/>
+                <Text Index="4" Pos="358;135" Rot="0" Content="Lineb" TextSettings="2"/>
+                <Text Index="5" Pos="396;135" Rot="0" Content="Beedl" TextSettings="2"/>
+                <Text Index="6" Pos="396;168" Rot="0" Content="Silv." TextSettings="2"/>
+                <Text Index="7" Pos="363;201" Rot="0" Content="Gold" TextSettings="2"/>
+                <Text Index="8" Pos="396;201" Rot="0" Content="Plat." TextSettings="2"/>
+                <Text Index="9" Pos="362;235" Rot="0" Content="Diam." TextSettings="2"/>
+                <Text Index="10" Pos="397;235" Rot="0" Content="Carb." TextSettings="2"/>
+                <Text Index="11" Pos="362;270" Rot="0" Content="Niko" TextSettings="2"/>
+                <Text Index="12" Pos="397;270" Rot="0" Content="Fer 1" TextSettings="2"/>
+                <Text Index="13" Pos="361;304" Rot="0" Content="Fer 2" TextSettings="2"/>
+                <Text Index="14" Pos="396;304" Rot="0" Content="Fer 3" TextSettings="2"/>
+                <Text Index="15" Pos="370;340" Rot="0" Content="Kagoron" TextSettings="2"/>
+                <Text Index="16" Pos="362;168" Rot="0" Content="Card" TextSettings="2"/>
             </Item>
             <Rewards/>
         </Inventory>
